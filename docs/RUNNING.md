@@ -209,8 +209,8 @@ this can't happen — if it did, one of the two stopped reading it.
 
 Honest gaps, so this file doesn't describe a system that doesn't exist:
 
-- **`gunicorn` is not in `requirements.txt`.** The Render start command above needs it. That's a
-  code change, so it needs an issue.
 - **The SPA has no API client**, so no `VITE_API_BASE_URL` yet. It arrives with the login slice.
-- **Neither app has been deployed.** The Render and Pages settings above are what the decisions
-  call for, not something verified against a live dashboard.
+- **Neither app has been deployed.** The build and start commands above have been run locally —
+  `gunicorn config.wsgi:application` serves `/api/health`, and `collectstatic` post-processes
+  cleanly through WhiteNoise — but the Render and Pages *settings* are what the decisions call
+  for, not something verified against a live dashboard.
