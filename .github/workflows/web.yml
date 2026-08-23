@@ -1,0 +1,30 @@
+name: web
+
+on:
+  push:
+    branches: [main]
+    paths: ["apps/web/**", "shared/**", ".github/workflows/web.yml"]
+  pull_request:
+    paths: ["apps/web/**", "shared/**", ".github/workflows/web.yml"]
+
+defaults:
+  run:
+    working-directory: apps/web
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - run: npm ci
+
+      # `tsc -b` runs as part of build, so a type error fails here.
+      - name: Build
+        run: npm run build

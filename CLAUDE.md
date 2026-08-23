@@ -1,0 +1,100 @@
+# CLAUDE.md — Sapien Paradox V2
+
+## What this is
+
+A modular, cadence-paced learning platform for "Intellectual Explorers." A reader buys a book;
+its chapters unlock on a schedule; each arrives by WhatsApp as a self-authenticating link; they
+read it in a token-gated chamber and discuss it with a companion.
+
+**V2 is the same product as V1, rebuilt so every piece is deliberate.** V1 lives at
+`../Sapien Paradox App` and is **read-only reference**.
+
+## Read first
+
+| File | When |
+|---|---|
+| **`STATUS.md`** | always — current focus, next action, open questions |
+| **`DESIGN.md`** | what we're building and how it fits together |
+| **`decisions/`** | before proposing anything structural — every locked decision and *why* |
+| `apps/api/CLAUDE.md` | working on the backend |
+| `apps/web/CLAUDE.md` | working on the frontend |
+
+**Most structural questions are already decided.** `decisions/README.md` indexes all of them by
+number (D1…D21) with rejected alternatives and V1 provenance. Check there before proposing —
+the option you're about to suggest may already have been considered and ruled out for a recorded
+reason.
+
+Decisions live in `decisions/` and **nowhere else**. `DESIGN.md` references them by number. If you
+find the same decision written in two places, that is a bug — V1 died of exactly that.
+
+## Layout
+
+```
+apps/api/     Django 6 + Django Ninja + Postgres   → has its own CLAUDE.md
+apps/web/     React (Vite) + TS + XState           → has its own CLAUDE.md
+docs/         operational docs (setup, deploy)
+DESIGN.md     what we're building and why
+STATUS.md     what's happening now
+```
+
+Monorepo, one git history. **A vertical slice is one PR** spanning both apps — V1 split repos by
+lane and every feature had to be split in half with manual cross-repo merge ordering.
+
+Deployed as `app.<domain>` (static SPA) + `api.<domain>` (Django), session cookie scoped to the
+parent domain. See D6.
+
+## The three seams
+
+Everything routes through these; nothing bypasses them. This is what makes payments and cadence
+drop-ins later rather than second implementations.
+
+- **`access.can_read(user_or_token, chapter)`** — the only access check. Never query `Order` or
+  `TemporalGrant` directly.
+- **`onboarding.create_reader(...)`** — the only way a reader comes into existence.
+- **`whatsapp.send_chapter(grant)`** — the only delivery path.
+
+*Anything a human can do in Django admin, a service function does.*
+
+## Engineering mandates
+
+1. **Zero hardcoded strings** — UI text via `labels.ts`; message templates and the companion
+   prompt in their own config files, editable without touching logic.
+2. **Machine-first logic** — complex UI state is an XState machine with the 5-file split.
+3. **Temporal security** — never expose a storage URL; always proxy bytes through the API.
+4. **Type-safe API** — Ninja schemas on every request/response body; no untyped dicts at the
+   boundary, no `as any` on the frontend.
+5. **Variable Velocity** — animations start fast, settle slow.
+6. **Env-driven externals** — anything touching the outside world reads env and has a
+   console/no-op fallback. A fresh clone runs with zero credentials.
+
+## Workflow — issue first, then a branch, then a PR
+
+**No work starts without a GitHub issue.** If there isn't one, stop and ask for it — don't open
+one unilaterally and don't start coding "just this once".
+
+```
+issue  →  branch  →  one PR  →  merge  →  issue closes
+```
+
+- **One issue, one PR, one branch.** Never two issues in a PR, never one issue across two PRs.
+- **Branch name carries the issue:** `<issue-number>-<short-slug>`, e.g. `14-grant-pdf-stream`.
+- **The PR body says `Closes #<n>`**, so merging closes the issue and the trail survives.
+- **A PR is a vertical slice** — schema, API, UI, tests — spanning both apps when the change does.
+  That is the whole reason this is a monorepo (D6).
+- **Never commit straight to `main`.** Not for a typo, not for a doc fix.
+- **Applies to documentation too.** A decision record, a spec change, an edit to this file — all
+  of it goes through an issue and a PR. Docs drifting silently is what killed V1.
+
+*The single exception is repository bootstrap, which cannot be gated behind an issue that has
+nowhere to live yet.*
+
+## Working discipline
+
+- **BFS** — root before leaves, exhaust a level before descending. One question at a time, always
+  with a recommended answer.
+- **Decisions land immediately** in `DESIGN.md`, not at end of turn. Sessions end abruptly.
+- **Every departure from V1** carries an `Inherited from V1` block: what V1 did, what V2 does,
+  why, what would make us revisit.
+- **One canonical doc per question.** If a new doc would overlap an existing one, edit the
+  existing one. V1 had three docs answering "what are we building" and they drifted apart.
+- **Simple over fancy.** Complexity must earn its keep.

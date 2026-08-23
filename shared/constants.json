@@ -1,0 +1,13 @@
+{
+  "_comment": "D20 — single source of truth for values where a mismatch between backend and frontend is a bug. Python reads this with json.load; TypeScript re-exports it with `as const`. Do not add anything here that only one side uses.",
+
+  "pace": ["slow", "medium", "fast"],
+
+  "routes": {
+    "login": "/login",
+    "home": "/",
+    "read": "/read/:chapterId",
+    "reader": "/r/:token",
+    "resetConfirm": "/reset/:token"
+  }
+}
