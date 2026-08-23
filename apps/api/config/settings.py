@@ -7,6 +7,7 @@ reaches the network at import time.
 """
 
 import os
+import sys
 from pathlib import Path
 
 import dj_database_url
@@ -107,9 +108,14 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Database — DATABASE_URL from the first commit (D5)
 # ─────────────────────────────────────────────────────────────────────────────
 
+# An *empty* DATABASE_URL is treated as absent. `.env` files habitually carry blank keys
+# as placeholders, and dj_database_url parses "" into a config with no ENGINE rather than
+# falling back — which fails at first query with a misleading error.
+_database_url = os.getenv("DATABASE_URL", "").strip() or f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+
 DATABASES = {
-    "default": dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+    "default": dj_database_url.parse(
+        _database_url,
         conn_max_age=600,
         conn_health_checks=True,
         ssl_require=env_bool("DATABASE_SSL_REQUIRE", False),
@@ -127,7 +133,14 @@ DATABASES = {
 
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME", "")
 
-if AWS_STORAGE_BUCKET_NAME:
+# Tests must never touch the network or the real bucket (mandate 3). Without this, a
+# fixture that saves a FileField uploads to R2 — slow, and it litters production storage
+# with test objects.
+TESTING = "test" in sys.argv
+
+if TESTING:
+    _default_storage = {"BACKEND": "django.core.files.storage.InMemoryStorage"}
+elif AWS_STORAGE_BUCKET_NAME:
     _default_storage = {
         "BACKEND": "storages.backends.s3.S3Storage",
         "OPTIONS": {
