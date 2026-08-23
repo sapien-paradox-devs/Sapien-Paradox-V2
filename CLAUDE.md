@@ -81,12 +81,14 @@ issue  →  branch  →  one PR  →  merge  →  issue closes
 - **The PR body says `Closes #<n>`**, so merging closes the issue and the trail survives.
 - **A PR is a vertical slice** — schema, API, UI, tests — spanning both apps when the change does.
   That is the whole reason this is a monorepo (D6).
-- **Never commit straight to `main`.** Not for a typo, not for a doc fix.
-- **Applies to documentation too.** A decision record, a spec change, an edit to this file — all
-  of it goes through an issue and a PR. Docs drifting silently is what killed V1.
+- **Never commit code straight to `main`.**
 
-*The single exception is repository bootstrap, which cannot be gated behind an issue that has
-nowhere to live yet.*
+**Markdown is exempt.** Decision records, specs, `STATUS.md`, this file — write them directly and
+commit them. Decisions must land the moment they're made (sessions end abruptly), and routing a
+paragraph through an issue and a PR would guarantee they don't.
+
+*Also exempt: repository bootstrap, which cannot be gated behind an issue that has nowhere to
+live yet.*
 
 ## Working discipline
 
