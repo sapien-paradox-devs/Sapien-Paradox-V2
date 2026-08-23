@@ -8,22 +8,56 @@
 >
 > **This is not a diary.** V1's equivalent accumulated a 24-entry narrative log nobody could use.
 
-**Last updated:** 2026-08-12
+**Last updated:** 2026-08-23
 
 ---
 
 # 1. What we have
 
-## Documents (6 files, ~1,900 lines)
+## The repository
+
+**https://github.com/sapien-paradox-devs/Sapien-Paradox-V2** — private, monorepo, three commits on
+`main`, both CI workflows green.
+
+One repo, two independently deployable apps. Chosen over V1's split repos: five of the twelve
+planned slices touch both sides in one change, and `shared/constants.json` would otherwise need a
+published package on two ecosystems to sync nine values.
+
+## Code — running, not just written
+
+| | State |
+|---|---|
+| `apps/api` | Django 6.0.8 + Ninja. Boots, migrates, tests pass. `GET /api/health` live |
+| `apps/web` | React 19 + Vite 6 + XState 5. Builds clean |
+| `shared/constants.json` | pace keys + route patterns, read by both sides (D20) |
+| CI | two path-filtered workflows, **no credentials** — proves a fresh clone runs |
+| Deploy commands | `gunicorn config.wsgi:application` and `collectstatic` verified locally |
+
+**Models: `User` only.** It shipped in the bootstrap because `AUTH_USER_MODEL` must exist in
+migration `0001` — changing it later is a painful manual migration. The other seven tables (D18)
+are their own slice.
+
+## Documents
 
 | File | Holds |
 |---|---|
-| `CLAUDE.md` | how to work here — stack, seams, mandates |
+| `CLAUDE.md` | how to work here — **workflow**, stack, seams, mandates |
+| `README.md` | what this is, how to run it, where things are written down |
 | `DESIGN.md` | product, scope, architecture, data model, roadmap |
 | `decisions/` | **24 locked decisions** with rationale, rejected alternatives, V1 provenance |
-| `apps/api/CLAUDE.md` | backend layering, file structure, API surface, V1 pitfalls |
-| `apps/web/CLAUDE.md` | frontend levels, root machine spec, XState conventions, V1 pitfalls |
 | `decisions/00-why-v2.md` | the V1 audit every decision traces back to |
+| `apps/api/CLAUDE.md` · `apps/web/CLAUDE.md` | per-app architecture |
+| `apps/api/BUILD.md` | backend build order, S0–S11, with the gates |
+| `docs/RUNNING.md` | setup, commands, environment, CI, deploy, troubleshooting |
+
+## Workflow — new, and now in force
+
+**Issue → branch → one PR → merge.** Branch is `<issue-number>-<slug>`, PR body says `Closes #n`,
+never commit code straight to `main`. **Markdown is exempt** — decisions must land the moment
+they're made.
+
+**Consequence: no further code can start until issues exist.** The twelve-slice breakdown is
+drafted but unapproved, and no issues are open.
 
 ## Design — locked
 
@@ -39,21 +73,10 @@
 - **The three seams** — `access.can_read`, `onboarding.create_reader`, `whatsapp.send_chapter`.
   Signatures, transaction boundaries, failure behaviour. **Everything routes through these.**
 - **Four API-layer questions** — PDF endpoint name, CSRF policy, cap placement, GET honesty.
-  Proposed answers in `apps/api/CLAUDE.md`; none locked.
-- **Rate-limit mechanism** — four limits specified, no Redis (D17). Derivable from `MessageLog` and
-  `PasswordResetToken` rows, but undecided.
-- **`.env.example`** — the variable list falls out of the above.
+  Proposed answers in `apps/api/BUILD.md` as gates G1–G6; none locked.
+- **Rate-limit mechanism** — cooldown windows are in `settings.py` and env-overridable, but *how*
+  they're counted (rows in `MessageLog` / `PasswordResetToken`) is proposed, not decided.
 - **Level 3 detail** — copy, validation, animation, prompt craft. Deferred by decision.
-
-## Code
-
-None, except `apps/web/src/pages/machine/{machine,types}.ts` — written during design as the
-reference shape.
-
-## Version control
-
-**Nothing is committed.** `git init` only, no remote. Twenty-four decisions across six documents,
-untracked — the exact failure that lost V1's planning tree.
 
 ---
 
@@ -67,33 +90,39 @@ untracked — the exact failure that lost V1's planning tree.
 - [ ] **Twilio account** → WhatsApp sender application → **submit all four templates**
 - [ ] **Decide the payment provider**, then start KYC — *blocked on an open question, see §3*
 
-**Nothing here has started.** Meta approval is days-to-weeks of waiting and gates the Phase 4 demo.
+**Nothing here has started.** Meta approval is days-to-weeks of waiting and gates the demo.
 
 ## Track B — close the design gaps *(unblocks all backend code)*
 
-- [ ] **Grill the three seams** — two or three questions each
-- [ ] Close the four API-layer questions
-- [ ] Decide the rate-limit mechanism
-- [ ] Enumerate `.env.example`
+- [ ] **Grill the three seams** (gate G3) — the only one that needs a real session
+- [ ] Close G1, G2, G5, G6 — one-line answers, already proposed
+- [ ] Decide the rate-limit mechanism (G4)
 
-## Track C — build *(after Track B; implemented against the specs)*
+## Track C — build
 
-- [ ] **Phase 0** — monorepo, Django + Ninja, `DATABASE_URL`, `django-storages`, Vite + React +
-      XState, `labels.ts`, `shared/constants.json`, path-filtered CI, **both sides deployed**
+- [x] **Phase 0** — monorepo, Django + Ninja, `DATABASE_URL`, `django-storages`, Vite + React +
+      XState, `labels.ts`, `shared/constants.json`, path-filtered CI
+- [ ] **Phase 0 remainder** — **both sides actually deployed** (D5 says deploy before there's much
+      to deploy; this is now the oldest unpaid debt)
 - [ ] **Phase 1** — auth endpoints, `/login` + machine, boot rehydration, cross-subdomain cookie
-- [ ] **Phase 2** — 8 models + migrations, the three seams, `GET /api/home`, `/read/:chapterId`,
+- [ ] **Phase 2** — remaining 7 models, the three seams, `GET /api/home`, `/read/:chapterId`,
       Home screen, Django admin onboarding, `seed_dev`
 - [ ] **Phase 3** — grant + PDF endpoints, `/r/:token`, sanctuary, 7-day expiry
 - [ ] **Phase 4** — Twilio + console backends, `MessageLog`, admin action, CLI, re-issue
 - [ ] **Phase 5** — `text_content` extraction, `POST /api/chat`, caps, panel, versioned prompt
-- [ ] **Phase 6** — end-to-end test, complete seed, `docs/HOW_TO_START.md`
+- [ ] **Phase 6** — end-to-end test, complete seed
 
 Tracks A and B run concurrently. Phases 3 and 4 run in parallel after Phase 2.
 
 ## Housekeeping
 
-- [ ] **Commit everything** — six documents, untracked
-- [ ] Push to GitHub? (`sapien-paradox-devs`, new repo) — your call
+- [ ] **Open the issue backlog** — nothing code-shaped can start without it
+- [ ] **Delete `ALL_DOCUMENTATION.md` and `UNIFIED_SPEC.md`** — 3,400 lines of concatenated copies
+      of the six real documents, already stale (neither mentions D24 or the workflow rule).
+      Duplication is what killed V1
+- [ ] **Amend D20** — it assumed `as const` preserves literal unions on JSON imports. It doesn't;
+      TypeScript widens to `string[]`. The union is declared in `src/lib/constants.ts` with a
+      load-time assertion against the JSON
 
 ---
 
@@ -101,18 +130,18 @@ Tracks A and B run concurrently. Phases 3 and 4 run in parallel after Phase 2.
 
 | # | Question | Blocks | Default if unanswered |
 |---|---|---|---|
-| 1 | **Message template copy** (4 templates) | **Meta approval → Phase 4 demo** | I draft in `BUSINESS.md` register for review |
+| 1 | **Message template copy** (4 templates) | **Meta approval → the demo** | I draft them for review |
 | 2 | **Domain name** | Track A entirely — templates embed the URL | — must be chosen |
-| 3 | Hosts confirmation | Phase 0 | Cloudflare Pages + Render + managed Postgres + R2 (D23) |
+| 3 | Hosts confirmation | deploy | Cloudflare Pages + Render + managed Postgres + R2 (D23) |
 | 4 | **Payment provider** — Stripe vs Razorpay/Cashfree | KYC clock | **needs: where is the business registered, and where are the readers?** |
 | 5 | Companion interaction design + system prompt | Phase 5 | its own session (D14) |
 | 6 | Read/unread mark on Home — keep or drop | Phase 2 | keep (D11) |
 | 7 | **What does an anonymous visitor see at `/`?** Amends D7/D11 | Phase 2 | redirect to `/login` |
 | 8 | **Is a signup page in scope?** Contradicts D10 | Phase 1 | no — D10 stands |
-| 9 | PDF endpoint name — `/api/grants/{token}/pdf` vs V1's stale `/api/shards/stream/` | Phase 3 | rename (`Shard` no longer exists) |
-| 10 | CSRF policy | Phase 1 | enforce on session endpoints, exempt grant-authenticated |
-| 11 | Where chat caps live | Phase 5 | `services/companion.py` |
-| 12 | Is `GET /api/read/{id}` honest as a GET? | Phase 2 | keep GET, make it idempotent |
+| 9 | PDF endpoint name (G1) | Phase 3 | `/api/grants/{token}/pdf` — `Shard` no longer exists |
+| 10 | CSRF policy (G2) | Phase 1 | enforce on session endpoints, exempt grant-authenticated |
+| 11 | Where chat caps live (G6) | Phase 5 | `services/companion.py` |
+| 12 | Is `GET /api/read/{id}` honest as a GET? (G5) | Phase 2 | keep GET, make it idempotent |
 
 **#7 and #8 are coupled:** a public `/` with a signup path is a coherent product; a gated `/` with
 signup isn't.
@@ -130,7 +159,7 @@ signup isn't.
 | 3 | **Meta Business** *(via Twilio)* | business verification + 4 template approvals | — | **days–weeks** | not started |
 | 4 | **Render** | Django + managed Postgres | **~$5–7/mo** | minutes | not started |
 | 5 | **Anthropic** | the companion (Sonnet 5) | per token | minutes | not started |
-| 6 | GitHub | source, CI | free | — | exists |
+| 6 | GitHub | source, CI | free | — | **live** |
 | — | *Payment provider* | later | % per txn | **days–weeks KYC** | **undecided (#4)** |
 
 **Deliberately not integrating:** email provider (D16 — WhatsApp is the only outbound channel) ·
