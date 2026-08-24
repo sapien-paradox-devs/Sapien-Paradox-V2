@@ -12,11 +12,13 @@ Rule for every step: it ends with a command that passes. No step is "done" becau
 
 | | |
 |---|---|
-| Written | `manage.py` · `requirements.txt` · `config/{settings,urls,wsgi,asgi}.py` · `../../shared/constants.json` |
-| Missing | all of `core/` · `.env.example` · `config/logging.py` |
-| Broken | `settings.py` names `config.logging.JsonFormatter`, which doesn't exist — `manage.py check` fails today |
+| Done | S0, S1, S2, S3 — environment, all eight tables, admin, health endpoint. 21 tests pass |
+| Next | S5 (the seams) then S4 (auth) — see the reordering note below |
+| Gates | all six closed (D25–D27, D29–D33). Nothing blocks endpoint code |
 
-Nothing is committed.
+**Reordered since this file was written:** the seams (S5) now come before auth (S4). Both the auth
+and home slices call them, they are pure functions with no HTTP, and building them first keeps each
+pull request reviewable.
 
 ---
 
@@ -33,7 +35,8 @@ Steps 0–3 are unblocked. These must close before the step named.
 | ~~G5~~ | Is `GET /api/read/{id}` honest as a GET? | S6 | keep GET, make it idempotent — reuse a live grant, mint only when none exists |
 | ~~G6~~ | Where chat caps live | S10 | `services/companion.py`, so the CLI and any future caller inherit them |
 
-**All gates are now closed.** G3 became D25–D27; G1, G2, G4, G5 and G6 became D29–D33. Originally: The rest are one-line answers; the seams are a design session.
+**All six gates are closed.** G3 became D25–D27 after a nine-question grilling; G1, G2, G4, G5 and
+G6 became D29–D33. The "Proposed" column above is what each one was decided as.
 
 ---
 
