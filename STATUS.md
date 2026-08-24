@@ -70,8 +70,8 @@ drafted but unapproved, and no issues are open.
 
 ## Design — NOT started
 
-- **The three seams** — `access.can_read`, `onboarding.create_reader`, `whatsapp.send_chapter`.
-  Signatures, transaction boundaries, failure behaviour. **Everything routes through these.**
+- ~~**The three seams**~~ — **locked 2026-08-25 as D25–D27** (`decisions/07-seams.md`). Signatures,
+  transaction boundaries, and failure behaviour all decided; gate G3 is closed.
 - **Four API-layer questions** — PDF endpoint name, CSRF policy, cap placement, GET honesty.
   Proposed answers in `apps/api/BUILD.md` as gates G1–G6; none locked.
 - **Rate-limit mechanism** — cooldown windows are in `settings.py` and env-overridable, but *how*
@@ -94,7 +94,7 @@ drafted but unapproved, and no issues are open.
 
 ## Track B — close the design gaps *(unblocks all backend code)*
 
-- [ ] **Grill the three seams** (gate G3) — the only one that needs a real session
+- [x] **Grill the three seams** (gate G3) — locked as D25–D27
 - [ ] Close G1, G2, G5, G6 — one-line answers, already proposed
 - [ ] Decide the rate-limit mechanism (G4)
 

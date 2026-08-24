@@ -28,7 +28,7 @@ Steps 0–3 are unblocked. These must close before the step named.
 |---|---|---|---|
 | G1 | PDF endpoint name | S7 | `GET /api/grants/{token}/pdf`. `Shard` doesn't exist (D4); `CLAUDE.md` mandate 1 still says otherwise and is stale |
 | G2 | CSRF policy | S4 | enforce on session endpoints, exempt grant-authenticated ones — CSRF defends *ambient* cookie authority, a grant token isn't ambient |
-| G3 | **The three seams** — signatures, transaction boundaries, failure behaviour | **S5** | needs a grilling pass; everything routes through these |
+| ~~G3~~ | ~~**The three seams**~~ | ~~S5~~ | **CLOSED** 2026-08-25 — D25, D26, D27 in `../../decisions/07-seams.md` |
 | G4 | Rate-limit mechanism | S5 | count rows in `MessageLog` / `PasswordResetToken` within a cooldown window; window lengths already in `settings.py`, env-overridable. No Redis (D17) |
 | G5 | Is `GET /api/read/{id}` honest as a GET? | S6 | keep GET, make it idempotent — reuse a live grant, mint only when none exists |
 | G6 | Where chat caps live | S10 | `services/companion.py`, so the CLI and any future caller inherit them |

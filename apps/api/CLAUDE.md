@@ -18,12 +18,31 @@ the Stripe webhook a drop-in later (D10).
 
 ## The three seams
 
-- `access.can_read(user_or_token, chapter)` — the only access check. **No caller queries `Order`
-  or `TemporalGrant` directly.** Cadence and subscriptions extend this function; they don't add
-  parallel checks.
-- `onboarding.create_reader(name, email, phone, book, pace)` — the only way a reader comes into
-  existence. User + Order + first grant atomically, delivery post-commit.
-- `whatsapp.send_chapter(grant)` — the only delivery path.
+Signatures and reasoning: **D25, D26, D27** in `../../decisions/07-seams.md`. Summary:
+
+```python
+grants.validate(token)  -> TemporalGrant | None    # is this token live?
+access.can_read(user, chapter) -> bool             # does this person own the book?
+
+onboarding.create_reader(full_name, email, phone, book, pace) -> OnboardingResult
+
+whatsapp.send_chapter(grant)              -> MessageLog
+whatsapp.send_password_reset(reset_token) -> MessageLog
+```
+
+- **`can_read` is ownership only, and returns a plain bool.** No caller queries `Order` or
+  `TemporalGrant` directly. Cadence extends *this function*; it never adds a parallel check.
+  Refusals become 403s at the API layer — services hold no HTTP concerns.
+- **A live token is never sufficient.** Grant-authenticated requests validate the token *and* check
+  the `Order`, so revocation takes effect on the next request.
+- **`create_reader` is the only way a reader begins.** Three rows atomic; delivery outside the
+  transaction; the result carries the `MessageLog` so admin can see a failed send. Never call it
+  from inside an outer `atomic()` block.
+- **Callers mint, `send_chapter` delivers.** Home reuses a live grant, sanctuary mints a fresh one
+  — that decision belongs to the caller, not to a `force_new` flag.
+- **Delivery failures return a `MessageLog`; they never raise.** That is what makes D17's "a Twilio
+  failure never breaks the transaction" structural rather than a convention five callers must
+  remember. Bugs — an unknown template key — still raise.
 
 ## Data model
 

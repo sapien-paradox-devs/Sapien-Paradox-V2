@@ -48,10 +48,13 @@ parent domain. See D6.
 Everything routes through these; nothing bypasses them. This is what makes payments and cadence
 drop-ins later rather than second implementations.
 
-- **`access.can_read(user_or_token, chapter)`** — the only access check. Never query `Order` or
-  `TemporalGrant` directly.
+- **`access.can_read(user, chapter) -> bool`** — the only access check. Never query `Order` or
+  `TemporalGrant` directly. Token liveness is a separate question: `grants.validate(token)`.
 - **`onboarding.create_reader(...)`** — the only way a reader comes into existence.
-- **`whatsapp.send_chapter(grant)`** — the only delivery path.
+- **`whatsapp.send_chapter(grant)`** — the only chapter delivery path. Callers mint the grant.
+
+Signatures, failure behaviour, and transaction boundaries: **D25–D27** in
+`decisions/07-seams.md`.
 
 *Anything a human can do in Django admin, a service function does.*
 

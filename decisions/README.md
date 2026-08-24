@@ -47,6 +47,9 @@ back to. Without it these read as taste rather than as answers to specific, obse
 | D22 | Logging: stdout only, and never log a token | [infrastructure](03-infrastructure.md) | locked |
 | D23 | Platform: modular monolith, Django confirmed, two infra vendors | [infrastructure](03-infrastructure.md) | locked |
 | D24 | Companion cost model (caching, 1h TTL) and vendor neutrality | [product](01-product.md) | locked |
+| D25 | `access.can_read` — two questions, not one; returns bool | [seams](07-seams.md) | locked |
+| D26 | `create_reader` — reuse/refuse, transaction boundary, the password | [seams](07-seams.md) | locked |
+| D27 | WhatsApp delivery — one mechanism, named wrappers *(refines D12)* | [seams](07-seams.md) | locked |
 
 ## Still open
 
