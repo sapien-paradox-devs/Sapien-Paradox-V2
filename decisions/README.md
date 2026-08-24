@@ -50,6 +50,7 @@ back to. Without it these read as taste rather than as answers to specific, obse
 | D25 | `access.can_read` — two questions, not one; returns bool | [seams](07-seams.md) | locked |
 | D26 | `create_reader` — reuse/refuse, transaction boundary, the password | [seams](07-seams.md) | locked |
 | D27 | WhatsApp delivery — one mechanism, named wrappers *(refines D12)* | [seams](07-seams.md) | locked |
+| D28 | Razorpay is the payment provider | [payments](08-payments.md) | locked |
 
 ## Still open
 

@@ -8,7 +8,7 @@
 >
 > **This is not a diary.** V1's equivalent accumulated a 24-entry narrative log nobody could use.
 
-**Last updated:** 2026-08-23
+**Last updated:** 2026-08-25
 
 ---
 
@@ -16,8 +16,8 @@
 
 ## The repository
 
-**https://github.com/sapien-paradox-devs/Sapien-Paradox-V2** — private, monorepo, three commits on
-`main`, both CI workflows green.
+**https://github.com/sapien-paradox-devs/Sapien-Paradox-V2** — private, monorepo, both CI workflows
+green. **13 issues open** (#1 the PRD, #2 closed), **PR #14 open and green**.
 
 One repo, two independently deployable apps. Chosen over V1's split repos: five of the twelve
 planned slices touch both sides in one change, and `shared/constants.json` would otherwise need a
@@ -33,9 +33,11 @@ published package on two ecosystems to sync nine values.
 | CI | two path-filtered workflows, **no credentials** — proves a fresh clone runs |
 | Deploy commands | `gunicorn config.wsgi:application` and `collectstatic` verified locally |
 
-**Models: `User` only.** It shipped in the bootstrap because `AUTH_USER_MODEL` must exist in
-migration `0001` — changing it later is a painful manual migration. The other seven tables (D18)
-are their own slice.
+**All eight tables exist** with admin screens and 21 tests, on PR #14 awaiting merge. `User` shipped
+in the bootstrap because `AUTH_USER_MODEL` must exist in migration `0001`.
+
+**R2 is live and proven** — private bucket, public URL disabled, a real PDF read server-side and
+parsed with pypdf. `render.yaml` provisions the API and Postgres but nothing is deployed yet.
 
 ## Documents
 
@@ -44,7 +46,7 @@ are their own slice.
 | `CLAUDE.md` | how to work here — **workflow**, stack, seams, mandates |
 | `README.md` | what this is, how to run it, where things are written down |
 | `DESIGN.md` | product, scope, architecture, data model, roadmap |
-| `decisions/` | **24 locked decisions** with rationale, rejected alternatives, V1 provenance |
+| `decisions/` | **28 locked decisions** with rationale, rejected alternatives, V1 provenance |
 | `decisions/00-why-v2.md` | the V1 audit every decision traces back to |
 | `apps/api/CLAUDE.md` · `apps/web/CLAUDE.md` | per-app architecture |
 | `apps/api/BUILD.md` | backend build order, S0–S11, with the gates |
@@ -56,8 +58,7 @@ are their own slice.
 never commit code straight to `main`. **Markdown is exempt** — decisions must land the moment
 they're made.
 
-**Consequence: no further code can start until issues exist.** The twelve-slice breakdown is
-drafted but unapproved, and no issues are open.
+The backlog is open: 12 slice issues plus the PRD. #2 (skeleton) closed, #5 (tables) on PR #14.
 
 ## Design — locked
 
@@ -73,7 +74,7 @@ drafted but unapproved, and no issues are open.
 - ~~**The three seams**~~ — **locked 2026-08-25 as D25–D27** (`decisions/07-seams.md`). Signatures,
   transaction boundaries, and failure behaviour all decided; gate G3 is closed.
 - **Four API-layer questions** — PDF endpoint name, CSRF policy, cap placement, GET honesty.
-  Proposed answers in `apps/api/BUILD.md` as gates G1–G6; none locked.
+  Proposed answers in `apps/api/BUILD.md` as gates G1, G2, G5, G6; none locked.
 - **Rate-limit mechanism** — cooldown windows are in `settings.py` and env-overridable, but *how*
   they're counted (rows in `MessageLog` / `PasswordResetToken`) is proposed, not decided.
 - **Level 3 detail** — copy, validation, animation, prompt craft. Deferred by decision.
@@ -88,7 +89,8 @@ drafted but unapproved, and no issues are open.
 - [ ] **Finalise the four WhatsApp template copies** — chapter delivery, fresh link, unread
       reminder, password reset
 - [ ] **Twilio account** → WhatsApp sender application → **submit all four templates**
-- [ ] **Decide the payment provider**, then start KYC — *blocked on an open question, see §3*
+- [x] ~~Decide the payment provider~~ — **Razorpay (D28)**
+- [ ] **Start Razorpay KYC** — days to weeks, and independent of Meta's clock
 
 **Nothing here has started.** Meta approval is days-to-weeks of waiting and gates the demo.
 
@@ -133,7 +135,7 @@ Tracks A and B run concurrently. Phases 3 and 4 run in parallel after Phase 2.
 | 1 | **Message template copy** (4 templates) | **Meta approval → the demo** | I draft them for review |
 | 2 | **Domain name** | Track A entirely — templates embed the URL | — must be chosen |
 | 3 | Hosts confirmation | deploy | Cloudflare Pages + Render + managed Postgres + R2 (D23) |
-| 4 | **Payment provider** — Stripe vs Razorpay/Cashfree | KYC clock | **needs: where is the business registered, and where are the readers?** |
+| ~~4~~ | ~~Payment provider~~ | — | **CLOSED — Razorpay (D28).** KYC not yet started |
 | 5 | Companion interaction design + system prompt | Phase 5 | its own session (D14) |
 | 6 | Read/unread mark on Home — keep or drop | Phase 2 | keep (D11) |
 | 7 | **What does an anonymous visitor see at `/`?** Amends D7/D11 | Phase 2 | redirect to `/login` |
@@ -146,7 +148,8 @@ Tracks A and B run concurrently. Phases 3 and 4 run in parallel after Phase 2.
 **#7 and #8 are coupled:** a public `/` with a signup path is a coherent product; a gated `/` with
 signup isn't.
 
-**#2 and #4 are the only ones blocked on you specifically.** Everything else has a workable default.
+**#2 (the domain) is now the only one blocked on you specifically.** Everything else has a workable
+default.
 
 ---
 
@@ -154,13 +157,13 @@ signup isn't.
 
 | # | Service | For | Cost | Lead time | Status |
 |---|---|---|---|---|---|
-| 1 | **Cloudflare** | registrar · DNS · Pages · R2 | free / ~$10yr | hours | not started |
+| 1 | **Cloudflare** | registrar · DNS · Pages · R2 | free / ~$10yr | hours | **R2 done** · domain not started |
 | 2 | **Twilio** | WhatsApp delivery, recovery, password reset | per message | minutes | not started |
 | 3 | **Meta Business** *(via Twilio)* | business verification + 4 template approvals | — | **days–weeks** | not started |
 | 4 | **Render** | Django + managed Postgres | **~$5–7/mo** | minutes | not started |
 | 5 | **Anthropic** | the companion (Sonnet 5) | per token | minutes | not started |
 | 6 | GitHub | source, CI | free | — | **live** |
-| — | *Payment provider* | later | % per txn | **days–weeks KYC** | **undecided (#4)** |
+| 7 | **Razorpay** | payments — later (D28) | ~2% domestic | **days–weeks KYC** | not started |
 
 **Deliberately not integrating:** email provider (D16 — WhatsApp is the only outbound channel) ·
 log vendor (D22 — stdout to host viewer) · Redis/queue (D17 — bounded in-request retry) ·
