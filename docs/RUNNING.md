@@ -138,17 +138,34 @@ session cookie scoped to `.<domain>`. Unrelated vendor domains would make the se
 third-party cookie, which Safari and most blockers drop — login would silently fail on some
 devices and work fine on yours.
 
-### API — Render
+### API and database — Render, from `render.yaml`
 
-| Setting | Value |
-|---|---|
-| Root directory | `apps/api` |
-| Build | `pip install -r requirements.txt && python manage.py collectstatic --no-input` |
-| Start | `gunicorn config.wsgi:application` |
-| Pre-deploy | `python manage.py migrate` |
-| Health check path | `/api/health` |
+**Render → New → Blueprint → select this repository.** `render.yaml` at the repo root provisions
+the web service *and* the Postgres instance, wires `DATABASE_URL` between them over the private
+network, and generates `DJANGO_SECRET_KEY`. Render prompts for the values marked `sync: false`.
 
-Plus a managed Postgres instance, with its internal `DATABASE_URL` wired into the web service.
+Both live in **Singapore**, Render's closest region to India. Change one and you must change the
+other — a service and database in different regions lose the private network and fall back to a
+slower, publicly-reachable connection.
+
+**The API deploys and stays healthy before any of the optional secrets exist.** With no Twilio
+credentials, delivery prints to the log instead of sending; with no Anthropic key, the companion is
+simply unavailable. That is what makes it deployable *now*, before the WhatsApp templates clear
+Meta review.
+
+**Set immediately after the first deploy**, or the health check returns 400:
+
+```
+DJANGO_ALLOWED_HOSTS = sapien-api.onrender.com
+```
+
+Then add `api.<domain>` to it once DNS exists.
+
+**Leave `COOKIE_DOMAIN` empty until the real domain is pointed.** Sessions spanning two subdomains
+need it; on `*.onrender.com` there is no shared parent domain to scope a cookie to.
+
+**Free Postgres on Render is a 30-day trial, not a tier** — the instance is deleted at the end of
+it. `render.yaml` specifies a paid plan deliberately.
 
 > **Never use a tier that sleeps.** Free tiers spin down and cold-start in roughly a minute, and the
 > same applies to Postgres tiers that pause when idle. The core moment of this product is *tap a
