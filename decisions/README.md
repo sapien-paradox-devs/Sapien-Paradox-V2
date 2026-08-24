@@ -51,6 +51,11 @@ back to. Without it these read as taste rather than as answers to specific, obse
 | D26 | `create_reader` — reuse/refuse, transaction boundary, the password | [seams](07-seams.md) | locked |
 | D27 | WhatsApp delivery — one mechanism, named wrappers *(refines D12)* | [seams](07-seams.md) | locked |
 | D28 | Razorpay is the payment provider | [payments](08-payments.md) | locked |
+| D29 | PDF endpoint is `GET /api/grants/{token}/pdf` | [api-layer](09-api-layer.md) | locked |
+| D30 | CSRF on session endpoints, exempt on grant ones | [api-layer](09-api-layer.md) | locked |
+| D31 | Rate limits counted from rows, no Redis | [api-layer](09-api-layer.md) | locked |
+| D32 | `GET /api/read/{id}` stays a GET, made idempotent | [api-layer](09-api-layer.md) | locked |
+| D33 | Companion caps live in the service, not the endpoint | [api-layer](09-api-layer.md) | locked |
 
 ## Still open
 

@@ -59,8 +59,8 @@ Departures from V1 (no `Shard` table, no view quota, `grant.user` required) and 
 ## Mandates
 
 1. **Temporal security** — never expose a storage URL. PDFs are always proxied through
-   `/api/shards/stream/`. This is also what keeps object storage swappable: nothing outside this
-   app knows where files live.
+   `GET /api/grants/{token}/pdf` (D29). This is also what keeps object storage swappable: nothing
+   outside this app knows where files live.
 2. **Type-safe API** — Ninja schemas on every request and response body. No untyped dicts crossing
    the boundary.
 3. **Env-driven externals** — Twilio, Anthropic, Stripe, storage and `DATABASE_URL` all read from
@@ -126,7 +126,7 @@ siblings.
 | `GET /api/read/{chapter_id}` | session | mint-or-reuse → `{ token }` |
 | `POST /api/chapters/{id}/send` | session | send to my WhatsApp (D11), rate-limited |
 | `GET /api/grants/{token}` | **grant** | validate, chapter meta, stamp `opened_at` |
-| `GET /api/grants/{token}/pdf` | **grant** | proxied bytes — *name pending, see below* |
+| `GET /api/grants/{token}/pdf` | **grant** | proxied bytes, chunked (D29) |
 | `POST /api/grants/{token}/reissue` | **grant** | one-tap fresh link (D9), rate-limited |
 | `POST /api/chat` | **grant** | companion, capped and logged (D7) |
 
@@ -134,20 +134,21 @@ siblings.
 and `GrantAuth` (resolves the token from the path, checks expiry). **Each endpoint declares exactly
 one. No endpoint accepts both.**
 
-## Open — four API-layer questions (not yet decided)
+## API-layer rules — all locked
 
-1. **PDF endpoint name.** V1 used `/api/shards/stream/?token=`, but D4 deleted the `Shard` table.
-   Proposed `GET /api/grants/{token}/pdf` — grant-centric and consistent with the sibling routes.
-2. **CSRF policy.** D6 puts the SPA and API on sibling subdomains, so session POSTs need CSRF:
-   `CSRF_COOKIE_DOMAIN=.<domain>`, SPA sends `X-CSRFToken`. Proposed: **enforce on session
-   endpoints, exempt the grant-authenticated ones** — CSRF defends *ambient* cookie authority; a
-   grant token isn't ambient, and enforcing it would break the cookie-less WhatsApp visitor
-   entirely.
-3. **Where the chat caps live.** Proposed `services/companion.py`, not the API layer, so the CLI
-   and any future caller inherit them.
-4. **Is `GET /api/read/{chapter_id}` honest as a GET?** It can mint a grant. Proposed: keep GET and
-   make it **idempotent** — reuse any live grant, mint only when none exists. The frontend
-   navigates to it directly; a POST would mean an interstitial.
+See **D29–D33** in `../../decisions/09-api-layer.md`.
+
+- **PDF bytes are `GET /api/grants/{token}/pdf`** (D29). The token sits in the path, not the query
+  string, so it stays out of referrer headers and access logs — it is a credential (D22).
+- **CSRF is enforced on session endpoints and exempt on grant-authenticated ones** (D30). CSRF
+  defends *ambient* authority; a grant token is not ambient, and enforcing it would break the
+  cookie-less WhatsApp visitor entirely.
+- **Rate limits count existing rows** in `MessageLog`, `PasswordResetToken`, and `ChatUsage` within
+  a window read from env (D31). No Redis (D17) — the tables already hold the truth.
+- **`GET /api/read/{chapter_id}` stays a GET and is idempotent** (D32): reuse a live grant, mint
+  only when none exists. A POST would mean an interstitial screen on the path to reading.
+- **The companion's caps live in `services/companion.py`**, not the endpoint (D33), so every future
+  caller inherits them rather than having to remember them.
 
 ## Commands
 
