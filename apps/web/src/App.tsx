@@ -1,14 +1,9 @@
 /**
- * Placeholder shell. The navigation machine in `pages/machine/` drives this once the
- * login and home slices land — see `CLAUDE.md` in this directory for the three levels.
+ * Mounts the Navigator and nothing else. No logic lives here (D15).
  */
 
-import { labels } from "./lib/labels";
+import { Navigator } from "./pages";
 
 export function App() {
-  return (
-    <main className="shell">
-      <h1>{labels.app.name}</h1>
-    </main>
-  );
+  return <Navigator />;
 }

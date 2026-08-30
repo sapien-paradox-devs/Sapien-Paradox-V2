@@ -49,7 +49,36 @@ src/pages/<page>/machine/
 | `actions.ts` | individual `const`s using `assign`, collected into one exported `actions` object |
 | `actors.ts` | `fromPromise` actors calling `mappedFetcher`, collected into one exported `actors` object |
 | `guards.ts` | individual **named exports**, no wrapper object (imported via `import * as guards`) |
-| `index.ts` | `machine.provide({ actions, actors, guards })` |
+| `index.ts` | `setup({ types, actions, actors, guards }).createMachine(config)` |
+
+### `setup()`, not `machine.provide()`
+
+The split above is unchanged — `machine.ts` stays declarative and `index.ts` composes — but
+composition uses `setup()`.
+
+`provide()` does not typecheck when the implementations live in sibling files. `assign()` called
+outside the machine widens its event to `EventObject`, and `provide` wants the machine's own event
+union, so every context updater is rejected. `setup()` supplies the types at composition time and
+everything infers.
+
+One consequence: **`assign` is applied in `index.ts`, not in `actions.ts`.** Actions export plain
+functions returning the context patch, and `index.ts` wraps them:
+
+```ts
+// actions.ts — a plain function, no assign
+export function userFrom({ event }: { event: Event }): Pick<Context, "user"> {
+  return { user: event.type === "AUTHENTICATED" ? event.user : null };
+}
+
+// index.ts
+actions: { assignUser: assign(actions.userFrom) }
+```
+
+Side-effecting actions stay plain functions in `actions.ts` and are passed straight through.
+
+**An actor's result arrives as `event.output`, not as one of your events.** A single updater shared
+between `onDone` and a hand-sent event silently leaves context null on the actor path — which looks
+exactly like being logged out. Give the actor path its own updater.
 
 Omit `actors.ts` only when a machine genuinely has no async work. **Never add a seventh file** —
 V1's landing machine grew `fields.ts` and `services.ts`, which is the signal a machine is doing

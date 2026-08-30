@@ -1,8 +1,11 @@
-import { createMachine } from "xstate";
-import type { Context, Event } from "./types";
-
 /**
- * Root machine — level 0.
+ * Root machine — level 0. Declarative config only; no implementations.
+ *
+ * `index.ts` wires the actions, actors and guards through `setup()`. The
+ * convention in CLAUDE.md describes `machine.provide()`, which does not
+ * typecheck under XState v5 when the implementations live in sibling files —
+ * `assign` widens the event to `EventObject` and `provide` wants the union.
+ * `setup()` keeps the same split: this file stays declarative, index.ts composes.
  *
  * Owns exactly two things: session state, and which page is showing.
  * Everything else belongs to a page machine.
@@ -13,8 +16,7 @@ import type { Context, Event } from "./types";
  * never waits on the session region, a token link can never be redirected
  * to /login by a pending auth check (DESIGN.md D1).
  */
-export const navigationMachine = createMachine({
-  types: {} as { context: Context; events: Event },
+export const navigationConfig = {
   id: "navigation",
   type: "parallel",
 
@@ -45,7 +47,7 @@ export const navigationMachine = createMachine({
         checking: {
           invoke: {
             src: "checkSession",
-            onDone: { target: "authenticated", actions: "assignUser" },
+            onDone: { target: "authenticated", actions: "assignCheckedUser" },
             onError: { target: "anonymous" },
           },
         },
@@ -96,4 +98,4 @@ export const navigationMachine = createMachine({
       },
     },
   },
-});
+} as const;
