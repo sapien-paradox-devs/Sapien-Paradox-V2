@@ -12,6 +12,20 @@ export const labels = {
   health: {
     booting: "Opening the room…",
   },
+  home: {
+    greeting: "Your library",
+    empty: "Nothing has arrived yet. The first chapter is on its way.",
+    error: "We could not reach your library.",
+    retry: "Try again",
+    chapter: "Chapter",
+    read: "Read",
+    send: "Send to WhatsApp",
+    sending: "Sending…",
+    sent: "Sent — check WhatsApp.",
+    limited: "Already sent — check WhatsApp.",
+    sendFailed: "That did not send. Try again.",
+    dismiss: "Dismiss",
+  },
   login: {
     title: "Welcome back",
     email: "Email",
