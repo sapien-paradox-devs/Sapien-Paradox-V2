@@ -11,6 +11,7 @@ import { useEffect, useMemo } from "react";
 
 import { HomePage } from "./home";
 import { LoginPage } from "./login";
+import { OpeningPage } from "./opening";
 import { navigationMachine } from "./machine";
 import { startRouteSync } from "./machine/sync";
 import { NavigationContext, type Navigation } from "./useNavigation";
@@ -34,13 +35,12 @@ export function Navigator() {
   // `page.unknown` renders nothing on purpose: it stops Home flashing before
   // sync.ts delivers the first ROUTE on mount (D15).
   //
-  // Each page arrives in its own slice — #30 opening, #31 reader — and
-  // replaces its placeholder here.
+  // The reader arrives in #31 and replaces its placeholder here.
   let page = null;
 
   if (state.matches({ page: "login" })) page = <LoginPage />;
   else if (state.matches({ page: "home" })) page = <HomePage />;
-  else if (state.matches({ page: "opening" })) page = <Placeholder name="opening" />;
+  else if (state.matches({ page: "opening" })) page = <OpeningPage />;
   else if (state.matches({ page: "reader" })) page = <Placeholder name="reader" />;
 
   return (
