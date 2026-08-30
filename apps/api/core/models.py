@@ -273,6 +273,19 @@ class TemporalGrant(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # The reading machine's state (D36). Grants begin live because `unlock_at`
+    # is null until cadence lands; `scheduled` is reachable only once it does.
+    #
+    # There is no `expired` state on purpose: expiry is derived from
+    # `expires_at`, and storing it too would need a sweeper to keep the two
+    # agreeing. See core/machines/reading/machine.py.
+    SCHEDULED = "scheduled"
+    LIVE = "live"
+    OPENED = "opened"
+    STATE_CHOICES = [(SCHEDULED, SCHEDULED), (LIVE, LIVE), (OPENED, OPENED)]
+
+    state = models.CharField(max_length=20, choices=STATE_CHOICES, default=LIVE)
+
     class Meta:
         ordering = ["-created_at"]
         indexes = [models.Index(fields=["user", "chapter"])]
