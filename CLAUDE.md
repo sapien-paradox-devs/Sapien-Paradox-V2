@@ -6,23 +6,39 @@ A modular, cadence-paced learning platform for "Intellectual Explorers." A reade
 its chapters unlock on a schedule; each arrives by WhatsApp as a self-authenticating link; they
 read it in a token-gated chamber and discuss it with a companion.
 
-**V2 is the same product as V1, rebuilt so every piece is deliberate.** V1 lives at
-`../Sapien Paradox App` and is **read-only reference**.
+**V2 is the same product as V1, rebuilt so every piece is deliberate.**
+
+**V1 is the parent repo:** `../Sapien Paradox App` (github: `Sapien-Paradox-App-Services` +
+`-UI`). It is **read-only reference** — consult it for prior art and provenance, never plan or
+build there. V1's models, tickets, open PRs and test failures are **not constraints on V2**;
+V2 inherits nothing but the product idea and the lessons.
+
+Every session starts by asking whether the work is for V1 or V2 (enforced by
+`.claude/hooks/session-start.sh` in both repos). If the answer is V1, switch directories.
 
 ## Read first
 
+These three are **imported automatically** — they are already in context, do not re-read them
+with a tool call:
+
+@STATUS.md
+@DESIGN.md
+@decisions/README.md
+
+Loaded on demand, when the work touches them:
+
 | File | When |
 |---|---|
-| **`STATUS.md`** | always — current focus, next action, open questions |
-| **`DESIGN.md`** | what we're building and how it fits together |
-| **`decisions/`** | before proposing anything structural — every locked decision and *why* |
-| `apps/api/CLAUDE.md` | working on the backend |
-| `apps/web/CLAUDE.md` | working on the frontend |
+| `decisions/NN-*.md` | the full text of a decision the index says is relevant |
+| `apps/api/CLAUDE.md` | working on the backend (auto-loads in that directory) |
+| `apps/web/CLAUDE.md` | working on the frontend (auto-loads in that directory) |
+| `docs/ACCOUNTS.md` | external services, credentials, client handover |
+| `docs/RUNNING.md` | running locally or deploying |
 
-**Most structural questions are already decided.** `decisions/README.md` indexes all of them by
-number (D1…D21) with rejected alternatives and V1 provenance. Check there before proposing —
-the option you're about to suggest may already have been considered and ruled out for a recorded
-reason.
+**Most structural questions are already decided.** `decisions/README.md` — imported above —
+indexes every one by number with rejected alternatives and V1 provenance. Check it before
+proposing: the option you are about to suggest may already have been considered and ruled out
+for a recorded reason.
 
 Decisions live in `decisions/` and **nowhere else**. `DESIGN.md` references them by number. If you
 find the same decision written in two places, that is a bug — V1 died of exactly that.
