@@ -1,0 +1,8 @@
+/* Structure only. Uninterrupted by design: no timers, no progress bars, no
+   session metadata (BUSINESS.md, still binding for the chamber). */
+
+.reader,
+.sanctuary {
+  max-width: 46rem;
+  margin: 2rem auto;
+}

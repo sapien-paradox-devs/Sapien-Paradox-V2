@@ -32,6 +32,28 @@ export const labels = {
     error: "We could not open that chapter.",
     retry: "Try again",
   },
+  reader: {
+    loading: "Opening the chapter…",
+    finish: "Finish chapter",
+    finished: "That is the end of this chapter.",
+    denied: "This chapter is not on your shelf.",
+    error: "We could not open this chapter.",
+    retry: "Try again",
+  },
+  sanctuary: {
+    title: "This link has rested",
+    body: "Links stay open for seven days. We can send you a fresh one.",
+    reissue: "Send me a new link",
+    sending: "Sending…",
+    sent: "On its way — check WhatsApp.",
+    limited: "Already sent — check WhatsApp.",
+    failed: "That did not send. Try again.",
+  },
+  pdf: {
+    loading: "Loading the pages…",
+    error: "The pages did not load. Your link is fine.",
+    retry: "Try again",
+  },
   login: {
     title: "Welcome back",
     email: "Email",
