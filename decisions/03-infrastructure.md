@@ -285,3 +285,93 @@ duplicating with a matching test (the fallback if a host isolates the subdirecto
 **Phase 0 verification:** both apps deploy from subdirectories, so `../../shared/` must exist in
 each build context. Most hosts clone the whole repo and build from the subdirectory, but not all —
 confirm on the real hosts while there is nothing to lose.
+
+---
+
+## D34 — Vercel hosts the SPA, not Cloudflare Pages
+
+**Locked** 2026-08-30
+**Amends D23**, which rejected Vercel by name. That rejection stands as written and is not deleted;
+this decision overrides its conclusion, not its reasoning.
+
+### What changed
+
+The SPA deploys to **Vercel**. Cloudflare keeps the registrar, DNS, and R2.
+
+### Why D23 rejected it, and what that costs us
+
+D23's argument was **vendor count, not capability**: "replaces nothing… a third dashboard for a job
+Cloudflare does." That argument is still correct. We are accepting a fourth actively-managed vendor
+for a job an existing vendor could do.
+
+This is an owner's preference, taken knowingly. Nothing technical forced it.
+
+### What it does *not* cost us — correcting an error made while deciding
+
+**D6 is not violated.** D6 requires `app.` and `api.` to be siblings under one parent *domain*; it
+says nothing about vendors. Vercel serves custom domains, so `app.<domain>` → Vercel and
+`api.<domain>` → Render satisfies D6 exactly as Pages would have.
+
+The third-party-cookie failure applies only while the SPA is on `*.vercel.app` and the API on
+`*.onrender.com` — a temporary state identical to the one `pages.dev` would have produced, and
+resolved by the same action: point the real domain at both.
+
+### What this actually requires
+
+| Concern | Handling |
+|---|---|
+| Monorepo | Root Directory `apps/web`; **"Include files outside the Root Directory" must be ON**, or `@shared → ../../shared` fails to resolve and the build breaks (D20) |
+| Deep links | SPA routes (`/r/:token`, `/read/:chapterId`) 404 without a catch-all rewrite to `index.html`. `apps/web/vercel.json` carries it |
+| Build isolation | Vercel builds `apps/web` on every push by default, including API-only commits. Ignored-build step scopes it, mirroring the path filters CI already uses |
+
+### Revisit if
+
+Vercel's free tier stops covering a static SPA, or the fourth dashboard proves to be the attention
+cost D23 predicted. Moving back to Pages is a re-point of one DNS record and a build-settings
+change — the SPA has no Vercel-specific code, and `vercel.json` is the only artefact to delete.
+
+---
+
+## D35 — Phase 0 deploys on free tiers, which suspends D23's no-sleep rule
+
+**Locked** 2026-08-30
+**Temporarily suspends** the "never use a tier that sleeps" clause of D23. **This is time-boxed and
+must be reversed before the first WhatsApp link is sent to anyone.**
+
+### The decision
+
+Render's free web service and free Postgres, for Phase 0 only. Cost: $0.
+
+### What D23 said, and why suspending it is safe *right now*
+
+D23's rule is a **product** decision: *tap a WhatsApp link → the chapter opens*, and a 50-second
+cold start means the product has failed silently. That reasoning is untouched and still correct.
+
+It does not bite yet because **there is no reader and no WhatsApp link.** Phase 0 deploys a health
+endpoint and an empty SPA. Nobody taps anything. The rule protects an experience that does not
+exist for another four phases.
+
+### What we accept in exchange
+
+| Free-tier limit | Consequence here |
+|---|---|
+| Web service spins down after 15 min idle, ~1 min cold start | **The D23 violation.** Tolerable only while no reader exists |
+| `preDeployCommand` is **paid-only** | Migrations move into `startCommand` (`migrate && gunicorn`). Re-runs on every restart; safe because migrations are idempotent and free tier is a single instance |
+| Postgres **expires 30 days after creation**, 14-day grace, then deleted | **Hard deadline. Created 2026-08-30 → expires ~2026-09-29.** No backups on this tier, so upgrade before then or lose the data |
+| Postgres 1 GB, one free instance per workspace, no backups | Irrelevant at Phase 0 volume |
+| Ephemeral filesystem | Harmless — PDFs live in R2 (D19) and static files are rebuilt each deploy |
+
+### The reversal condition — not optional
+
+Upgrade **both** the web service and Postgres to paid plans when *either* comes first:
+
+1. **Before the first WhatsApp link goes to a real reader** (D23's actual trigger), or
+2. **Before ~2026-09-29**, or the database is deleted after its grace period.
+
+### Rejected
+
+**Paid from day one** (~$5–7/mo, what `render.yaml` originally specified): correct on the merits and
+avoids both the migration and the deadline. Overridden by the owner for a Phase 0 with no readers.
+
+**Free web service, paid Postgres:** removes the deletion deadline but keeps the sleep, which is the
+clause that actually matters. Pays money to fix the wrong half.
