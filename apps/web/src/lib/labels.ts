@@ -54,6 +54,16 @@ export const labels = {
     error: "The pages did not load. Your link is fine.",
     retry: "Try again",
   },
+  companion: {
+    open: "Ask about this chapter",
+    close: "Close",
+    placeholder: "What would you like to ask?",
+    send: "Ask",
+    thinking: "Thinking…",
+    capped: "That is all the conversation this chapter holds.",
+    error: "That question did not go through.",
+    retry: "Try again",
+  },
   login: {
     title: "Welcome back",
     email: "Email",

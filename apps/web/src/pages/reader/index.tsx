@@ -5,6 +5,7 @@
 
 import { useMachine } from "@xstate/react";
 
+import { Companion } from "../../components/Companion";
 import { PdfChamber } from "../../components/PdfChamber";
 import { labels } from "../../lib/labels";
 import { readerMachine } from "./machine";
@@ -57,6 +58,8 @@ export function ReaderPage() {
       )}
 
       <PdfChamber token={token} />
+
+      <Companion token={token} />
 
       {state.matches({ chamber: "finished" }) ? (
         <p>{labels.reader.finished}</p>
