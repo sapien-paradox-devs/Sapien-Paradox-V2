@@ -56,6 +56,13 @@ back to. Without it these read as taste rather than as answers to specific, obse
 | D31 | Rate limits counted from rows, no Redis | [api-layer](09-api-layer.md) | locked |
 | D32 | `GET /api/read/{id}` stays a GET, made idempotent | [api-layer](09-api-layer.md) | locked |
 | D33 | Companion caps live in the service, not the endpoint | [api-layer](09-api-layer.md) | locked |
+| D34 | Vercel hosts the SPA *(amends D23)* | [infrastructure](03-infrastructure.md) | locked |
+| D35 | Phase 0 on free tiers *(suspends D23's no-sleep rule)* | [infrastructure](03-infrastructure.md) | **time-boxed → ~2026-09-29** |
+| D36 | Machines are the orchestration layer *(amends the layering table)* | [machines](10-machines.md) | locked |
+| D37 | `transitions`, and machines never import Django | [machines](10-machines.md) | locked |
+| D38 | Dispatch returns a result; refusals become status codes at the edge | [machines](10-machines.md) | locked |
+| D39 | Cadence is an event source, not a queue *(reads against D17)* | [machines](10-machines.md) | locked |
+| D40 | Outcome-branching, not exceptions | [machines](10-machines.md) | locked |
 
 ## Still open
 

@@ -8,15 +8,26 @@ Root context: `../../CLAUDE.md`. Design and decisions: `../../DESIGN.md`.
 
 | Layer | Holds | Never |
 |---|---|---|
-| `core/api/*` | HTTP only. Ninja schemas in and out. | business logic |
-| `core/services/*` | all business logic | HTTP concerns, `request` objects |
+| `core/api/*` | HTTP only. Ninja schemas in and out. Request → event, result → status. | business logic, guards |
+| `core/machines/*` | **the flow** — states, events, guards, transition tables | ORM, HTTP, network, Django imports |
+| `core/services/*` | **the effects** — all business I/O, the three seams | deciding what happens next |
 | `core/models.py` | data | orchestration |
+
+**Flow and effects are separate layers** (D36). A service does the work; a machine decides when it
+is called. `core/machines/` imports nothing from Django — `machines/binding.py` is the only
+Django-aware module in the layer, which is what keeps the logic portable and testable without a
+database (D37).
+
+Refusals travel as codes on a `TransitionResult` and become status codes in `core/api/*` (D38).
+No layer below the API knows what a 403 is.
 
 Services must be callable from the API, Django admin, management commands, and later from
 webhooks and schedulers. If a service needs `request`, it's in the wrong layer — that's what makes
 the Stripe webhook a drop-in later (D10).
 
 ## The three seams
+
+**Unchanged by D36.** Machines decide *when* a seam is called; nothing bypasses one.
 
 Signatures and reasoning: **D25, D26, D27** in `../../decisions/07-seams.md`. Summary:
 
