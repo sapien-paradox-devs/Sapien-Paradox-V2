@@ -231,3 +231,17 @@ Honest gaps, so this file doesn't describe a system that doesn't exist:
   `gunicorn config.wsgi:application` serves `/api/health`, and `collectstatic` post-processes
   cleanly through WhiteNoise — but the Render and Pages *settings* are what the decisions call
   for, not something verified against a live dashboard.
+
+## Seeing the machines
+
+The backend's flow lives in transition tables (D36). Render them as Mermaid:
+
+```bash
+python3 manage.py machine_diagram          # writes machine-diagrams/*.mmd
+python3 manage.py machine_diagram --show   # prints them instead
+```
+
+Generated from the tables themselves, so a diagram cannot drift from the code.
+Output is gitignored — regenerate it, never commit it. Paste a block into a pull
+request and GitHub renders it inline, which is the cheapest way to show what a
+rule change did.
