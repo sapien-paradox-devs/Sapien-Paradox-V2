@@ -1,0 +1,18 @@
+/* Structure only — level 3 detail is deferred by decision. */
+
+.account-block {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-bottom: var(--space-4);
+}
+
+.account-block-name {
+  font-weight: bold;
+}
+
+.account-block-email,
+.account-block-phone {
+  color: var(--muted);
+  font-size: var(--font-size-small);
+}

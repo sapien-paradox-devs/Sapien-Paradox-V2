@@ -1,0 +1,26 @@
+/* Structure only — level 3 detail (final colour, spacing) is deferred by decision. */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  transition: opacity var(--duration-fast) var(--ease-settle);
+}
+
+.button-primary {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.button-secondary {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--border);
+}
+
+.button:disabled {
+  opacity: 0.5;
+}

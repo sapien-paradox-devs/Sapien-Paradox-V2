@@ -1,0 +1,29 @@
+/* Structure only — level 3 detail is deferred by decision. */
+
+.text-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.text-field label {
+  font-size: var(--font-size-small);
+  color: var(--muted);
+}
+
+.text-field input {
+  padding: var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.text-field input[aria-invalid="true"] {
+  border-color: var(--error);
+}
+
+.text-field-error {
+  font-size: var(--font-size-small);
+  color: var(--error);
+}

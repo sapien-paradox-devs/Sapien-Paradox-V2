@@ -1,0 +1,39 @@
+/**
+ * Design tokens — CSS custom properties only, no rules.
+ *
+ * Placeholder values. Level 3 visual detail (final colour, spacing, animation)
+ * is deferred by decision; these exist so components have something consistent
+ * to reference rather than each inventing its own numbers.
+ */
+
+:root {
+  /* Colour */
+  --ink: #1a1a1a;
+  --paper: #faf8f5;
+  --muted: #6b6b6b;
+  --border: #d8d3cb;
+  --error: #a3342a;
+  --focus-ring: #2563eb;
+
+  /* Type */
+  --font-body: Georgia, "Times New Roman", serif;
+  --font-size-small: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-large: 1.25rem;
+
+  /* Space — a small scale, not a per-component guess */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2rem;
+
+  /* Shape */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+
+  /* Motion — Variable Velocity (mandate 4): fast start, slow settle. */
+  --ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 120ms;
+  --duration-settle: 320ms;
+}

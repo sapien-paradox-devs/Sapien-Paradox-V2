@@ -1,0 +1,31 @@
+/* Structure only — level 3 detail is deferred by decision. */
+
+.spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--muted);
+}
+
+.spinner-mark {
+  width: 1em;
+  height: 1em;
+  border: 2px solid var(--border);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: spin 800ms linear infinite;
+}
+
+/* The global reset already clamps animation-duration under reduced motion;
+   this keeps the mark from spinning even that one slow revolution. */
+@media (prefers-reduced-motion: reduce) {
+  .spinner-mark {
+    animation: none;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -12,6 +12,10 @@ export const labels = {
   health: {
     booting: "Opening the room…",
   },
+  account: {
+    logout: "Log out",
+    loggingOut: "Signing out…",
+  },
   home: {
     greeting: "Your library",
     empty: "Nothing has arrived yet. The first chapter is on its way.",

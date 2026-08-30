@@ -1,0 +1,27 @@
+/* Structure only — level 3 detail is deferred by decision. */
+
+.chapter-list section + section {
+  margin-top: var(--space-4);
+}
+
+.chapter-list ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.chapter-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.chapter-row-open {
+  flex: 1;
+  text-align: left;
+  padding: var(--space-2) 0;
+}
+
+.chapter-row-mark {
+  color: var(--muted);
+}
