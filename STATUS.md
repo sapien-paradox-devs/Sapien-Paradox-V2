@@ -7,8 +7,12 @@
 > This file tracks state and actions only.
 >
 > **This is not a diary.** V1's equivalent accumulated a 24-entry narrative log nobody could use.
+>
+> **Resuming after a break?** `docs/HANDOFF-2026-08-30.md` is the narrative of the machine-layer
+> session — the PR stack and its merge order, the XState traps, and what was proven about Razorpay
+> and Twilio. Read it once; work from here afterwards.
 
-**Last updated:** 2026-08-25
+**Last updated:** 2026-08-30
 
 ---
 
@@ -33,8 +37,15 @@ published package on two ecosystems to sync nine values.
 | CI | two path-filtered workflows, **no credentials** — proves a fresh clone runs |
 | Deploy commands | `gunicorn config.wsgi:application` and `collectstatic` verified locally |
 
-**All eight tables exist** with admin screens and 21 tests, on PR #14 awaiting merge. `User` shipped
-in the bootstrap because `AUTH_USER_MODEL` must exist in migration `0001`.
+**All eight tables exist** with admin screens and 21 tests, merged as #14. `User` shipped in the
+bootstrap because `AUTH_USER_MODEL` must exist in migration `0001`.
+
+**The machine layer is built and unmerged** — 12 stacked PRs, #33–#37 (backend) and #38–#44
+(frontend). Backend 75 tests, frontend 56 plus a test runner the app did not have. Merge order is in
+the handoff; merging out of order conflicts.
+
+**It is scaffolding, not the application.** The machines call the three seams through injected
+callables and are tested against fakes. `core/services/` still does not exist.
 
 **R2 is live and proven** — private bucket, public URL disabled, a real PDF read server-side and
 parsed with pypdf. `render.yaml` provisions the API and Postgres but nothing is deployed yet.
@@ -68,6 +79,8 @@ The backlog is open: 12 slice issues plus the PRD. #2 (skeleton) closed, #5 (tab
 | Infrastructure, vendors, external systems | D5, D6, D16, D17, D20, D22, D23 |
 | Frontend architecture + root machine | D15 · spec in `apps/web/CLAUDE.md` |
 | Backend layering, structure, data model (8 tables) | D4, D18–D21 · spec in `apps/api/CLAUDE.md` |
+| **The machine layer** — flow in transition tables, effects in services | **D36–D40** · `decisions/10-machines.md` |
+| **The four page machines and how they fail** | **D41–D45** · `decisions/05-frontend.md` |
 
 ## Design — NOT started
 
@@ -89,7 +102,11 @@ The backlog is open: 12 slice issues plus the PRD. #2 (skeleton) closed, #5 (tab
 - [ ] **Finalise the four WhatsApp template copies** — chapter delivery, fresh link, unread
       reminder, password reset
 - [ ] **Twilio account** → WhatsApp sender application → **submit all four templates**
-- [x] ~~Decide the payment provider~~ — **Razorpay (D28)**
+      *(a trial account and the sandbox are already proven: a real message reached a handset,
+      status `delivered`. Templates are still mandatory — every cadence message is
+      business-initiated and therefore always outside the 24-hour window.)*
+- [x] ~~Decide the payment provider~~ — **Razorpay (D28)**, and **proven**: a real ₹10 test
+      payment completed (`plink_TVf5nhHQomnoOh`). Test mode is domestic-only
 - [ ] **Start Razorpay KYC** — days to weeks, and independent of Meta's clock
 
 **Nothing here has started.** Meta approval is days-to-weeks of waiting and gates the demo.
@@ -106,7 +123,8 @@ The backlog is open: 12 slice issues plus the PRD. #2 (skeleton) closed, #5 (tab
       XState, `labels.ts`, `shared/constants.json`, path-filtered CI
 - [ ] **Phase 0 remainder** — **both sides actually deployed** (D5 says deploy before there's much
       to deploy; this is now the oldest unpaid debt)
-- [ ] **Phase 1** — auth endpoints, `/login` + machine, boot rehydration, cross-subdomain cookie
+- [ ] **Phase 1** — auth endpoints, boot rehydration, cross-subdomain cookie. *(`/login` and its
+      machine are built, on PR #40 — waiting on a backend to call.)*
 - [ ] **Phase 2** — remaining 7 models, the three seams, `GET /api/home`, `/read/:chapterId`,
       Home screen, Django admin onboarding, `seed_dev`
 - [ ] **Phase 3** — grant + PDF endpoints, `/r/:token`, sanctuary, 7-day expiry
@@ -117,6 +135,11 @@ The backlog is open: 12 slice issues plus the PRD. #2 (skeleton) closed, #5 (tab
 Tracks A and B run concurrently. Phases 3 and 4 run in parallel after Phase 2.
 
 ## Housekeeping
+
+- [ ] **Merge or re-cut the 12 stacked PRs.** Nothing above the base of each stack can land until
+      its base does — see the handoff for the order
+- [ ] **Write the three seams** (D25–D27). Locked, and written nowhere. Every machine waits on them
+- [ ] Commit `docs/ARTIFACTS.md` to `main` — currently untracked
 
 - [ ] **Open the issue backlog** — nothing code-shaped can start without it
 - [ ] **Delete `ALL_DOCUMENTATION.md` and `UNIFIED_SPEC.md`** — 3,400 lines of concatenated copies
@@ -144,6 +167,7 @@ Tracks A and B run concurrently. Phases 3 and 4 run in parallel after Phase 2.
 | 10 | CSRF policy (G2) | Phase 1 | enforce on session endpoints, exempt grant-authenticated |
 | 11 | Where chat caps live (G6) | Phase 5 | `services/companion.py` |
 | 12 | Is `GET /api/read/{id}` honest as a GET? (G5) | Phase 2 | keep GET, make it idempotent |
+| 13 | **Two departures made while building** — expiry derived rather than stored (#20), and no `react-pdf` (#31) | reviewing #34 and #43 | keep both; each is argued in its PR |
 
 **#7 and #8 are coupled:** a public `/` with a signup path is a coherent product; a gated `/` with
 signup isn't.
@@ -158,12 +182,12 @@ default.
 | # | Service | For | Cost | Lead time | Status |
 |---|---|---|---|---|---|
 | 1 | **Cloudflare** | registrar · DNS · Pages · R2 | free / ~$10yr | hours | **R2 done** · domain not started |
-| 2 | **Twilio** | WhatsApp delivery, recovery, password reset | per message | minutes | not started |
+| 2 | **Twilio** | WhatsApp delivery, recovery, password reset | per message | minutes | **sandbox proven** · WABA not started |
 | 3 | **Meta Business** *(via Twilio)* | business verification + 4 template approvals | — | **days–weeks** | not started |
 | 4 | **Render** | Django + managed Postgres | **~$5–7/mo** | minutes | not started |
 | 5 | **Anthropic** | the companion (Sonnet 5) | per token | minutes | not started |
 | 6 | GitHub | source, CI | free | — | **live** |
-| 7 | **Razorpay** | payments — later (D28) | ~2% domestic | **days–weeks KYC** | not started |
+| 7 | **Razorpay** | payments — later (D28) | ~2% domestic | **days–weeks KYC** | **test keys proven** · KYC not started |
 
 **Deliberately not integrating:** email provider (D16 — WhatsApp is the only outbound channel) ·
 log vendor (D22 — stdout to host viewer) · Redis/queue (D17 — bounded in-request retry) ·
