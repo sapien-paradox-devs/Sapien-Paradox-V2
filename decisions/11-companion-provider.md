@@ -60,6 +60,88 @@ That makes the case for Anthropic in production slightly stronger than D24 argue
 a free tier in testing correspondingly weaker. Recorded because the decision was taken with the
 older number in view.
 
+---
+
+## The provider config file
+
+**Which vendor is live is a config-file setting, not a code change and not primarily an env var.**
+
+This amends D24's rule 2 — "provider and model come from env, never hardcoded". Env was the right
+instinct (never hardcoded) but the wrong home: a provider choice is *configuration a person edits
+deliberately*, like the message templates and the companion prompt. It belongs beside them.
+
+```
+core/content/providers.py     ← the config file. One line selects the vendor.
+core/content/templates.py     ← WhatsApp copy (D12)
+core/content/companion_prompt.md ← the system prompt (D14)
+```
+
+`content/` is already defined as "editable copy, no logic". A provider table fits that exactly: it
+is a set of values a person changes on purpose, reviewed in a diff, with the reasoning in version
+control.
+
+### Shape
+
+```python
+ACTIVE = "gemini"          # ← the only line you change to swap vendors
+
+PROVIDERS = {
+    "anthropic": Provider(
+        model                 = "claude-sonnet-5",
+        api_key_env           = "ANTHROPIC_API_KEY",
+        caching               = "explicit_breakpoints",
+        cache_ttl             = "1h",      # NOT the 5-minute default (D24)
+        min_cacheable_tokens  = 1024,
+    ),
+    "gemini": Provider(
+        model                 = "<set at build time; verify against current docs>",
+        api_key_env           = "GEMINI_API_KEY",
+        caching               = "separate_context_api",
+        cache_ttl             = None,
+        min_cacheable_tokens  = None,      # verify — Gemini's floor differs
+    ),
+}
+```
+
+### Three rules that keep this from becoming an abstraction layer
+
+D24 rejected a generic provider interface because there is **one call site**, and an abstraction
+over one call site is a plugin architecture for a single plugin. That objection still stands, and
+this design does not violate it:
+
+1. **The config file holds values, never behaviour.** No conditionals, no classes with methods, no
+   strategy objects. A dict of settings and a name.
+2. **Each vendor is one function body** in `services/companion.py` — `_ask_anthropic(...)` and
+   `_ask_gemini(...)` — selected by name. Not a base class, not a registry of plugins.
+3. **The boundary type does not change.** `discuss(chapter_text, history, question) -> Answer`
+   takes and returns our own types whichever provider is live. No vendor object crosses it.
+
+If a third vendor ever needs a fourth concept the others do not have, that is the signal to
+reconsider — not before.
+
+### Precedence, and where the keys live
+
+```
+COMPANION_PROVIDER env var   →  wins if set
+providers.ACTIVE             →  otherwise
+```
+
+The env override exists so a deployed environment can differ from the checked-in default without a
+commit — production on Anthropic while the file says Gemini, for instance. **The file is the
+default and the documented answer; env is the deployment escape hatch.**
+
+**API keys never go in the config file.** It is version-controlled; keys are read from the
+environment variable each provider entry *names*. The file says which env var to read, never what
+is in it.
+
+### What this buys
+
+Swapping vendors is a one-line diff with a reviewer, a date, and a reason attached — rather than an
+env var someone changed on a dashboard six weeks ago that nobody can now explain. Given that D46
+already expects this to be swapped back before production, the swap itself should leave a trail.
+
+---
+
 ### Revisit when
 
 The companion's interaction design and prompt are settled (D14 defers both to their own session) and
