@@ -357,16 +357,25 @@ exist for another four phases.
 |---|---|
 | Web service spins down after 15 min idle, ~1 min cold start | **The D23 violation.** Tolerable only while no reader exists |
 | `preDeployCommand` is **paid-only** | Migrations move into `startCommand` (`migrate && gunicorn`). Re-runs on every restart; safe because migrations are idempotent and free tier is a single instance |
-| Postgres **expires 30 days after creation**, 14-day grace, then deleted | **Hard deadline. Created 2026-08-30 → expires ~2026-09-29.** No backups on this tier, so upgrade before then or lose the data |
+| Postgres **expires 30 days after creation**, 14-day grace, then deleted | **Hard deadline. Created 2026-09-18 → expires ~2026-10-18.** No backups on this tier, so upgrade before then or lose the data |
 | Postgres 1 GB, one free instance per workspace, no backups | Irrelevant at Phase 0 volume |
 | Ephemeral filesystem | Harmless — PDFs live in R2 (D19) and static files are rebuilt each deploy |
+
+### Amended 2026-09-18 — the premise weakened before the deploy happened
+
+This decision was written when nothing was built. By the time the deploy actually ran, the seams,
+WhatsApp delivery, the message templates and the reading chamber were all written, and real
+messages had been sent to a real handset from the prototype bench. **Re-confirmed as free anyway**,
+because `main` still carries only the machine framework and the tables: the deployed surface is a
+health endpoint and an empty SPA, so nothing a reader touches can cold-start. The reversal
+condition below is now the operative part of this decision, not a footnote.
 
 ### The reversal condition — not optional
 
 Upgrade **both** the web service and Postgres to paid plans when *either* comes first:
 
 1. **Before the first WhatsApp link goes to a real reader** (D23's actual trigger), or
-2. **Before ~2026-09-29**, or the database is deleted after its grace period.
+2. **Before ~2026-10-18**, or the database is deleted after its grace period.
 
 ### Rejected
 

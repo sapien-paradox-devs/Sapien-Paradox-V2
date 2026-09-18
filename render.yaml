@@ -7,11 +7,17 @@
 # together — a web service and database in different regions lose the private
 # network and fall back to a slower, publicly-reachable connection.
 
+# PHASE 0 IS ON FREE TIERS (D35) — time-boxed, and the clock is real.
+# Free Postgres EXPIRES 30 DAYS AFTER CREATION, then has a 14-day grace period
+# before deletion. There are no backups on this tier. Upgrade both plans below
+# before ~2026-10-18, or before the first WhatsApp link reaches a real reader,
+# whichever comes first. That reversal is a condition of D35, not a nice-to-have.
+
 databases:
   - name: sapien-db
     databaseName: sapien
     user: sapien
-    plan: basic-256mb
+    plan: free                # D35 — was basic-256mb. Expires; see the note above.
     region: singapore
 
 services:
@@ -21,14 +27,20 @@ services:
     rootDir: apps/api
     region: singapore
 
-    # NEVER a plan that sleeps (D23). A cold start means a reader taps a WhatsApp
-    # link and stares at a blank screen for the better part of a minute. This is a
-    # product decision, not a cost one.
-    plan: starter
+    # D23 says NEVER a plan that sleeps: a cold start means a reader taps a WhatsApp
+    # link and stares at a blank screen for the better part of a minute — a product
+    # decision, not a cost one. D35 suspends that rule for Phase 0 ONLY, because there
+    # is no reader and no WhatsApp link yet. Restore `starter` before there is.
+    plan: free                # D35 — sleeps after 15 min idle, ~1 min cold start.
 
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --no-input
-    preDeployCommand: python manage.py migrate --no-input
-    startCommand: gunicorn config.wsgi:application --workers 2 --threads 4 --timeout 120
+
+    # Migrations run in the start command, NOT preDeployCommand, because pre-deploy
+    # commands are a paid-instance feature and this is a free instance (D35). The
+    # trade: this re-runs on every restart, including every wake from sleep. That is
+    # safe — migrations are idempotent, and free tier is a single instance so two
+    # cannot race. Move this back into preDeployCommand when the plan goes paid.
+    startCommand: python manage.py migrate --no-input && gunicorn config.wsgi:application --workers 2 --threads 4 --timeout 120
 
     healthCheckPath: /api/health
 
@@ -52,19 +64,26 @@ services:
         value: "false"        # private network inside one region; no SSL needed
 
       # ── set these once the domain exists ───────────────────────────────
-      # Until then the API answers on <service>.onrender.com and the health
-      # check works. Sessions across two subdomains need the real domain, so
-      # COOKIE_DOMAIN stays empty until DNS is pointed.
+      # LEAVE EVERY ONE OF THESE BLANK AT BLUEPRINT CREATION. The service comes
+      # up healthy without them, and they are filled in afterwards.
+      #
+      # DJANGO_ALLOWED_HOSTS is safe to leave empty because settings.py reads
+      # Render's automatic RENDER_EXTERNAL_HOSTNAME — the service's own
+      # onrender.com address is always allowed, so the first deploy's health
+      # check passes with no intervention. Set this only to ADD api.<domain>.
+      #
+      # COOKIE_DOMAIN must STAY empty until DNS is pointed: on *.onrender.com
+      # there is no shared parent domain to scope a session cookie to (D6).
       - key: DJANGO_ALLOWED_HOSTS
-        sync: false           # api.<domain>,sapien-api.onrender.com
+        sync: false           # optional — add api.<domain> once DNS exists
       - key: CORS_ALLOWED_ORIGINS
-        sync: false           # https://app.<domain>
+        sync: false           # the SPA origin — https://<project>.vercel.app, later https://app.<domain>
       - key: CSRF_TRUSTED_ORIGINS
-        sync: false           # https://app.<domain>
+        sync: false           # same as CORS_ALLOWED_ORIGINS
       - key: COOKIE_DOMAIN
-        sync: false           # .<domain>  — leading dot matters
+        sync: false           # .<domain>  — leading dot matters. Empty until then.
       - key: APP_BASE_URL
-        sync: false           # https://app.<domain>
+        sync: false           # the SPA URL; WhatsApp links are built from it
 
       # ── secrets, typed once into the dashboard ─────────────────────────
       # Cloudflare R2. THE BUCKET MUST STAY PRIVATE (D19) — nothing here
