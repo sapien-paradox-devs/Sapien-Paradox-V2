@@ -138,6 +138,27 @@ session cookie scoped to `.<domain>`. Unrelated vendor domains would make the se
 third-party cookie, which Safari and most blockers drop — login would silently fail on some
 devices and work fine on yours.
 
+### Live as of 2026-09-17
+
+| | |
+|---|---|
+| API | **https://sapien-api.onrender.com** — `srv-dam7kdh42hec738jl5tg` |
+| Database | `sapien-db` — `dpg-dam55mvqj5pc73bskqng-a`, free, Singapore, **expires 2026-10-17** |
+| Health | `{"status":"ok","database":"ok"}` |
+| Tables | all eight present, migrations `0001` and `0002` applied |
+
+**The service was created through the Render REST API, not the Blueprint**, because neither the
+API nor the MCP can apply a `render.yaml`. The payload was generated *from* `render.yaml` so the
+file stays the source of truth — but the two can now drift, and nothing enforces agreement. Re-check
+the file against the dashboard before trusting it.
+
+**External Postgres access is closed** (`ipAllowList: []`, Render's default). Verifying the schema
+means temporarily adding an IP, querying, and removing it again.
+
+**Confirmed: the free instance spins down.** The log shows `Handling signal: term` roughly fifteen
+minutes after the last real request. Render's own health checks do not keep it awake. This is
+exactly what D23 forbids and D35 accepted for Phase 0.
+
 ### API and database — Render, from `render.yaml`
 
 **Render → New → Blueprint → select this repository.** `render.yaml` at the repo root provisions
