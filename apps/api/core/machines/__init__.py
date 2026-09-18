@@ -138,13 +138,21 @@ def dispatch(
     )
     _attach(spec, subject, state_attr)
 
+    before = getattr(subject, state_attr)
     fired = subject.trigger(event, ctx=ctx)
-    state = getattr(subject, state_attr)
 
-    # A refusal row *does* fire — it stays in the same state and records why.
+    # A refusal row *does* fire — it records why and, being an internal
+    # transition, leaves the state alone. An action that moves the state and
+    # *then* refuses is rolled back here, so the object never claims a state
+    # that was never persisted (D40).
     ok = bool(fired) and ctx.refusal is None
-    if ok and persist is not None:
-        persist(subject)
+    if ok:
+        if persist is not None:
+            persist(subject)
+    else:
+        setattr(subject, state_attr, before)
 
     refusal = ctx.refusal if ctx.refusal else (None if fired else "no_transition")
-    return TransitionResult(ok=ok, state=state, refusal=refusal, data=ctx.data)
+    return TransitionResult(
+        ok=ok, state=getattr(subject, state_attr), refusal=refusal, data=ctx.data
+    )
