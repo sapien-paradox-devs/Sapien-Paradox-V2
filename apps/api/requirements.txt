@@ -12,6 +12,10 @@ whitenoise>=6.7
 # streaming (D23) — not by Django.
 gunicorn>=23.0
 
+# The flow lives in declarative transition tables (D36). Chosen for model=
+# binding, which attaches to any plain object, and for diagram generation (D37).
+transitions>=0.9
+
 python-dotenv>=1.0
 shortuuid>=1.0
 pypdf>=5.0
