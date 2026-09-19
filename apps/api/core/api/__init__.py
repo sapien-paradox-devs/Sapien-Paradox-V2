@@ -10,6 +10,7 @@ from ninja import NinjaAPI
 from .auth import router as auth_router
 from .grants import router as grants_router
 from .home import router as home_router
+from .read import router as read_router
 from .health import router as health_router
 
 api = NinjaAPI(
@@ -23,3 +24,4 @@ api.add_router("", health_router, tags=["health"])
 api.add_router("", grants_router, tags=["grants"])
 api.add_router("", auth_router, tags=["auth"])
 api.add_router("", home_router, tags=["home"])
+api.add_router("", read_router, tags=["read"])
