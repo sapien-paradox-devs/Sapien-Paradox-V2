@@ -9,7 +9,7 @@ Stripe webhook a drop-in later rather than a second implementation. Actions arri
 their own issues — this file registers models and nothing more.
 """
 
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
 from core.models import (
@@ -98,6 +98,45 @@ class OrderAdmin(admin.ModelAdmin):
 
 @admin.register(TemporalGrant)
 class TemporalGrantAdmin(admin.ModelAdmin):
+    actions = ["resend_chapter"]
+
+    @admin.action(description="Send this chapter's link again, over WhatsApp")
+    def resend_chapter(self, request, queryset):
+        """The concierge's main repair. A mistyped number, a failed send, a
+        reader who lost the message -- all end here.
+
+        Goes through the seams (D27): mint_or_reuse, then send_chapter. It does
+        NOT reuse the selected grant's token blindly, because a selected grant
+        may be expired and reviving it would undo the point of expiry (D21).
+        """
+        sent = failed = refused = 0
+
+        for grant in queryset.select_related("user", "chapter__book"):
+            if not access.can_read(grant.user, grant.chapter):
+                refused += 1
+                continue
+
+            fresh = grants.mint_or_reuse(grant.user, grant.chapter)
+            log = whatsapp.send_chapter(fresh)
+
+            if log.status == "sent":
+                sent += 1
+            else:
+                failed += 1
+                # Named, because the person who can fix a bad number is the
+                # person looking at this screen right now (D26).
+                self.message_user(
+                    request,
+                    f"{grant.user.email}: {log.error or log.status}",
+                    level=messages.ERROR,
+                )
+
+        self.message_user(
+            request,
+            f"sent {sent}· failed {failed}· refused {refused}",
+            level=messages.SUCCESS if failed == 0 and refused == 0 else messages.WARNING,
+        )
+
     """The token column is deliberately absent from every display.
 
     A token is a credential, and admin pages get screenshotted and shared. D22 says never
