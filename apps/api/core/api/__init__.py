@@ -7,6 +7,7 @@ wrong layer.
 
 from ninja import NinjaAPI
 
+from .grants import router as grants_router
 from .health import router as health_router
 
 api = NinjaAPI(
@@ -17,3 +18,4 @@ api = NinjaAPI(
 )
 
 api.add_router("", health_router, tags=["health"])
+api.add_router("", grants_router, tags=["grants"])

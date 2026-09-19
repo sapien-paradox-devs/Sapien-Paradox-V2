@@ -59,3 +59,18 @@ def reissue(grant: TemporalGrant) -> TemporalGrant:
 
 def first_chapter_of(book):
     return book.chapters.order_by("order_index").first()
+
+
+def find(token: str) -> TemporalGrant | None:
+    """The grant for this token, live or not — or None if no such token.
+
+    `validate` collapses "expired" into None, which is right for callers that
+    only want a usable grant. The API layer needs the distinction: an expired
+    link gets sanctuary and a button (D9); an unknown one gets nothing. So the
+    endpoint resolves with this and lets the reading machine judge expiry.
+    """
+    return (
+        TemporalGrant.objects.select_related("user", "chapter__book")
+        .filter(token=token)
+        .first()
+    )
