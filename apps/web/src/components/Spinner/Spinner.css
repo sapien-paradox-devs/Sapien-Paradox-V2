@@ -1,0 +1,21 @@
+.ui-spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--ink-faint);
+  font-size: 0.92rem;
+}
+
+.ui-spinner-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: ui-breathe 1.8s var(--ease-settle) infinite;
+}
+
+/* Variable Velocity (mandate 5): fast out, slow settle. */
+@keyframes ui-breathe {
+  0%, 100% { opacity: 0.25; transform: scale(0.8); }
+  35%      { opacity: 1;    transform: scale(1); }
+}

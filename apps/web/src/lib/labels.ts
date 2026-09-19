@@ -55,6 +55,7 @@ export const labels = {
     retry: "Try again",
     chapter: "Chapter",
     read: "Read",
+    logout: "Sign out",
     send: "Send to WhatsApp",
     sending: "Sending…",
     sent: "Sent — check WhatsApp.",

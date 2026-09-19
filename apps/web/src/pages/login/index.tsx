@@ -6,6 +6,9 @@
 import { useMachine } from "@xstate/react";
 import { useEffect, useState } from "react";
 
+import { Button } from "../../components/Button";
+import { ErrorNotice } from "../../components/ErrorNotice";
+import { TextField } from "../../components/TextField";
 import { labels } from "../../lib/labels";
 import { useNavigation } from "../useNavigation";
 import { loginMachine } from "./machine";
@@ -26,45 +29,51 @@ export function LoginPage() {
   const submitting = state.matches("submitting");
 
   return (
-    <main className="login">
-      <h1>{labels.login.title}</h1>
+    <main className="shell">
+      <div className="login">
+        <p className="login-mark">{labels.app.name}</p>
+        <h1>{labels.login.title}</h1>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          send({ type: "SUBMIT", email, password });
-        }}
-      >
-        <label htmlFor="email">{labels.login.email}</label>
-        <input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            send({ type: "EDIT" });
+        <form
+          className="login-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            send({ type: "SUBMIT", email, password });
           }}
-        />
+        >
+          <TextField
+            label={labels.login.email}
+            id="email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              send({ type: "EDIT" });
+            }}
+          />
 
-        <label htmlFor="password">{labels.login.password}</label>
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => {
-            setPassword(e.target.value);
-            send({ type: "EDIT" });
-          }}
-        />
+          <TextField
+            label={labels.login.password}
+            id="password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              send({ type: "EDIT" });
+            }}
+          />
 
-        {state.context.errorMessage && (
-          <p role="alert">{state.context.errorMessage}</p>
-        )}
+          {state.context.errorMessage && (
+            <ErrorNotice>{state.context.errorMessage}</ErrorNotice>
+          )}
 
-        <button type="submit" disabled={submitting}>
-          {submitting ? labels.login.submitting : labels.login.submit}
-        </button>
-      </form>
+          <Button type="submit" disabled={submitting}>
+            {submitting ? labels.login.submitting : labels.login.submit}
+          </Button>
+        </form>
+      </div>
     </main>
   );
 }

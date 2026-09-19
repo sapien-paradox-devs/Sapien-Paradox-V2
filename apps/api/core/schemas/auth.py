@@ -21,3 +21,12 @@ class UserOut(Schema):
     fullName: str
     email: str
     phone: str
+
+
+class ResetRequestIn(Schema):
+    phone: str
+
+
+class ResetConfirmIn(Schema):
+    token: str
+    password: str
