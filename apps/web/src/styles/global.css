@@ -164,6 +164,25 @@ input, select {
 .btn-quiet:hover:not(:disabled) { border-color: var(--ink-faint); color: var(--ink); }
 .btn-quiet:disabled { opacity: 0.5; cursor: default; }
 
+/*
+ * A button that reads as a link. Navigation goes through `navigate()` rather
+ * than an <a href> (D15 — one path through pushUrl), so the element has to be a
+ * button while sitting inside a sentence.
+ */
+.linklike {
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  cursor: pointer;
+  transition: color 0.18s var(--ease-settle);
+}
+
+.linklike:hover { color: var(--accent-hover); }
+
 .notice {
   padding: var(--space-3) var(--space-4);
   border-left: 2px solid var(--danger);
