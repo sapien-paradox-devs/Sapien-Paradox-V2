@@ -195,13 +195,36 @@ _cookie_domain = os.getenv("COOKIE_DOMAIN", "")     # e.g. ".sapienparadox.com"
 SESSION_COOKIE_DOMAIN = _cookie_domain or None
 CSRF_COOKIE_DOMAIN = _cookie_domain or None
 
-SESSION_COOKIE_SAMESITE = "Lax"
-CSRF_COOKIE_SAMESITE = "Lax"
+# TEMPORARY (#92). "Lax" is correct once the SPA and API are siblings under one
+# parent domain, which is D6's actual answer. Until then they are unrelated hosts
+# -- vercel.app and onrender.com -- so the session cookie is third-party and the
+# browser refuses to send it cross-site: login succeeds and every call after it
+# is anonymous.
+#
+# "None" makes it cross-site-capable. It requires Secure, which is already on
+# whenever DEBUG is off. The ambient-authority risk this widens is the one CSRF
+# defends against, and CSRF stays enforced on every session endpoint (D30).
+#
+# **Set this back to Lax when the real domain is pointed** and COOKIE_DOMAIN is
+# set -- at that point the cookie is first-party and None would be a needless
+# relaxation.
+SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE", "Lax")
+CSRF_COOKIE_SAMESITE = os.getenv("CSRF_COOKIE_SAMESITE", "Lax")
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = False                        # the SPA reads it to send X-CSRFToken
 
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
+
+# Browsers silently REJECT a SameSite=None cookie that is not also Secure, so the
+# combination below fails by doing nothing at all -- login appears to work and
+# every later request is anonymous, which is the exact symptom #92 was opened for.
+# Fail loudly at startup instead.
+if SESSION_COOKIE_SAMESITE == "None" and not SESSION_COOKIE_SECURE:
+    raise RuntimeError(
+        "SESSION_COOKIE_SAMESITE=None requires SESSION_COOKIE_SECURE, which is off "
+        "because DJANGO_DEBUG is on. Browsers drop the cookie without it."
+    )
 
 if not DEBUG:
     SECURE_SSL_REDIRECT = env_bool("SECURE_SSL_REDIRECT", True)
