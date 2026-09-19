@@ -114,3 +114,59 @@ as D26. Only the gateway-facing half is Razorpay-specific.
   rather than arriving as a side effect.
 - One-time purchase versus subscription.
 - GST and invoicing obligations for an Indian business.
+
+---
+
+## D47 — Public signup, and payments lead onboarding
+
+**Locked** 2026-09-19 · **reverses D10's "no public signup"** · **advances D28's sequencing**
+
+A visitor can buy a book from a public page, and paying is what creates them as a reader:
+
+```
+landing  →  signup  →  Razorpay  →  create_reader  →  WhatsApp link  →  chamber
+```
+
+### What this reverses
+
+**D10** said readers are created by concierge onboarding, and that no public signup exists
+*"until payments land"*. That precondition has now expired — this is payments landing. Concierge
+onboarding **remains**, because the admin path is still how a reader is created by hand, and
+`create_reader` is still the only door. What changes is that it gains a second caller.
+
+**D28** sequenced payments later and named `onboarding.create_reader(...)` as the seam a webhook
+would eventually call. The seam was built and tested in #86; this is the caller arriving. Nothing
+about the seam changes — same four identity-collision cases, same transaction boundary, same
+delivery outside it. **This is the seam paying for itself**, exactly as D28 predicted: payments
+arrive as a new *caller*, not a new flow.
+
+### Why now rather than later
+
+The prototype bench proved every leg against live test APIs — a real Payment Link, a real signed
+webhook, a real WhatsApp delivery to a real handset. Leaving that proven and unused while the
+product has no way for anyone to buy anything was the larger cost.
+
+### What it does not change
+
+**Nothing about access.** `can_read` still asks whether an `Order` exists. A paid reader and a
+concierge-created one are indistinguishable downstream, which is the point.
+
+**Nothing about the password.** A paying reader still has no usable password (D26). Checkout
+completing is not an account; the set-a-password link over WhatsApp is what makes it one. Crucially
+this means **no password is collected at checkout**, so nothing needs to carry a credential through
+Razorpay's `notes` — a practice D28 already flagged as wrong when it inherited it from V1.
+
+### Rejected
+
+**Keeping signup private and taking payment out of band** (an invoice, a transfer, then concierge
+creation). Honest, and it defers this decision. Rejected because it makes every sale manual work,
+which is the opposite of what payments are for.
+
+**A signup page that creates the reader and charges afterwards.** Rejected: an unpaid `Order` is
+an entitlement, and `can_read` would start needing to ask about payment status — which is precisely
+the complexity the seam exists to keep out of it.
+
+### Revisit if
+
+Readers turn out to arrive overwhelmingly through concierge onboarding anyway, in which case the
+public page is maintained for nobody.
