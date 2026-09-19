@@ -36,6 +36,8 @@ export const labels = {
     error: "We could not load what is available.",
     retry: "Try again",
     nothingForSale: "Nothing is on sale just yet.",
+    haveAccount: "Already reading with us?",
+    signIn: "Sign in",
   },
   welcome: {
     headline: "Thank you.",
