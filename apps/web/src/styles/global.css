@@ -1,11 +1,53 @@
-/* Vanilla CSS, no framework. Tokens here; component styles live beside their component. */
+/* Vanilla CSS, no framework. Tokens here; component styles live beside their component.
+ *
+ * The direction is the product's own: depth over velocity, digital monasticism.
+ * Warm paper rather than a screen, a serif for anything you read, and one
+ * restrained accent. Nothing glows. A reader spends an hour here.
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap");
 
 :root {
-  --ink: #1a1a1a;
-  --paper: #faf8f5;
-  --muted: #6b6b6b;
+  /* Ink — warm, never pure black. Pure black on paper reads as a screenshot. */
+  --ink: #1f1b16;
+  --ink-soft: #5d554a;
+  --ink-faint: #8f8679;
 
-  --font-body: Georgia, "Times New Roman", serif;
+  /* Ground */
+  --paper: #faf7f2;
+  --paper-raised: #fffdfa;
+  --paper-sunk: #f2ede4;
+
+  --rule: #e4ddd1;
+  --rule-soft: #eee9e0;
+
+  /* One accent: burnt sienna. Warm enough to belong on paper, dark enough
+     to carry white text without shouting. */
+  --accent: #9c4f24;
+  --accent-hover: #83411d;
+  --accent-wash: #f6ece4;
+
+  --danger: #8e2f2a;
+  --good: #3f6b47;
+
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-read: Georgia, "Times New Roman", serif;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  --radius: 6px;
+  --radius-lg: 12px;
+
+  --shadow-card: 0 1px 2px rgba(31, 27, 22, 0.04), 0 8px 24px -12px rgba(31, 27, 22, 0.12);
+  --shadow-lift: 0 2px 4px rgba(31, 27, 22, 0.06), 0 16px 40px -16px rgba(31, 27, 22, 0.18);
 
   /* Variable Velocity (mandate 5) — fast start, slow settle. */
   --ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
@@ -22,11 +64,115 @@ body {
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  margin: 0;
+  text-wrap: balance;
+}
+
+p { margin: 0; }
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border: 0;
+  background: none;
+  color: inherit;
+}
+
+input, select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
 }
 
 .shell {
   display: grid;
   place-items: center;
   min-height: 100vh;
+  padding: var(--space-8) var(--space-4);
+}
+
+/* ── shared primitives, until #76 extracts them properly ───────────── */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.field > label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.field > input,
+.field > select {
+  padding: 0.7rem 0.85rem;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  transition: border-color 0.18s var(--ease-settle);
+}
+
+.field > input:focus,
+.field > select:focus {
+  border-color: var(--accent);
+}
+
+.btn {
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: background 0.18s var(--ease-settle), transform 0.18s var(--ease-settle);
+}
+
+.btn:hover:not(:disabled) { background: var(--accent-hover); }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:disabled { opacity: 0.55; cursor: default; }
+
+.btn-quiet {
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  transition: border-color 0.18s var(--ease-settle), color 0.18s var(--ease-settle);
+}
+
+.btn-quiet:hover:not(:disabled) { border-color: var(--ink-faint); color: var(--ink); }
+.btn-quiet:disabled { opacity: 0.5; cursor: default; }
+
+.notice {
+  padding: var(--space-3) var(--space-4);
+  border-left: 2px solid var(--danger);
+  background: var(--paper-sunk);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
 }

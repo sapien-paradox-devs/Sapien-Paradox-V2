@@ -30,6 +30,7 @@ export const navigationConfig = {
       { guard: "isReaderPath", target: ".page.reader" },
       { guard: "isLoginPath", target: ".page.login" },
       { guard: "isOpeningPath", target: ".page.opening" },
+      { guard: "isWelcomePath", target: ".page.welcome" },
       { target: ".page.home" },
     ],
 
@@ -95,6 +96,7 @@ export const navigationConfig = {
         login: {},
         opening: {},
         reader: {},
+        welcome: {},
       },
     },
   },

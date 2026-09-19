@@ -12,6 +12,42 @@ export const labels = {
   health: {
     booting: "Opening the room…",
   },
+  landing: {
+    headline: "A book, one chapter at a time.",
+    subhead:
+      "Chapters arrive on WhatsApp as they unlock. You read them here, and talk them " +
+      "through with a companion that has read the same pages.",
+    how: [
+      "Choose a book and how quickly you want it.",
+      "Each chapter arrives on WhatsApp when it unlocks.",
+      "Tap the link and read — no app, no password.",
+    ],
+    chapters: "chapters",
+    name: "Your name",
+    email: "Email",
+    phone: "WhatsApp number",
+    phoneHint: "Chapters are delivered here, so it must be the number you use.",
+    pace: "How quickly",
+    buy: "Begin reading —",
+    sending: "Opening checkout…",
+    refused: "That did not go through. Nothing was charged — try again.",
+    fineprint: "You will be taken to Razorpay to pay. We never see your card.",
+    loading: "Opening…",
+    error: "We could not load what is available.",
+    retry: "Try again",
+    nothingForSale: "Nothing is on sale just yet.",
+  },
+  welcome: {
+    headline: "Thank you.",
+    body: "Your first chapter is on its way to your WhatsApp.",
+    password: "It arrives with a link to set your password, so you can come back here any time.",
+    login: "Go to sign in",
+  },
+  pace: {
+    slow: "Slowly — a chapter a week",
+    medium: "Steadily — every three days",
+    fast: "Quickly — one a day",
+  },
   home: {
     greeting: "Your library",
     empty: "Nothing has arrived yet. The first chapter is on its way.",
