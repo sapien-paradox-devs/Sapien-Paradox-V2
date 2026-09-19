@@ -23,3 +23,6 @@ pypdf>=5.0
 # External systems (D16). Each has a console/no-op fallback when unconfigured.
 twilio>=9.0
 anthropic>=0.40
+
+# D46 — Gemini during the testing phase, behind the same seam as Anthropic.
+google-genai>=1.0
