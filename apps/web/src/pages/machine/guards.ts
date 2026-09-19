@@ -20,3 +20,6 @@ export const isLoginPath = ({ event }: { event: Event }) => path(event) === "/lo
 /** `/read/:chapterId` — swaps a chapter for a token, then redirects. */
 export const isOpeningPath = ({ event }: { event: Event }) =>
   path(event).startsWith("/read/");
+
+/** `/welcome` — where Razorpay returns the reader after paying (D47). */
+export const isWelcomePath = ({ event }: { event: Event }) => path(event) === "/welcome";

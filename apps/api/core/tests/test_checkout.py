@@ -1,0 +1,184 @@
+"""Public checkout and the Razorpay webhook (D47).
+
+The webhook tests are the ones that matter: signature, idempotency, and never
+500-ing on a business refusal. Each of those fails quietly if it is wrong.
+"""
+
+import hashlib
+import hmac
+import json
+from unittest.mock import patch
+
+from django.core.files.base import ContentFile
+from django.test import TestCase, override_settings
+
+from core.models import Book, Chapter, Order, User
+
+PDF = b"%PDF-1.7\n%tiny\n%%EOF\n"
+SECRET = "test-webhook-secret"
+
+
+def sign(raw: bytes, secret: str = SECRET) -> str:
+    return hmac.new(secret.encode(), raw, hashlib.sha256).hexdigest()
+
+
+def paid_event(book_slug="tsp", email="new@example.com", phone="+919111000111",
+               payment_ref="plink_TEST0001"):
+    return {
+        "entity": "event",
+        "event": "payment_link.paid",
+        "id": "evt_TEST0001",
+        "payload": {"payment_link": {"entity": {
+            "id": payment_ref, "status": "paid", "amount": 190000, "currency": "INR",
+            "notes": {"full_name": "New Reader", "email": email, "phone": phone,
+                      "book_slug": book_slug, "pace": "medium"},
+        }}},
+    }
+
+
+class Base(TestCase):
+    def setUp(self):
+        self.book = Book.objects.create(
+            title="The Sapien Paradox", slug="tsp", price_cents=190000, is_published=True)
+        Chapter.objects.create(book=self.book, order_index=1, title="One",
+                               file=ContentFile(PDF, name="c1.pdf"))
+
+
+class BooksTests(Base):
+    def test_lists_published_books_to_anyone(self):
+        response = self.client.get("/api/books")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), [{
+            "slug": "tsp", "title": "The Sapien Paradox",
+            "priceMinorUnits": 190000, "chapterCount": 1,
+        }])
+
+    def test_an_unpublished_book_is_not_for_sale(self):
+        """`is_published` exists so a half-built book is not buyable."""
+        Book.objects.create(title="Half Done", slug="half", is_published=False)
+
+        slugs = [b["slug"] for b in self.client.get("/api/books").json()]
+
+        self.assertEqual(slugs, ["tsp"])
+
+
+@override_settings(RAZORPAY_KEY_ID="rzp_test_x", RAZORPAY_KEY_SECRET="s")
+class CheckoutTests(Base):
+    def post(self, **over):
+        body = {"fullName": "New Reader", "email": "new@example.com",
+                "phone": "+919111000111", "bookSlug": "tsp", "pace": "medium"}
+        body.update(over)
+        return self.client.post("/api/checkout", body, content_type="application/json")
+
+    @patch("core.services.payments.create_link")
+    def test_returns_the_hosted_payment_url(self, create_link):
+        create_link.return_value = {"short_url": "https://rzp.io/i/abc"}
+
+        response = self.post()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"paymentUrl": "https://rzp.io/i/abc"})
+
+    @patch("core.services.payments.create_link")
+    def test_creates_nothing_until_the_money_arrives(self, create_link):
+        """An unpaid Order is an entitlement, and can_read would have to start
+        asking about payment status (D47)."""
+        create_link.return_value = {"short_url": "https://rzp.io/i/abc"}
+
+        self.post()
+
+        self.assertEqual(User.objects.count(), 0)
+        self.assertEqual(Order.objects.count(), 0)
+
+    def test_an_unknown_book_is_404(self):
+        self.assertEqual(self.post(bookSlug="nope").status_code, 404)
+
+    def test_a_bad_pace_is_refused(self):
+        self.assertEqual(self.post(pace="instant").status_code, 422)
+
+    @override_settings(RAZORPAY_KEY_ID="", RAZORPAY_KEY_SECRET="")
+    def test_checkout_is_closed_when_unconfigured_rather_than_faked(self):
+        """A silent fake payment would leave a reader believing they had bought
+        something. 503, loudly."""
+        self.assertEqual(self.post().status_code, 503)
+
+
+@override_settings(RAZORPAY_WEBHOOK_SECRET=SECRET, WHATSAPP_BACKEND="console")
+class WebhookTests(Base):
+    def post(self, event=None, secret=SECRET, raw=None):
+        body = raw if raw is not None else json.dumps(event or paid_event()).encode()
+        return self.client.post(
+            "/api/payments/webhook", body, content_type="application/json",
+            HTTP_X_RAZORPAY_SIGNATURE=sign(body, secret))
+
+    def test_a_valid_event_creates_the_reader(self):
+        response = self.post()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(User.objects.filter(email="new@example.com").exists())
+        self.assertEqual(Order.objects.count(), 1)
+
+    def test_the_order_records_the_payment_reference(self):
+        self.post()
+        self.assertEqual(Order.objects.get().payment_reference, "plink_TEST0001")
+
+    def test_a_REPLAYED_event_changes_nothing_and_still_returns_200(self):
+        """Razorpay retries on any non-2xx and on timeout. Replying non-2xx to
+        an event we already handled makes it retry what worked."""
+        self.post()
+        again = self.post()
+
+        self.assertEqual(again.status_code, 200)
+        self.assertTrue(again.json()["duplicate"])
+        self.assertEqual(Order.objects.count(), 1)
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_a_bad_signature_is_refused_and_creates_nothing(self):
+        response = self.post(secret="not-the-secret")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(User.objects.count(), 0)
+
+    def test_a_tampered_body_is_refused(self):
+        raw = json.dumps(paid_event()).encode()
+        tampered = raw.replace(b'"amount": 190000', b'"amount": 1')
+        response = self.client.post(
+            "/api/payments/webhook", tampered, content_type="application/json",
+            HTTP_X_RAZORPAY_SIGNATURE=sign(raw))
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_a_reserialised_body_is_refused_because_raw_bytes_matter(self):
+        """Semantically identical, different bytes. This is what breaks when a
+        framework hands you a parsed dict instead of the body."""
+        raw = json.dumps(paid_event()).encode()
+        # Different separators -> same meaning, different bytes. The previous
+        # version used plain json.dumps and reproduced `raw` exactly, so it
+        # asserted nothing.
+        reserialised = json.dumps(json.loads(raw), separators=(", ", ": "), indent=2).encode()
+        response = self.client.post(
+            "/api/payments/webhook", reserialised, content_type="application/json",
+            HTTP_X_RAZORPAY_SIGNATURE=sign(raw))
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_an_unrelated_event_is_acknowledged_not_processed(self):
+        other = paid_event()
+        other["event"] = "payment.captured"
+
+        response = self.post(other)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(User.objects.count(), 0)
+
+    def test_buying_the_same_book_twice_is_refused_without_a_500(self):
+        """An already-owned book is a fact, not an error to retry."""
+        self.post()
+        second = paid_event(payment_ref="plink_TEST0002")
+
+        response = self.post(second)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json().get("refused"), "already_owns_book")
+        self.assertEqual(Order.objects.count(), 1)

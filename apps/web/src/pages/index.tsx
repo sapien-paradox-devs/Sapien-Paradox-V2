@@ -10,9 +10,11 @@ import { useMachine } from "@xstate/react";
 import { useEffect, useMemo } from "react";
 
 import { HomePage } from "./home";
+import { LandingPage } from "./landing";
 import { LoginPage } from "./login";
 import { OpeningPage } from "./opening";
 import { ReaderPage } from "./reader";
+import { WelcomePage } from "./welcome";
 import { navigationMachine } from "./machine";
 import { startRouteSync } from "./machine/sync";
 import { NavigationContext, type Navigation } from "./useNavigation";
@@ -38,8 +40,19 @@ export function Navigator() {
   //
   let page = null;
 
+  // `/` is two pages. An authenticated reader gets their library; a visitor
+  // gets the page that sells them a book (D47). While the session region is
+  // still `checking` this renders nothing rather than guessing -- guessing
+  // would flash the landing page at a reader who is already signed in, which
+  // is the same mistake D44 forbids on the opening page.
+  const sessionChecking = state.matches({ session: "checking" });
+  const signedIn = state.matches({ session: "authenticated" });
+
   if (state.matches({ page: "login" })) page = <LoginPage />;
-  else if (state.matches({ page: "home" })) page = <HomePage />;
+  else if (state.matches({ page: "welcome" })) page = <WelcomePage />;
+  else if (state.matches({ page: "home" })) {
+    if (!sessionChecking) page = signedIn ? <HomePage /> : <LandingPage />;
+  }
   else if (state.matches({ page: "opening" })) page = <OpeningPage />;
   else if (state.matches({ page: "reader" })) page = <ReaderPage />;
 

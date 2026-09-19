@@ -227,6 +227,19 @@ class Order(models.Model):
     pace = models.CharField(max_length=20, choices=PACE_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # D47. The gateway's reference for the payment that created this order, and
+    # the thing that makes the webhook idempotent -- Razorpay retries, so the
+    # same event arrives twice and the second must find this row and stop.
+    #
+    # Blank, NOT unique-and-required. D19 dropped V1's `stripe_session_id`
+    # precisely because it was both, which made a concierge-created order
+    # impossible to save. An admin still creates readers by hand and those
+    # orders have no payment at all.
+    payment_reference = models.CharField(
+        max_length=100, blank=True, default="", db_index=True,
+        help_text="Razorpay payment_link id. Empty for concierge-created orders.",
+    )
+
     class Meta:
         ordering = ["-created_at"]
         constraints = [

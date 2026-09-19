@@ -296,6 +296,13 @@ TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
 TWILIO_WHATSAPP_FROM = os.getenv("TWILIO_WHATSAPP_FROM", "")
 WHATSAPP_MAX_ATTEMPTS = int(os.getenv("WHATSAPP_MAX_ATTEMPTS", "3"))
 
+# Payments -- Razorpay (D28, D47). Unset means checkout is closed and says so;
+# there is deliberately no console fallback, because a silent fake payment would
+# leave a reader believing they had bought something.
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
+RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET", "")
+
 # The companion (D13, D24). Budget against $3/$15 — the intro rate ends 2026-08-31.
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 COMPANION_MODEL = os.getenv("COMPANION_MODEL", "claude-sonnet-5")

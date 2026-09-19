@@ -26,6 +26,7 @@ export const navigationMachine = setup({
     isReaderPath: guards.isReaderPath,
     isLoginPath: guards.isLoginPath,
     isOpeningPath: guards.isOpeningPath,
+    isWelcomePath: guards.isWelcomePath,
   },
 }).createMachine(navigationConfig);
 

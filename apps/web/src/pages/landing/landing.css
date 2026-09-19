@@ -1,0 +1,113 @@
+.landing {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-12);
+  max-width: 62rem;
+  margin: 0 auto;
+  padding: var(--space-16) var(--space-6) var(--space-12);
+}
+
+@media (min-width: 62rem) {
+  .landing {
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: var(--space-16);
+    align-items: start;
+    padding-top: 6rem;
+  }
+}
+
+.landing-eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: var(--space-4);
+}
+
+.landing-lede h1 {
+  font-size: clamp(2.1rem, 5vw, 3.1rem);
+  max-width: 14ch;
+}
+
+.landing-sub {
+  margin-top: var(--space-4);
+  max-width: 34ch;
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+}
+
+.landing-how {
+  margin: var(--space-8) 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 36ch;
+}
+
+.landing-how li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 1.6rem 1fr;
+  gap: var(--space-3);
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+}
+
+.landing-how li::before {
+  content: counter(step);
+  font-family: var(--font-display);
+  color: var(--accent);
+  font-size: 0.9rem;
+  padding-top: 0.1rem;
+}
+
+.landing-buy {
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-card);
+}
+
+.landing-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.landing-book {
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--rule-soft);
+  margin-bottom: var(--space-2);
+}
+
+.landing-book h2 { font-size: 1.35rem; }
+
+.landing-meta {
+  margin-top: var(--space-2);
+  font-size: 0.88rem;
+  color: var(--ink-faint);
+}
+
+.landing-hint {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+}
+
+.landing-fineprint {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+.landing-quiet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  align-items: center;
+  color: var(--ink-soft);
+}
