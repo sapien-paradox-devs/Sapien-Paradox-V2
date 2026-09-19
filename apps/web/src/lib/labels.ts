@@ -26,6 +26,12 @@ export const labels = {
     sendFailed: "That did not send. Try again.",
     dismiss: "Dismiss",
   },
+  opening: {
+    working: "Finding your place…",
+    denied: "This book is not on your shelf.",
+    error: "We could not open that chapter.",
+    retry: "Try again",
+  },
   login: {
     title: "Welcome back",
     email: "Email",
