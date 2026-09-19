@@ -63,6 +63,7 @@ back to. Without it these read as taste rather than as answers to specific, obse
 | D38 | Dispatch returns a result; refusals become status codes at the edge | [machines](10-machines.md) | locked |
 | D39 | Cadence is an event source, not a queue *(reads against D17)* | [machines](10-machines.md) | locked |
 | D40 | Outcome-branching, not exceptions | [machines](10-machines.md) | locked |
+| D46 | Gemini for testing, behind the existing seam *(scoped; amends D24's model choice)* | [companion-provider](11-companion-provider.md) | locked |
 
 ## Still open
 

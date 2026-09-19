@@ -248,9 +248,16 @@ PACE_DELAY_DAYS = {
 }
 
 # WhatsApp (D12, D17). Without credentials the backend prints to console.
-WHATSAPP_BACKEND = os.getenv("WHATSAPP_BACKEND", "") or (
-    "twilio" if os.getenv("TWILIO_AUTH_TOKEN") else "console"
-)
+# Under test this is ALWAYS console, whatever the environment says. Without the guard,
+# adding real credentials to a local .env silently turns the whole suite into a live
+# sender — it attempts delivery to fixture phone numbers, spends quota, and passes,
+# because the provider returns a queued id before the send actually fails. Mandate 3.
+if TESTING:
+    WHATSAPP_BACKEND = "console"
+else:
+    WHATSAPP_BACKEND = os.getenv("WHATSAPP_BACKEND", "") or (
+        "twilio" if os.getenv("TWILIO_AUTH_TOKEN") else "console"
+    )
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
 TWILIO_WHATSAPP_FROM = os.getenv("TWILIO_WHATSAPP_FROM", "")

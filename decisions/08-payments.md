@@ -60,10 +60,55 @@ save. The same mistake in Razorpay's clothing is the thing to avoid.
 - **A paying reader still has no password** (D26). Checkout completing is not an account; the
   set-a-password link over WhatsApp is what makes it one.
 
+### Inherited from V1 — a validated spike and a locked spec
+
+**V1 got further than "Stripe".** Two assets carry over, found 2026-09-09 after this decision was
+first written:
+
+- **`spikes/razorpay/`** (2026-08-29, ~430 lines, stdlib only) — a throwaway harness that hit the
+  **live Razorpay test API** before any Django code was written. It confirmed: INR with `amount`
+  in paise is accepted; a hosted **Payment Link** returns a redirectable `short_url`; `notes`
+  carries our six signup fields and echoes them back intact; and `callback_url` accepts
+  `localhost`, so the redirect leg needs no tunnel.
+- **Ticket 017** — a grilling-locked spec for replacing Stripe with Razorpay, including event
+  shape (`payment_link.paid`), signature verification via
+  `razorpay.Utility.verify_webhook_signature` against `X-Razorpay-Signature`, and the decision to
+  name the column neutrally rather than after the gateway.
+
+**Lift both.** The gateway-facing half is already de-risked against the real API; re-deriving it
+would be waste.
+
+**What the spike does NOT prove**, and what therefore remains real work: webhooks (Razorpay POSTs
+to a publicly reachable URL, so `localhost` fails there — either a tunnel for manual testing or, in
+CI, a unit test posting a hand-signed payload), signature verification, idempotency, and the atomic
+transaction.
+
+**V1's Stripe path was merged**, and its *fulfilment* half — atomic User + Order + grant,
+post-commit best-effort WhatsApp, idempotency on the session id — is correct and is the same shape
+as D26. Only the gateway-facing half is Razorpay-specific.
+
+**Follow V1?** ☑ yes, for the spike's findings and 017's gateway spec. ☐ no, for its column naming
+— V2 has no payment columns at all yet (D19).
+
+### Answered by the spike
+
+- **Units: paise.** The spike sent `amount: 1000` for ₹10 and Razorpay accepted it. So the smallest
+  unit matches `Book.price_cents`'s intent but not its name. **Rename the field to
+  `price_minor_units`** rather than storing rupees — 017 reached the same conclusion for its own
+  column and noted the rename is one word in a `CharField` plus one migration, while the alternative
+  is paying that bill again at the next gateway change.
+- **`notes` is the metadata channel**, capped at 15 string keys — enough for the six fields V1
+  locked (`email`, `password_hash`, `full_name`, `phone`, `book_slug`, `pace`).
+
+**Worth knowing:** Razorpay can send the *payment link itself* over WhatsApp natively
+(`notify.whatsapp`). Unrelated to chapter delivery, which stays on Twilio (D12), but it exists.
+
 ### Open, and deliberately not decided here
 
-- **Currency and units.** `Book.price_cents` is named for cents; rupees are stored in paise.
-  Rename or document — but decide before the first real price is entered.
+- **`password_hash` in `notes` is inherited from V1 and should be challenged.** It puts a credential
+  in a third party's metadata store. D26 already gives paying readers an unusable password plus a
+  set-a-password link over WhatsApp, which removes the need to carry a password through checkout at
+  all.
 - **Does a public signup page now exist?** D10 says no public signup exists *until payments land*.
   This is that moment, so D10's precondition is expiring. That reversal deserves its own decision
   rather than arriving as a side effect.
