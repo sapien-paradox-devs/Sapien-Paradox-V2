@@ -9,6 +9,7 @@
 import { useMachine } from "@xstate/react";
 import { useEffect, useMemo } from "react";
 
+import { HomePage } from "./home";
 import { LoginPage } from "./login";
 import { navigationMachine } from "./machine";
 import { startRouteSync } from "./machine/sync";
@@ -33,12 +34,12 @@ export function Navigator() {
   // `page.unknown` renders nothing on purpose: it stops Home flashing before
   // sync.ts delivers the first ROUTE on mount (D15).
   //
-  // Each page arrives in its own slice — #29 home, #30 opening, #31 reader —
-  // and replaces its placeholder here.
+  // Each page arrives in its own slice — #30 opening, #31 reader — and
+  // replaces its placeholder here.
   let page = null;
 
   if (state.matches({ page: "login" })) page = <LoginPage />;
-  else if (state.matches({ page: "home" })) page = <Placeholder name="home" />;
+  else if (state.matches({ page: "home" })) page = <HomePage />;
   else if (state.matches({ page: "opening" })) page = <Placeholder name="opening" />;
   else if (state.matches({ page: "reader" })) page = <Placeholder name="reader" />;
 
