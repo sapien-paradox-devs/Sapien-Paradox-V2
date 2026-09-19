@@ -1,10 +1,9 @@
 /** The landing machine — one test per row of its table (D47). */
 
-import { createActor, fromPromise } from "xstate";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { assign, createActor, fromPromise, setup } from "xstate";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { landingConfig } from "../machine";
-import { setup, assign } from "xstate";
 import * as actions from "../actions";
 import type { Book, Context, Event, Signup } from "../types";
 
