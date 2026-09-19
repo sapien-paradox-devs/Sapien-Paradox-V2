@@ -23,3 +23,15 @@
   flex-direction: column;
   gap: var(--space-4);
 }
+
+.login-lead {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+.login-alt {
+  margin-top: var(--space-6);
+  font-size: 0.86rem;
+  color: var(--ink-faint);
+}

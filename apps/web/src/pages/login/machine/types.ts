@@ -9,4 +9,8 @@ export type Context = {
 export type Event =
   | { type: "SUBMIT"; email: string; password: string }
   /** Typing in either field clears the error rather than scolding as you fix it. */
-  | { type: "EDIT" };
+  | { type: "EDIT" }
+  /** A reader who has never had a password. The form cannot help them. */
+  | { type: "REQUEST_LINK" }
+  | { type: "SEND_LINK"; phone: string }
+  | { type: "BACK" };

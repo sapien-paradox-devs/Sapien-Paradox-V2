@@ -22,6 +22,10 @@ export function unexpectedFailure(): Pick<Context, "errorMessage"> {
   return { errorMessage: labels.login.errorGeneric };
 }
 
+export function linkSendFailed(): Pick<Context, "errorMessage"> {
+  return { errorMessage: labels.login.linkErrorGeneric };
+}
+
 export function userFromLogin({ event }: { event: AnyEventObject }): Pick<Context, "user"> {
   const output = "output" in event ? event.output : null;
   return { user: isUser(output) ? output : null };

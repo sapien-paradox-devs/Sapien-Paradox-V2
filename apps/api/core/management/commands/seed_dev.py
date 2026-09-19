@@ -149,7 +149,8 @@ class Command(BaseCommand):
         self.report("seed_dev: ready", self.style.SUCCESS)
         # The token is a credential — printed for local use only, never logged (D22).
         self.report(f"  read chapter 1:  /r/{result.grant.token}")
-        self.report(f"  set a password:  /reset/{result.reset_token.token}")
+        if result.reset_token is not None:
+            self.report(f"  set a password:  /reset/{result.reset_token.token}")
 
     def say(self, kind, name, created):
         if self.quiet:

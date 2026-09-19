@@ -33,7 +33,8 @@ class OnboardingResult:
     user: User
     order: Order
     grant: TemporalGrant
-    reset_token: PasswordResetToken
+    reset_token: PasswordResetToken | None
+    """Minted only for a reader who cannot yet log in; None once they have a password."""
     created: bool
     """False when an existing reader bought another book."""
     chapter_message: Any = None
@@ -58,7 +59,13 @@ def create_reader(full_name, email, phone, book, pace) -> OnboardingResult:
             raise OnboardingRefused("book_has_no_chapters", "book")
 
         grant = TemporalGrant.objects.create(user=user, chapter=first)
-        reset_token = PasswordResetToken.objects.create(user=user)
+
+        # Only for a reader who cannot log in yet. Minting one unconditionally
+        # also throttles them: `reset_request` counts PasswordResetToken rows in
+        # a window (D31), so an unsent token silently blocks the "send me a
+        # sign-in link" they would reach for next.
+        needs_password = not user.has_usable_password()
+        reset_token = PasswordResetToken.objects.create(user=user) if needs_password else None
 
     # Outside the transaction, deliberately (D26). A failed send must not
     # discard the reader, and the caller needs to know it failed — a mistyped
@@ -67,8 +74,12 @@ def create_reader(full_name, email, phone, book, pace) -> OnboardingResult:
     from . import whatsapp as whatsapp_service
 
     chapter_message = whatsapp_service.send_chapter(grant)
+
+    # Gated on the password, not on `created`. A reader who bought once, never
+    # set a password, and came back was previously skipped here — so the one
+    # message that could let them in was the one we withheld.
     password_message = (
-        whatsapp_service.send_password_reset(reset_token) if created else None
+        whatsapp_service.send_password_reset(reset_token) if reset_token is not None else None
     )
 
     return OnboardingResult(

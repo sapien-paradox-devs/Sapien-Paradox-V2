@@ -9,7 +9,15 @@ from datetime import timedelta
 from django.test import TestCase
 from django.utils import timezone
 
-from core.models import Book, Chapter, MessageLog, Order, TemporalGrant, User
+from core.models import (
+    Book,
+    Chapter,
+    MessageLog,
+    Order,
+    PasswordResetToken,
+    TemporalGrant,
+    User,
+)
 from core.services import access, grants
 from core.services.onboarding import OnboardingRefused, create_reader
 
@@ -196,3 +204,62 @@ class CreateReaderTests(TestCase):
             self.submit()
 
         self.assertEqual(Order.objects.count(), before)
+
+
+class SetPasswordDeliveryTests(TestCase):
+    """Who is sent a set-a-password link, and who is not.
+
+    The gate used to be `created`, so a reader who bought once, never set a
+    password, and came back was skipped — the one message that could let them in
+    was the one withheld.
+    """
+
+    def setUp(self):
+        self.book = a_book()
+        self.second = a_book(slug="second-book")
+
+    def submit(self, book=None):
+        return create_reader(
+            full_name="Ada",
+            email="ada@example.com",
+            phone="+919876543210",
+            book=book or self.book,
+            pace="medium",
+        )
+
+    def test_a_new_reader_is_sent_one(self):
+        result = self.submit()
+
+        self.assertIsNotNone(result.reset_token)
+        self.assertEqual(result.password_message.template_key, "set_password")
+
+    def test_a_returning_reader_who_never_set_a_password_is_sent_one(self):
+        self.submit()
+
+        result = self.submit(book=self.second)
+
+        self.assertFalse(result.created)
+        self.assertFalse(result.user.has_usable_password())
+        self.assertIsNotNone(result.password_message)
+        self.assertEqual(result.password_message.template_key, "set_password")
+
+    def test_a_reader_who_already_has_a_password_is_not(self):
+        first = self.submit()
+        first.user.set_password("longenough")
+        first.user.save(update_fields=["password"])
+
+        result = self.submit(book=self.second)
+
+        self.assertIsNone(result.password_message)
+
+    def test_no_token_is_minted_for_a_reader_who_has_a_password(self):
+        """An unsent token would throttle their next 'send me a link' (D31)."""
+        first = self.submit()
+        first.user.set_password("longenough")
+        first.user.save(update_fields=["password"])
+
+        before = PasswordResetToken.objects.count()
+        result = self.submit(book=self.second)
+
+        self.assertIsNone(result.reset_token)
+        self.assertEqual(PasswordResetToken.objects.count(), before)
