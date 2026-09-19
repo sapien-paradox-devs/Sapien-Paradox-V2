@@ -15,11 +15,13 @@ export const loginMachine = setup({
     clearError: assign(actions.clearError),
     showInvalid: assign(actions.invalidCredentials),
     showUnexpected: assign(actions.unexpectedFailure),
+    showLinkFailed: assign(actions.linkSendFailed),
   },
-  actors: { loginActor: actors.loginActor },
+  actors: { loginActor: actors.loginActor, requestLinkActor: actors.requestLinkActor },
   guards: {
     fieldsPresent: guards.fieldsPresent,
     isUnauthorized: guards.isUnauthorized,
+    phonePresent: guards.phonePresent,
   },
 }).createMachine(loginConfig);
 

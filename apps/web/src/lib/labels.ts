@@ -127,6 +127,18 @@ export const labels = {
     submitting: "Opening…",
     errorInvalid: "That email and password do not match. Try again.",
     errorGeneric: "We could not reach the library. Try again in a moment.",
+    noPassword: "Never set a password?",
+    sendLink: "Send me a sign-in link",
+    linkTitle: "Send a sign-in link",
+    linkLead:
+      "Enter the WhatsApp number you signed up with and we will send a link to set your password.",
+    linkPhone: "WhatsApp number",
+    linkSubmit: "Send the link",
+    linkSending: "Sending\u2026",
+    linkDone:
+      "If that number is on an account, a link is on its way to it on WhatsApp. It works once, and only for an hour.",
+    linkBack: "Back to sign in",
+    linkErrorGeneric: "We could not send that. Try again in a moment.",
   },
 } as const;
 
