@@ -12,6 +12,15 @@ export const labels = {
   health: {
     booting: "Opening the room…",
   },
+  login: {
+    title: "Welcome back",
+    email: "Email",
+    password: "Password",
+    submit: "Enter",
+    submitting: "Opening…",
+    errorInvalid: "That email and password do not match. Try again.",
+    errorGeneric: "We could not reach the library. Try again in a moment.",
+  },
 } as const;
 
 export type Labels = typeof labels;
