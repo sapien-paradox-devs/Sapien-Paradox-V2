@@ -21,5 +21,12 @@ export const isLoginPath = ({ event }: { event: Event }) => path(event) === "/lo
 export const isOpeningPath = ({ event }: { event: Event }) =>
   path(event).startsWith("/read/");
 
+/**
+ * `/reset/:token` — the WhatsApp set-a-password link. Like `/r/:token` it must
+ * work with no session: a reader with an unusable password cannot sign in first.
+ */
+export const isResetPath = ({ event }: { event: Event }) =>
+  path(event).startsWith("/reset/");
+
 /** `/welcome` — where Razorpay returns the reader after paying (D47). */
 export const isWelcomePath = ({ event }: { event: Event }) => path(event) === "/welcome";

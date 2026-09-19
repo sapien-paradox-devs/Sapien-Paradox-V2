@@ -23,5 +23,16 @@ export default defineConfig({
   server: {
     port: 5173,
     fs: { allow: [fileURLToPath(new URL("../..", import.meta.url))] },
+    // `lib/env.ts` leaves API_BASE empty in development *because* this proxy
+    // exists — same-origin there, absolute in production (D6). Without it every
+    // call resolves against Vite, which answers `/api/...` with index.html: a
+    // 200 of text/html that fails at `response.json()` and surfaces as
+    // "we could not reach the library" on every screen.
+    proxy: {
+      "/api": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
+    },
   },
 });

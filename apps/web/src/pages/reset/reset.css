@@ -1,0 +1,36 @@
+.reset {
+  width: 100%;
+  max-width: 22rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.reset-mark {
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.reset h1 {
+  font-size: 1.9rem;
+}
+
+.reset-lead {
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  margin-bottom: var(--space-6);
+}
+
+.reset-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.reset-hint {
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+  margin-top: calc(var(--space-2) * -1);
+}

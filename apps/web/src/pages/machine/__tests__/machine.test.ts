@@ -43,6 +43,16 @@ describe("the page region", () => {
     expect(route(start(), "/r/abc123").matches({ page: "reader" })).toBe(true);
   });
 
+  it("sends a set-password link to the reset page", () => {
+    expect(route(start(), "/reset/tok_123").matches({ page: "reset" })).toBe(true);
+  });
+
+  it("does not mistake the reset link for home", () => {
+    // Before the reset page existed this fell through to `.page.home`, which
+    // showed a signed-out reader the landing page instead of the form (D26).
+    expect(route(start(), "/reset/tok_123").matches({ page: "home" })).toBe(false);
+  });
+
   it("sends /login to login", () => {
     expect(route(start(), "/login").matches({ page: "login" })).toBe(true);
   });
