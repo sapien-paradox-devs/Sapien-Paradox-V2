@@ -305,6 +305,8 @@ RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET", "")
 
 # The companion (D13, D24). Budget against $3/$15 — the intro rate ends 2026-08-31.
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+# D46: Gemini during the testing phase, behind the same seam.
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 COMPANION_MODEL = os.getenv("COMPANION_MODEL", "claude-sonnet-5")
 COMPANION_CACHE_TTL = os.getenv("COMPANION_CACHE_TTL", "1h")   # not the 5m default — D24
 COMPANION_MAX_INPUT_CHARS = int(os.getenv("COMPANION_MAX_INPUT_CHARS", "2000"))

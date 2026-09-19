@@ -17,3 +17,16 @@ class ChapterOut(Schema):
     bookTitle: str
     number: int
     title: str
+
+
+class ChatIn(Schema):
+    """The panel's existing contract: the token identifies the chapter, and the
+    question is one turn. History is not sent -- the companion is chapter-scoped
+    and the chapter is the context that matters (D13)."""
+
+    token: str
+    question: str
+
+
+class ChatOut(Schema):
+    answer: str
