@@ -10,6 +10,7 @@ import { useState } from "react";
 
 import { labels } from "../../lib/labels";
 import { PACE } from "../../lib/constants";
+import { useNavigation } from "../useNavigation";
 import { landingMachine } from "./machine";
 import "./landing.css";
 
@@ -18,6 +19,7 @@ const rupees = (minorUnits: number) =>
 
 export function LandingPage() {
   const [state, send] = useMachine(landingMachine);
+  const { navigate } = useNavigation();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -55,6 +57,19 @@ export function LandingPage() {
         <ol className="landing-how">
           {labels.landing.how.map((step) => <li key={step}>{step}</li>)}
         </ol>
+
+        {/*
+          A reader who has already set a password arrives here, not at /login —
+          `/` is the landing page for anyone without a session. Without this the
+          only routes to sign-in are /welcome and the set-password link, both
+          seen once, so coming back means typing the URL by hand.
+        */}
+        <p className="landing-signin">
+          {labels.landing.haveAccount}{" "}
+          <button type="button" className="linklike" onClick={() => navigate("/login")}>
+            {labels.landing.signIn}
+          </button>
+        </p>
       </section>
 
       <section className="landing-buy">
