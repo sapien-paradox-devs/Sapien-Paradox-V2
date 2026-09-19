@@ -138,6 +138,27 @@ session cookie scoped to `.<domain>`. Unrelated vendor domains would make the se
 third-party cookie, which Safari and most blockers drop — login would silently fail on some
 devices and work fine on yours.
 
+### Live as of 2026-09-17
+
+| | |
+|---|---|
+| API | **https://sapien-api.onrender.com** — `srv-dam7kdh42hec738jl5tg` |
+| Database | `sapien-db` — `dpg-dam55mvqj5pc73bskqng-a`, free, Singapore, **expires 2026-10-17** |
+| Health | `{"status":"ok","database":"ok"}` |
+| Tables | all eight present, migrations `0001` and `0002` applied |
+
+**The service was created through the Render REST API, not the Blueprint**, because neither the
+API nor the MCP can apply a `render.yaml`. The payload was generated *from* `render.yaml` so the
+file stays the source of truth — but the two can now drift, and nothing enforces agreement. Re-check
+the file against the dashboard before trusting it.
+
+**External Postgres access is closed** (`ipAllowList: []`, Render's default). Verifying the schema
+means temporarily adding an IP, querying, and removing it again.
+
+**Confirmed: the free instance spins down.** The log shows `Handling signal: term` roughly fifteen
+minutes after the last real request. Render's own health checks do not keep it awake. This is
+exactly what D23 forbids and D35 accepted for Phase 0.
+
 ### API and database — Render, from `render.yaml`
 
 **Render → New → Blueprint → select this repository.** `render.yaml` at the repo root provisions
@@ -153,19 +174,30 @@ credentials, delivery prints to the log instead of sending; with no Anthropic ke
 simply unavailable. That is what makes it deployable *now*, before the WhatsApp templates clear
 Meta review.
 
-**Set immediately after the first deploy**, or the health check returns 400:
+**Leave every `sync: false` field blank at Blueprint creation.** The service comes up healthy
+without them; they are filled in afterwards.
 
-```
-DJANGO_ALLOWED_HOSTS = sapien-api.onrender.com
-```
-
-Then add `api.<domain>` to it once DNS exists.
+`DJANGO_ALLOWED_HOSTS` used to be required immediately or the health check returned 400.
+`settings.py` now appends Render's automatic `RENDER_EXTERNAL_HOSTNAME`, so the service's own
+`onrender.com` address is always allowed and **the first deploy is green with no intervention**.
+Set the variable only to *add* `api.<domain>` once DNS exists.
 
 **Leave `COOKIE_DOMAIN` empty until the real domain is pointed.** Sessions spanning two subdomains
 need it; on `*.onrender.com` there is no shared parent domain to scope a cookie to.
 
-**Free Postgres on Render is a 30-day trial, not a tier** — the instance is deleted at the end of
-it. `render.yaml` specifies a paid plan deliberately.
+**Phase 0 runs on free tiers (D35), and that is time-boxed.** `render.yaml` specifies `plan: free`
+for both the web service and Postgres. Two consequences with real deadlines:
+
+- **Free Postgres expires 30 days after creation**, then has a 14-day grace period before deletion.
+  There are no backups on this tier.
+- **The free web service sleeps** after 15 minutes idle, ~1 minute cold start — the thing D23 says
+  never to do. Tolerable only because no reader and no WhatsApp link exist yet.
+
+Upgrade both plans before the first link reaches a real reader, or before the database expires —
+whichever comes first. That reversal is a condition of D35.
+
+Free instances also do not support `preDeployCommand`, which is why migrations run in the
+**start command** instead. Move them back to `preDeployCommand` when the plan goes paid.
 
 > **Never use a tier that sleeps.** Free tiers spin down and cold-start in roughly a minute, and the
 > same applies to Postgres tiers that pause when idle. The core moment of this product is *tap a
@@ -178,18 +210,30 @@ it. `render.yaml` specifies a paid plan deliberately.
 > while the application code still looks correct** (D19). Nothing in this codebase generates a
 > storage URL — the API only ever streams bytes.
 
-### Web — Cloudflare Pages
+### Web — Vercel (D34)
 
-| Setting | Value |
+`apps/web/vercel.json` carries the framework, build, output, and the SPA rewrite. **Three settings
+live only in the Vercel dashboard and cannot be set from that file:**
+
+| Dashboard setting | Value |
 |---|---|
-| Root directory | `apps/web` |
-| Build | `npm run build` |
-| Output | `dist` |
-| Node | 22 |
+| Root Directory | `apps/web` |
+| **Include files outside of the Root Directory in the Build Step** | **ON** |
+| Ignored Build Step | `git diff --quiet HEAD^ HEAD -- . ../../shared` |
 
-Pages clones the whole repo, so `../../shared/constants.json` resolves. **Confirm that on the first
-real deploy** — a host that isolates the subdirectory would break the import, and D20 names
-duplication-with-a-matching-test as the fallback if so.
+**The middle one is not optional.** `src/lib/constants.ts` imports `@shared/constants.json`, which
+`vite.config.ts` aliases to `../../shared` — outside this app's root (D20). With the toggle off,
+Vercel uploads only `apps/web` and the build fails to resolve the import. This is exactly the
+monorepo risk D20 flagged: *"confirm on the real hosts while there is nothing to lose."*
+Duplication-with-a-matching-test is the recorded fallback if a host ever makes it impossible.
+
+The **Ignored Build Step** mirrors the path filters the CI workflows already use, so an API-only
+commit doesn't rebuild the SPA. Without it every backend push triggers a frontend deploy.
+
+**The rewrite matters more than it looks.** `vercel.json` sends every unmatched path to
+`index.html`. Without it, a reader tapping a WhatsApp link to `/r/:token` gets Vercel's 404 instead
+of the reading room — the product's core moment, failing on a hosting default. Vercel checks the
+filesystem before applying rewrites, so real assets in `dist/` still serve normally.
 
 ---
 

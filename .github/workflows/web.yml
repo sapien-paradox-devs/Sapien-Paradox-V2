@@ -25,6 +25,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Test
+        run: npm test
+
       # `tsc -b` runs as part of build, so a type error fails here.
       - name: Build
         run: npm run build

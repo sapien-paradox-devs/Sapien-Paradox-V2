@@ -47,6 +47,16 @@ if not SECRET_KEY:
 
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", ["localhost", "127.0.0.1", "[::1]"])
 
+# Render sets RENDER_EXTERNAL_HOSTNAME to the service's own <name>.onrender.com address, and
+# health-check requests arrive with it as the Host header. Without this the very first deploy
+# returns 400 (DisallowedHost) and stays red until someone types the hostname into the
+# dashboard — a deploy failing on configuration nobody could know before the service existed.
+# Appended rather than assigned, so an explicit DJANGO_ALLOWED_HOSTS naming api.<domain> keeps
+# working alongside it.
+_render_hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip()
+if _render_hostname and _render_hostname not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_render_hostname)
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",

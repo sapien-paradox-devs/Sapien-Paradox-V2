@@ -85,3 +85,90 @@ Pages own their data with their own `useMachine` and call `useNavigation()` to m
   `/read/:chapterId`, reached only from Home, where you are already authenticated.
 - **`finished` is a real state**, rendered minimally — it is the anchor D14's deferred
   end-of-chapter companion question attaches to.
+
+---
+
+## D41 — The four page machines
+
+**Locked** 2026-08-30 · **extends D15 downward**
+
+D15 fixed the three levels and the root machine. Each page machine was left as one line — a
+summary, not a design. These are the four, in full.
+
+| Page | States |
+|---|---|
+| `login` | `idle → submitting → error` |
+| `home` | two regions: `list` (`loading → ready · empty · error`) and `send` |
+| `opening` | `waiting → resolving → done · denied · error` |
+| `reader` | `loading → reading → finished · sanctuary · denied · error` |
+
+**Failure states are named for what the reader can do about them, not for the status code.**
+`sanctuary` offers a fresh link in one tap (D9); `denied` has no button that helps (D25);
+`limited` means it already worked and they should check WhatsApp (D31). Collapsing any of these
+into a generic `error` throws away the only information that decides what to render.
+
+`sanctuary` means an expired or invalid link and nothing else. The end of a chapter is `finished`
+— V1 used one word for both.
+
+**Rejected — one shared `error` state per page**, with a message string in context. Cheaper, and
+it makes the difference between "tap here" and "there is nothing you can do" a matter of
+remembering to check a string.
+
+---
+
+## D42 — `home` and `reader` use parallel regions for in-flight work
+
+**Locked** 2026-08-30
+
+"Send this chapter to my WhatsApp" and "re-issue this dead link" are requests that happen *while*
+something is already on screen. A single sequence of states would have to leave `ready` to
+represent "sending", which blanks the chapter list for the duration of one button press.
+
+Same reasoning as the root machine's two regions (D15): these are independent dimensions, and
+nesting them forces one to wait on the other for no reason.
+
+---
+
+## D43 — `PdfChamber` owns its own error
+
+**Locked** 2026-08-30
+
+A grant can resolve perfectly and the PDF still fail — a broken byte range, a worker that did not
+load. Folding that into the reader page's `error` tells a reader whose link is fine that their
+link is broken, and offers them sanctuary, which cannot help.
+
+The component keeps its own `idle → loading → rendered → error`, and the chamber stays standing
+while the document retries.
+
+This is also why `PdfChamber` is one of only two components that earns a machine (D15): it owns
+async work with a lifecycle genuinely independent of its page.
+
+---
+
+## D44 — `opening` starts in `waiting` and never assumes anonymous
+
+**Locked** 2026-08-30
+
+On a hard refresh the session region is still `checking`. Treating "not yet authenticated" as
+"anonymous" bounces a legitimate reader to `/login` — a bug that appears only on reload, only for
+signed-in readers, and never in development, where the session check resolves instantly.
+
+So the page waits for the session region to settle before deciding anything.
+
+**This is the one sanctioned place where level 1 reads level 0**, and the reason the root machine
+exposes `user` at all. It is narrow on purpose: reading *session status* is allowed; reading
+anything else from the root is the leakage D15 warns about.
+
+---
+
+## D45 — Rate-limited is a normal state, not an error
+
+**Locked** 2026-08-30
+
+D31 counts rate limits from existing rows, which makes hitting one an ordinary outcome: the reader
+asked twice, and the first one worked. The copy is "already sent — check WhatsApp".
+
+Rendering it as a failure tells someone that something broke when nothing did, and invites them to
+press the button again.
+
+Applies everywhere it appears: Home's send button, and sanctuary's re-issue.
