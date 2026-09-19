@@ -10,7 +10,7 @@
 # PHASE 0 IS ON FREE TIERS (D35) — time-boxed, and the clock is real.
 # Free Postgres EXPIRES 30 DAYS AFTER CREATION, then has a 14-day grace period
 # before deletion. There are no backups on this tier. Upgrade both plans below
-# before ~2026-10-18, or before the first WhatsApp link reaches a real reader,
+# before ~2026-10-17, or before the first WhatsApp link reaches a real reader,
 # whichever comes first. That reversal is a condition of D35, not a nice-to-have.
 
 databases:

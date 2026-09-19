@@ -57,7 +57,7 @@ back to. Without it these read as taste rather than as answers to specific, obse
 | D32 | `GET /api/read/{id}` stays a GET, made idempotent | [api-layer](09-api-layer.md) | locked |
 | D33 | Companion caps live in the service, not the endpoint | [api-layer](09-api-layer.md) | locked |
 | D34 | Vercel hosts the SPA *(amends D23)* | [infrastructure](03-infrastructure.md) | locked |
-| D35 | Phase 0 on free tiers *(suspends D23's no-sleep rule)* | [infrastructure](03-infrastructure.md) | **time-boxed → ~2026-10-18** |
+| D35 | Phase 0 on free tiers *(suspends D23's no-sleep rule)* | [infrastructure](03-infrastructure.md) | **time-boxed → ~2026-10-17** |
 | D41 | The four page machines *(extends D15)* | [frontend](05-frontend.md) | locked |
 | D42 | `home` and `reader` use parallel regions for in-flight work | [frontend](05-frontend.md) | locked |
 | D43 | `PdfChamber` owns its own error | [frontend](05-frontend.md) | locked |
