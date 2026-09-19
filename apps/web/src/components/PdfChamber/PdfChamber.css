@@ -1,0 +1,7 @@
+/* Structure only — level 3 detail is deferred by decision. */
+
+.pdf-chamber {
+  width: 100%;
+  min-height: 70vh;
+  border: 0;
+}

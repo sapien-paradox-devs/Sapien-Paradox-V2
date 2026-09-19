@@ -1,0 +1,17 @@
+/* Level 3 detail — spacing and colour — is deferred by decision. This is
+   structure only, so the page is usable while the visual pass is pending. */
+
+.login {
+  max-width: 22rem;
+  margin: 4rem auto;
+}
+
+.login form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.login [role="alert"] {
+  margin: 0;
+}
