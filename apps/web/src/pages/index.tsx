@@ -14,6 +14,7 @@ import { LandingPage } from "./landing";
 import { LoginPage } from "./login";
 import { OpeningPage } from "./opening";
 import { ReaderPage } from "./reader";
+import { ResetPage } from "./reset";
 import { WelcomePage } from "./welcome";
 import { navigationMachine } from "./machine";
 import { startRouteSync } from "./machine/sync";
@@ -55,6 +56,7 @@ export function Navigator() {
   }
   else if (state.matches({ page: "opening" })) page = <OpeningPage />;
   else if (state.matches({ page: "reader" })) page = <ReaderPage />;
+  else if (state.matches({ page: "reset" })) page = <ResetPage />;
 
   return (
     <NavigationContext.Provider value={navigation}>

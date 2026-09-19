@@ -25,6 +25,7 @@ export const navigationMachine = setup({
   guards: {
     isReaderPath: guards.isReaderPath,
     isLoginPath: guards.isLoginPath,
+    isResetPath: guards.isResetPath,
     isOpeningPath: guards.isOpeningPath,
     isWelcomePath: guards.isWelcomePath,
   },

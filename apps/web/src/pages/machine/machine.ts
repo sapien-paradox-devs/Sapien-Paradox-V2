@@ -29,6 +29,7 @@ export const navigationConfig = {
     ROUTE: [
       { guard: "isReaderPath", target: ".page.reader" },
       { guard: "isLoginPath", target: ".page.login" },
+      { guard: "isResetPath", target: ".page.reset" },
       { guard: "isOpeningPath", target: ".page.opening" },
       { guard: "isWelcomePath", target: ".page.welcome" },
       { target: ".page.home" },
@@ -96,6 +97,7 @@ export const navigationConfig = {
         login: {},
         opening: {},
         reader: {},
+        reset: {},
         welcome: {},
       },
     },
