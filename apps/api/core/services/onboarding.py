@@ -10,13 +10,18 @@ hiccuped turns a delivery problem into a refund problem once payments land.
 committed when the delivery is handed a link to it.
 """
 
+import logging
+
 from dataclasses import dataclass
 from typing import Any
 
+from django.conf import settings
 from django.db import transaction
 
 from ..models import Order, PasswordResetToken, TemporalGrant, User
 from . import grants as grants_service
+
+logger = logging.getLogger(__name__)
 
 
 class OnboardingRefused(Exception):
@@ -116,6 +121,19 @@ def _resolve_identity(full_name, email, phone) -> tuple[User, bool]:
 
     if by_email is not None and by_phone is not None:
         raise OnboardingRefused("identity_belongs_to_two_readers", "email,phone")
+
+    # TEMPORARY (settings.ONBOARDING_ALLOW_PHONE_REUSE) — revert before real readers.
+    # A known phone with an unknown email is normally refused, which makes the flow
+    # untestable with one phone number. When the flag is on we treat the phone as
+    # the identity and reuse that reader; the new email is ignored rather than
+    # overwriting theirs, because silently rewriting an account's email from a
+    # checkout form is the more dangerous half of this.
+    if by_phone is not None and settings.ONBOARDING_ALLOW_PHONE_REUSE:
+        logger.warning(
+            "ONBOARDING_ALLOW_PHONE_REUSE: reusing reader %s for a signup that gave "
+            "a different email. This must not be on in production.", by_phone.pk
+        )
+        return by_phone, False
 
     raise OnboardingRefused(
         "partial_identity_match", "phone" if by_email is not None else "email"

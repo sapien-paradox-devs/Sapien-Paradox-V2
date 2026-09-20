@@ -136,6 +136,13 @@ Tracks A and B run concurrently. Phases 3 and 4 run in parallel after Phase 2.
 
 ## Housekeeping
 
+- [ ] **REVERT `ONBOARDING_ALLOW_PHONE_REUSE`** — a temporary relaxation of D26's identity rule so
+      Phase 0 testing is possible with a single phone number. A signup whose phone already belongs
+      to an account resolves to that reader instead of being refused. Off by default; set only on
+      the test deployment. **Unset it and delete the branch in `_resolve_identity` before a real
+      reader signs up** — with it on, anyone who knows a reader's number can attach a purchase to
+      their account.
+
 - [ ] **Merge or re-cut the 12 stacked PRs.** Nothing above the base of each stack can land until
       its base does — see the handoff for the order
 - [ ] **Write the three seams** (D25–D27). Locked, and written nowhere. Every machine waits on them

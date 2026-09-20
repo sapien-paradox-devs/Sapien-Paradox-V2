@@ -117,6 +117,13 @@ services:
       - key: RAZORPAY_WEBHOOK_SECRET
         sync: false
 
+      # TEMPORARY, TESTING ONLY — unset before real readers (see STATUS Housekeeping).
+      # Lets a signup whose phone already belongs to an account resolve to that
+      # reader instead of being refused, so the flow can be exercised with one
+      # phone number. Never creates a second account on one number.
+      - key: ONBOARDING_ALLOW_PHONE_REUSE
+        sync: false
+
       - key: TWILIO_ACCOUNT_SID
         sync: false
       - key: TWILIO_AUTH_TOKEN

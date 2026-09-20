@@ -291,6 +291,16 @@ else:
     WHATSAPP_BACKEND = os.getenv("WHATSAPP_BACKEND", "") or (
         "twilio" if os.getenv("TWILIO_AUTH_TOKEN") else "console"
     )
+# TEMPORARY, FOR TESTING ONLY — revert before real readers.
+# D26 refuses a signup whose phone belongs to another account: a changed number
+# and a typo'd number are identical to the code, and guessing wrong sends a
+# stranger someone's chapters. That refusal makes the flow impossible to exercise
+# with a single phone number, which is the situation during Phase 0 testing.
+# When on, a known phone with an unknown email resolves to the EXISTING reader
+# rather than refusing. It never creates a second account on one number —
+# `User.phone` is unique (D19) and that is not relaxed here.
+ONBOARDING_ALLOW_PHONE_REUSE = os.getenv("ONBOARDING_ALLOW_PHONE_REUSE", "").lower() in ("1", "true", "yes")
+
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
 TWILIO_WHATSAPP_FROM = os.getenv("TWILIO_WHATSAPP_FROM", "")
