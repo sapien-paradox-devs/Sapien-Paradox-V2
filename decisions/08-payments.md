@@ -170,3 +170,64 @@ the complexity the seam exists to keep out of it.
 
 Readers turn out to arrive overwhelmingly through concierge onboarding anyway, in which case the
 public page is maintained for nobody.
+
+---
+
+## D48 — Fulfil on the redirect as well as the webhook *(refines D47)*
+
+**Locked.**
+
+Both legs of the Razorpay return fulfil. `GET /welcome` carries
+`razorpay_payment_link_id`, hands it to `POST /api/checkout/confirm`, and that endpoint
+creates the reader. The webhook keeps doing the same. Whichever arrives first wins; the
+second is a no-op.
+
+### Why
+
+V1's `spikes/end-to-end/` worked, and this is how. Its header names both paths —
+*"GET /welcome — post-payment landing; fulfils and tries to message"* and
+*"POST /razorpay/webhook — the authoritative fulfilment path"* — and `flow.fulfil()`
+takes a `source` argument precisely so either may call it. The record from its working
+run says `"fulfilled_by": "redirect"`. **The webhook never did the work.**
+
+V2 shipped only the webhook, and that leg needs four things to all hold at once: a
+publicly reachable URL, a webhook registered in the dashboard, `RAZORPAY_WEBHOOK_SECRET`
+matching it, and an instance that is awake. On Phase 0 none of them is guaranteed —
+`render.yaml` declares no `RAZORPAY_*` variables at all, and D35 puts the API on a free
+plan that sleeps after 15 minutes. When any one fails, `signature_is_valid` returns
+False on `if not secret`, the endpoint 400s before parsing, and the reader sees a success
+page while nothing whatsoever has been created. That is not hypothetical: it happened to
+a real payment, and Twilio's log shows no send was ever attempted.
+
+The redirect leg needs none of those four. The reader's own browser delivers it.
+
+### Why it is safe to run both
+
+Idempotency on `Order.payment_reference`, which already exists for the webhook's own
+retries — Razorpay resends on any non-2xx and on timeout, so the second delivery has
+always had to be a no-op. Two legs is the same property with a different caller.
+
+### The one place we do not copy the spike
+
+The spike trusted `?phone=` from the query string. In production that is forgeable: anyone
+could call `/welcome?phone=…` and mint themselves a book. `confirm` therefore **fetches the
+payment link from Razorpay and requires `status == "paid"`** before it creates anything. The
+query parameter selects *which* link to check; it is never evidence of payment.
+
+### Rejected
+
+**Polling the webhook from `/welcome`.** Waits on the leg that is broken, and turns a 200ms
+page into an indefinite one — the reason `WelcomePage` had no spinner to begin with.
+
+**Trusting the callback's own `razorpay_payment_link_status`.** Razorpay appends it, and it is
+a query parameter like any other. Forgeable.
+
+**Recording a pending purchase at checkout, as the spike did.** An unpaid row is an
+entitlement, which D47 rejected for exactly this reason. Razorpay already stores everything
+`confirm` needs, in `notes` — so we read it back rather than keeping our own copy.
+
+### Revisit if
+
+The webhook becomes reliable — a paid plan, the secret set, the dashboard entry registered —
+*and* the redirect leg is shown to cause duplicate work in practice. Even then the cost of
+keeping both is one extra API call per purchase.

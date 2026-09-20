@@ -25,3 +25,22 @@ class BookCardOut(Schema):
     title: str
     priceMinorUnits: int
     chapterCount: int
+
+
+class ConfirmIn(Schema):
+    """`razorpay_payment_link_id`, as Razorpay appends it to the callback URL."""
+
+    paymentLinkId: str
+
+
+class ConfirmOut(Schema):
+    """What the welcome page can honestly say.
+
+    `fulfilled` means a reader now exists — by this call or by the webhook getting
+    there first. `pending` means Razorpay does not report the link as paid yet, which
+    is not the same as failed.
+    """
+
+    status: str          # "fulfilled" | "pending" | "refused"
+    delivered: bool      # whether the chapter message actually left
+    detail: str = ""     # a refusal reason, for the page to explain

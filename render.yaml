@@ -102,6 +102,21 @@ services:
       # Twilio. Leave unset and delivery falls back to printing on screen —
       # the app runs fine without it, which is how it stays deployable before
       # the WhatsApp templates clear Meta review.
+      # Razorpay (D28, D47). These were missing from the blueprint entirely, so a
+      # fresh provision never prompted for them. Checkout closes without the first
+      # two; the webhook fails CLOSED and SILENTLY without the third —
+      # `signature_is_valid` returns False on `if not secret` and the endpoint 400s
+      # before parsing, so a paid reader gets nothing and only a log line records it.
+      # D48's redirect leg exists because this is so easy to get wrong.
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      # Must match the secret set on the webhook in the Razorpay dashboard,
+      # which must point at <this service>/api/payments/webhook.
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+
       - key: TWILIO_ACCOUNT_SID
         sync: false
       - key: TWILIO_AUTH_TOKEN

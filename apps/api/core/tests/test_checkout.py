@@ -182,3 +182,126 @@ class WebhookTests(Base):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json().get("refused"), "already_owns_book")
         self.assertEqual(Order.objects.count(), 1)
+
+
+def paid_link(payment_ref="plink_TEST0001", status="paid", book_slug="tsp",
+              email="new@example.com", phone="+919111000111"):
+    """What `payments.fetch_link` returns — the payment-link entity itself."""
+    return {
+        "id": payment_ref, "status": status, "amount": 190000, "currency": "INR",
+        "notes": {"full_name": "New Reader", "email": email, "phone": phone,
+                  "book_slug": book_slug, "pace": "medium"},
+    }
+
+
+@override_settings(RAZORPAY_KEY_ID="rzp_test", RAZORPAY_KEY_SECRET="secret",
+                   RAZORPAY_WEBHOOK_SECRET=SECRET, WHATSAPP_BACKEND="console")
+class ConfirmTests(Base):
+    """D48 — the redirect leg fulfils too.
+
+    V1's spike worked because of this path; its run recorded `fulfilled_by: redirect`.
+    The webhook needs a public URL, a dashboard entry, a matching secret and an awake
+    instance. This needs none of them.
+    """
+
+    def post(self, payment_link_id="plink_TEST0001"):
+        return self.client.post(
+            "/api/checkout/confirm",
+            json.dumps({"paymentLinkId": payment_link_id}),
+            content_type="application/json",
+        )
+
+    @patch("core.services.payments.fetch_link")
+    def test_a_paid_link_creates_the_reader(self, fetch):
+        fetch.return_value = paid_link()
+
+        response = self.post()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "fulfilled")
+        self.assertTrue(User.objects.filter(email="new@example.com").exists())
+        self.assertEqual(Order.objects.get().payment_reference, "plink_TEST0001")
+
+    @patch("core.services.payments.fetch_link")
+    def test_an_unpaid_link_creates_nothing_and_is_not_an_error(self, fetch):
+        """Razorpay can lag. Pending is not failed — the webhook may still land."""
+        fetch.return_value = paid_link(status="created")
+
+        response = self.post()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "pending")
+        self.assertEqual(User.objects.count(), 0)
+        self.assertEqual(Order.objects.count(), 0)
+
+    @patch("core.services.payments.fetch_link")
+    def test_the_browsers_id_is_never_taken_as_proof_of_payment(self, fetch):
+        """The id selects which link to ask about; Razorpay says whether it was paid."""
+        fetch.return_value = paid_link(status="created")
+
+        self.post("plink_FORGED")
+
+        fetch.assert_called_once_with("plink_FORGED")
+        self.assertEqual(Order.objects.count(), 0)
+
+    @patch("core.services.payments.fetch_link")
+    def test_confirming_twice_fulfils_once(self, fetch):
+        fetch.return_value = paid_link()
+
+        self.post()
+        again = self.post()
+
+        self.assertEqual(again.json()["status"], "fulfilled")
+        self.assertEqual(Order.objects.count(), 1)
+        self.assertEqual(User.objects.count(), 1)
+
+    @patch("core.services.payments.fetch_link")
+    def test_a_webhook_arriving_after_the_redirect_is_a_no_op(self, fetch):
+        """Both legs run in the real world. The second must change nothing."""
+        fetch.return_value = paid_link()
+        self.post()
+
+        body = json.dumps(paid_event()).encode()
+        late = self.client.post("/api/payments/webhook", body,
+                                content_type="application/json",
+                                HTTP_X_RAZORPAY_SIGNATURE=sign(body))
+
+        self.assertEqual(late.status_code, 200)
+        self.assertTrue(late.json()["duplicate"])
+        self.assertEqual(Order.objects.count(), 1)
+
+    @patch("core.services.payments.fetch_link")
+    def test_a_redirect_arriving_after_the_webhook_is_a_no_op(self, fetch):
+        body = json.dumps(paid_event()).encode()
+        self.client.post("/api/payments/webhook", body, content_type="application/json",
+                         HTTP_X_RAZORPAY_SIGNATURE=sign(body))
+        fetch.return_value = paid_link()
+
+        response = self.post()
+
+        self.assertEqual(response.json()["status"], "fulfilled")
+        self.assertEqual(Order.objects.count(), 1)
+
+    @patch("core.services.payments.fetch_link")
+    def test_a_business_refusal_is_reported_not_500ed(self, fetch):
+        fetch.return_value = paid_link()
+        self.post()
+        fetch.return_value = paid_link(payment_ref="plink_TEST0002")
+
+        response = self.post("plink_TEST0002")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "refused")
+        self.assertEqual(response.json()["detail"], "already_owns_book")
+
+    @patch("core.services.payments.fetch_link")
+    def test_a_lookup_failure_is_502_not_a_silent_success(self, fetch):
+        from core.services.payments import PaymentsUnavailable
+        fetch.side_effect = PaymentsUnavailable("razorpay refused (404)")
+
+        self.assertEqual(self.post().status_code, 502)
+        self.assertEqual(Order.objects.count(), 0)
+
+    @override_settings(RAZORPAY_KEY_ID="", RAZORPAY_KEY_SECRET="")
+    def test_confirm_is_closed_when_unconfigured(self):
+        self.assertEqual(self.post().status_code, 503)

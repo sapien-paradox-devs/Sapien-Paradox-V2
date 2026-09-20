@@ -1,6 +1,6 @@
-"""Razorpay: create a payment link, verify a webhook (D28, D47).
+"""Razorpay: create a payment link, read one back, verify a webhook (D28, D47, D48).
 
-Two functions, and deliberately no more. This module talks to the gateway and
+Three functions, and deliberately no more. This module talks to the gateway and
 nothing else -- fulfilment is `onboarding.create_reader`, which is the only door
 a reader comes through whether they paid or an admin typed them in.
 
@@ -70,6 +70,31 @@ def create_link(*, amount_minor_units, book, full_name, email, phone, pace, call
     request = urllib.request.Request(API, data=json.dumps(payload).encode(), method="POST")
     request.add_header("Authorization", f"Basic {auth}")
     request.add_header("Content-Type", "application/json")
+
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            return json.loads(response.read())
+    except urllib.error.HTTPError as exc:
+        detail = (exc.read() or b"").decode()[:300]
+        raise PaymentsUnavailable(f"razorpay refused ({exc.code}): {detail}") from exc
+
+
+def fetch_link(payment_link_id: str) -> dict:
+    """Read a payment link back from Razorpay (D48).
+
+    The redirect leg hands us an id out of a query string, which is forgeable — so
+    the id only selects *which* link to ask about. Whether it was paid is Razorpay's
+    answer, never the browser's.
+    """
+    if not configured():
+        raise PaymentsUnavailable("no razorpay credentials")
+
+    auth = base64.b64encode(
+        f"{settings.RAZORPAY_KEY_ID}:{settings.RAZORPAY_KEY_SECRET}".encode()
+    ).decode()
+
+    request = urllib.request.Request(f"{API}/{payment_link_id}", method="GET")
+    request.add_header("Authorization", f"Basic {auth}")
 
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
