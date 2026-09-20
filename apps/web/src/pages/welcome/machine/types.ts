@@ -1,5 +1,5 @@
 export type Outcome = {
-  status: "fulfilled" | "pending" | "refused";
+  status: "fulfilled" | "owned" | "pending" | "refused";
   delivered: boolean;
   detail: string;
 };

@@ -62,7 +62,9 @@ export const labels = {
     refusedTitle: "Something needs a look.",
     refusedBody:
       "Your payment went through, but we could not set up your reading. Please contact us and quote this page \u2014 nothing further is needed from you.",
-    alreadyOwned: "You already own this book. Sign in and it is waiting in your library.",
+    ownedTitle: "You already have this one.",
+    alreadyOwned:
+      "This book is already on your account, so nothing was charged twice. Send the links again below, or sign in \u2014 it is waiting in your library.",
 
     failedTitle: "We could not confirm that just now.",
     failedBody:

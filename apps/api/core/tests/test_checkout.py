@@ -283,7 +283,9 @@ class ConfirmTests(Base):
         self.assertEqual(Order.objects.count(), 1)
 
     @patch("core.services.payments.fetch_link")
-    def test_a_business_refusal_is_reported_not_500ed(self, fetch):
+    def test_owning_the_book_is_reported_as_owned_not_as_a_failure(self, fetch):
+        """Still a 200 and still creates nothing — but the reader owns it, and
+        that is a state they can act on rather than a dead end."""
         fetch.return_value = paid_link()
         self.post()
         fetch.return_value = paid_link(payment_ref="plink_TEST0002")
@@ -291,8 +293,9 @@ class ConfirmTests(Base):
         response = self.post("plink_TEST0002")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["status"], "refused")
+        self.assertEqual(response.json()["status"], "owned")
         self.assertEqual(response.json()["detail"], "already_owns_book")
+        self.assertEqual(Order.objects.count(), 1)
 
     @patch("core.services.payments.fetch_link")
     def test_a_lookup_failure_is_502_not_a_silent_success(self, fetch):
@@ -404,3 +407,87 @@ class ResendTests(Base):
     @override_settings(RAZORPAY_KEY_ID="", RAZORPAY_KEY_SECRET="")
     def test_resend_is_closed_when_unconfigured(self):
         self.assertEqual(self.post().status_code, 503)
+
+
+@override_settings(RAZORPAY_KEY_ID="rzp_test", RAZORPAY_KEY_SECRET="secret",
+                   RAZORPAY_WEBHOOK_SECRET=SECRET, WHATSAPP_BACKEND="console")
+class AlreadyOwnedTests(Base):
+    """Owning the book is the easiest case to serve, not a dead end.
+
+    `payment_reference` only matches when the same link is replayed. An order from
+    an earlier payment, or from concierge onboarding with no reference, is
+    invisible to it — and the replay was then refused for a book the reader owns.
+    """
+
+    def confirm(self, payment_link_id="plink_TEST0001"):
+        return self.client.post(
+            "/api/checkout/confirm", json.dumps({"paymentLinkId": payment_link_id}),
+            content_type="application/json")
+
+    def resend(self, payment_link_id="plink_TEST0001"):
+        return self.client.post(
+            "/api/checkout/resend", json.dumps({"paymentLinkId": payment_link_id}),
+            content_type="application/json")
+
+    @patch("core.services.payments.fetch_link")
+    def test_a_different_link_for_a_book_already_owned_reports_owned(self, fetch):
+        fetch.return_value = paid_link()
+        self.confirm()
+        Order.objects.update(payment_reference="")      # an order with no reference
+
+        fetch.return_value = paid_link(payment_ref="plink_OTHER")
+        response = self.confirm("plink_OTHER")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "owned")
+        self.assertEqual(response.json()["detail"], "already_owns_book")
+
+    @patch("core.services.payments.fetch_link")
+    def test_it_adopts_the_reference_so_the_next_replay_short_circuits(self, fetch):
+        fetch.return_value = paid_link()
+        self.confirm()
+        Order.objects.update(payment_reference="")
+
+        fetch.return_value = paid_link(payment_ref="plink_OTHER")
+        self.confirm("plink_OTHER")
+
+        self.assertEqual(Order.objects.get().payment_reference, "plink_OTHER")
+
+    @patch("core.services.payments.fetch_link")
+    def test_owning_the_book_still_lets_you_resend(self, fetch):
+        """The whole point: you own it, so send the links again."""
+        fetch.return_value = paid_link()
+        self.confirm()
+        Order.objects.update(payment_reference="")
+        MessageLog.objects.all().delete()
+
+        fetch.return_value = paid_link(payment_ref="plink_OTHER")
+        response = self.resend("plink_OTHER")
+
+        self.assertEqual(response.json()["status"], "sent")
+        self.assertTrue(response.json()["chapterSent"])
+
+    @patch("core.services.payments.fetch_link")
+    def test_it_does_not_create_a_second_order(self, fetch):
+        fetch.return_value = paid_link()
+        self.confirm()
+        Order.objects.update(payment_reference="")
+
+        fetch.return_value = paid_link(payment_ref="plink_OTHER")
+        self.confirm("plink_OTHER")
+
+        self.assertEqual(Order.objects.count(), 1)
+        self.assertEqual(User.objects.count(), 1)
+
+    @patch("core.services.payments.fetch_link")
+    def test_a_genuine_refusal_is_still_a_refusal(self, fetch):
+        """partial_identity_match must not be swept into `owned`."""
+        fetch.return_value = paid_link()
+        self.confirm()
+
+        fetch.return_value = paid_link(payment_ref="plink_OTHER",
+                                       email="someone-else@example.com")
+        response = self.confirm("plink_OTHER")
+
+        self.assertEqual(response.json()["status"], "refused")
+        self.assertEqual(response.json()["detail"], "partial_identity_match")

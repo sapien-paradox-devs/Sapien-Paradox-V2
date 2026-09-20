@@ -85,6 +85,20 @@ export function WelcomePage() {
     );
   }
 
+  if (state.matches("owned")) {
+    return (
+      <main className="shell">
+        <div className="welcome">
+          <p className="welcome-mark">{labels.app.name}</p>
+          <h1>{labels.welcome.ownedTitle}</h1>
+          <p className="welcome-body">{labels.welcome.alreadyOwned}</p>
+          {resend}
+          {signIn}
+        </div>
+      </main>
+    );
+  }
+
   if (state.matches("pending")) {
     return (
       <main className="shell">
