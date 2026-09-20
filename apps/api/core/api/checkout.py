@@ -15,7 +15,8 @@ from ninja import Router
 from ninja.errors import HttpError
 
 from ..models import Book, Order
-from ..schemas.checkout import BookCardOut, CheckoutIn, CheckoutOut
+from ..models import MessageLog
+from ..schemas.checkout import BookCardOut, CheckoutIn, CheckoutOut, ConfirmIn, ConfirmOut
 from ..services import payments
 from ..services.onboarding import OnboardingRefused, create_reader
 
@@ -75,51 +76,29 @@ def checkout(request, payload: CheckoutIn):
     return CheckoutOut(paymentUrl=link["short_url"])
 
 
-@router.post("/payments/webhook", auth=None, url_name="razorpay_webhook")
-def webhook(request):
-    """Razorpay tells us the money arrived. This creates the reader.
+def _fulfil(entity) -> tuple[str, str, bool]:
+    """Create the reader for one paid payment-link entity. (status, detail, delivered)
 
-    Three things this must get right, each of which breaks quietly otherwise:
-
-    1. **Verify before parsing.** The signature is over the raw bytes, so
-       `request.body` is read first and nothing re-serialises it.
-    2. **Idempotent.** Razorpay retries on any non-2xx *and* on timeout, so the
-       same event will arrive twice. A duplicate does nothing and still returns
-       200 -- replying non-2xx would make it retry what already succeeded.
-    3. **Never 500 on a business refusal.** An already-owned book is not an
-       error Razorpay should retry.
+    Shared by the webhook and the redirect (D48). Idempotent on
+    `Order.payment_reference`, which the webhook already relied on for Razorpay's
+    own retries — two legs is that same property with a different caller.
     """
-    raw = request.body                                   # RAW BYTES FIRST
-    provided = request.headers.get("X-Razorpay-Signature", "")
-
-    if not payments.signature_is_valid(raw, provided):
-        log.warning("razorpay webhook refused: signature mismatch")
-        raise HttpError(400, "bad_signature")
-
-    event = json.loads(raw)
-    if event.get("event") != "payment_link.paid":
-        return {"status": "ignored", "event": event.get("event")}
-
-    entity = (event.get("payload", {}).get("payment_link", {}) or {}).get("entity", {})
     notes = entity.get("notes", {}) or {}
     payment_ref = entity.get("id", "")
 
-    # Idempotency, on the payment reference rather than a separate ledger: the
-    # Order is written anyway, and a second table would be a second truth.
     if payment_ref and Order.objects.filter(payment_reference=payment_ref).exists():
-        log.info("razorpay webhook: %s already fulfilled", payment_ref)
-        return {"status": "ok", "duplicate": True}
+        log.info("already fulfilled: %s", payment_ref)
+        return "fulfilled", "duplicate", True
 
     try:
         book = Book.objects.get(slug=notes.get("book_slug", ""))
     except Book.DoesNotExist:
-        log.error("razorpay webhook: unknown book %r", notes.get("book_slug"))
-        return {"status": "ok", "ignored": "unknown_book"}
+        log.error("unknown book %r on %s", notes.get("book_slug"), payment_ref)
+        return "refused", "unknown_book", False
 
-    # No outer transaction here. `create_reader` opens its own (D26), and
-    # wrapping it in a second one means a refusal raised inside the inner block
-    # leaves the outer one marked for rollback -- so even the handled path can
-    # no longer touch the database.
+    # No outer transaction: `create_reader` opens its own (D26), and wrapping it in a
+    # second one means a refusal raised inside leaves the outer marked for rollback,
+    # so even the handled path can no longer touch the database.
     try:
         result = create_reader(
             full_name=notes.get("full_name", ""),
@@ -129,12 +108,80 @@ def webhook(request):
             pace=notes.get("pace", "medium"),
         )
     except OnboardingRefused as exc:
-        # A refusal is a fact, not a failure Razorpay should retry.
-        log.warning("razorpay webhook refused by onboarding: %s", exc.reason)
-        return {"status": "ok", "refused": exc.reason}
+        log.warning("onboarding refused %s: %s", payment_ref, exc.reason)
+        return "refused", exc.reason, False
 
     if payment_ref:
         Order.objects.filter(pk=result.order.pk).update(payment_reference=payment_ref)
 
-    log.info("razorpay webhook fulfilled %s", payment_ref)
-    return {"status": "ok", "duplicate": False}
+    delivered = bool(
+        result.chapter_message and result.chapter_message.status == MessageLog.SENT
+    )
+    log.info("fulfilled %s delivered=%s", payment_ref, delivered)
+    return "fulfilled", "", delivered
+
+
+@router.post("/checkout/confirm", response=ConfirmOut, auth=None, url_name="checkout_confirm")
+def confirm(request, payload: ConfirmIn):
+    """The redirect leg (D48). The reader's own browser delivers this.
+
+    The webhook needs a public URL, a dashboard entry, a matching secret and an
+    instance that is awake. This needs none of them — which is why V1's spike
+    fulfilled here, and why its working run recorded `fulfilled_by: redirect`.
+
+    The id arrives in a query string and is forgeable, so it only selects which link
+    to ask Razorpay about. `status == "paid"` is Razorpay's answer, never the browser's.
+    """
+    if not payments.configured():
+        raise HttpError(503, "payments_unavailable")
+
+    try:
+        link = payments.fetch_link(payload.paymentLinkId.strip())
+    except payments.PaymentsUnavailable as exc:
+        log.error("confirm could not read %s: %s", payload.paymentLinkId, exc)
+        raise HttpError(502, "payment_lookup_failed") from exc
+
+    if link.get("status") != "paid":
+        # Not a failure. Razorpay can lag, and the webhook may still land.
+        log.info("confirm: %s is %r, not paid", payload.paymentLinkId, link.get("status"))
+        return ConfirmOut(status="pending", delivered=False)
+
+    status, detail, delivered = _fulfil(link)
+    return ConfirmOut(status=status, delivered=delivered, detail=detail)
+
+
+@router.post("/payments/webhook", auth=None, url_name="razorpay_webhook")
+def webhook(request):
+    """Razorpay tells us the money arrived. The backstop leg (D48).
+
+    Three things this must get right, each of which breaks quietly otherwise:
+
+    1. **Verify before parsing.** The signature is over the raw bytes, so
+       `request.body` is read first and nothing re-serialises it.
+    2. **Idempotent.** Razorpay retries on any non-2xx *and* on timeout, and since
+       D48 the redirect may have fulfilled already. A duplicate does nothing and
+       still returns 200.
+    3. **Never 500 on a business refusal.** An already-owned book is not an error
+       Razorpay should retry.
+    """
+    raw = request.body                                   # RAW BYTES FIRST
+    provided = request.headers.get("X-Razorpay-Signature", "")
+
+    if not payments.signature_is_valid(raw, provided):
+        # Fails closed when RAZORPAY_WEBHOOK_SECRET is unset, which is easy to miss
+        # and silent — hence D48's second leg. `error`, not `warning`: a rejected
+        # webhook means a paid reader got nothing.
+        log.error("razorpay webhook refused: signature mismatch or secret unset")
+        raise HttpError(400, "bad_signature")
+
+    event = json.loads(raw)
+    if event.get("event") != "payment_link.paid":
+        return {"status": "ignored", "event": event.get("event")}
+
+    entity = (event.get("payload", {}).get("payment_link", {}) or {}).get("entity", {})
+    status, detail, _delivered = _fulfil(entity)
+
+    # The response shape is the webhook's contract, unchanged by D48's refactor.
+    if status == "refused":
+        return {"status": "ok", "refused": detail}
+    return {"status": "ok", "duplicate": detail == "duplicate"}

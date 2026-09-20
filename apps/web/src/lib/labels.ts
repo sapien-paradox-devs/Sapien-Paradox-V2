@@ -40,9 +40,34 @@ export const labels = {
     signIn: "Sign in",
   },
   welcome: {
+    /*
+     * One state per outcome. The old copy asserted "your chapter is on its way"
+     * before anything had been created — which is what a reader saw while a
+     * rejected webhook meant nothing had been, or ever would be.
+     */
+    confirming: "Confirming your payment\u2026",
+
     headline: "Thank you.",
     body: "Your first chapter is on its way to your WhatsApp.",
     password: "It arrives with a link to set your password, so you can come back here any time.",
+
+    sentButUndelivered: "Paid \u2014 but WhatsApp could not reach your number yet.",
+    sandboxNote:
+      "That is a messaging restriction, not a problem with your purchase. Your chapter is waiting, and it will arrive as soon as the channel opens.",
+
+    pendingTitle: "Payment received.",
+    pendingBody:
+      "We are still confirming it with the payment provider. Your chapter will arrive on WhatsApp shortly \u2014 you do not need to pay again.",
+
+    refusedTitle: "Something needs a look.",
+    refusedBody:
+      "Your payment went through, but we could not set up your reading. Please contact us and quote this page \u2014 nothing further is needed from you.",
+    alreadyOwned: "You already own this book. Sign in and it is waiting in your library.",
+
+    failedTitle: "We could not confirm that just now.",
+    failedBody:
+      "Your payment is safe. If your chapter does not arrive on WhatsApp shortly, contact us.",
+
     login: "Go to sign in",
   },
   pace: {

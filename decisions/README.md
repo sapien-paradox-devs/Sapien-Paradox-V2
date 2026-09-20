@@ -70,6 +70,7 @@ back to. Without it these read as taste rather than as answers to specific, obse
 | D40 | Outcome-branching, not exceptions | [machines](10-machines.md) | locked |
 | D46 | Gemini for testing, behind the existing seam *(scoped; amends D24's model choice)* | [companion-provider](11-companion-provider.md) | locked |
 | D47 | Public signup; payments lead onboarding *(reverses D10, advances D28)* | [payments](08-payments.md) | locked |
+| D48 | Fulfil on the redirect as well as the webhook *(refines D47)* | [payments](08-payments.md) | locked |
 
 ## Still open
 
