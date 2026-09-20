@@ -16,8 +16,16 @@ from ninja.errors import HttpError
 
 from ..models import Book, Order
 from ..models import MessageLog
-from ..schemas.checkout import BookCardOut, CheckoutIn, CheckoutOut, ConfirmIn, ConfirmOut
-from ..services import payments
+from ..models import PasswordResetToken
+from ..schemas.checkout import (
+    BookCardOut,
+    CheckoutIn,
+    CheckoutOut,
+    ConfirmIn,
+    ConfirmOut,
+    ResendOut,
+)
+from ..services import grants, payments, whatsapp
 from ..services.onboarding import OnboardingRefused, create_reader
 
 router = Router()
@@ -148,6 +156,84 @@ def confirm(request, payload: ConfirmIn):
 
     status, detail, delivered = _fulfil(link)
     return ConfirmOut(status=status, delivered=delivered, detail=detail)
+
+
+@router.post("/checkout/resend", response=ResendOut, auth=None, url_name="checkout_resend")
+def resend(request, payload: ConfirmIn):
+    """Send the chapter and the set-a-password link again, after checkout.
+
+    `api/read.py` already has a resend, but it is `session_auth` — useless to the
+    reader who needs this most, because D26 leaves them with an unusable password
+    and no way to sign in until the very link they are asking for arrives.
+
+    Authorised by the payment link id, the same thing the redirect carries. That
+    is safe for the reason `reissue` is safe: **everything goes to the phone on
+    the account, never to whoever asked.** Someone holding the id can cause the
+    owner to receive a message; they cannot receive one themselves.
+    """
+    if not payments.configured():
+        raise HttpError(503, "payments_unavailable")
+
+    try:
+        link = payments.fetch_link(payload.paymentLinkId.strip())
+    except payments.PaymentsUnavailable as exc:
+        log.error("resend could not read %s: %s", payload.paymentLinkId, exc)
+        raise HttpError(502, "payment_lookup_failed") from exc
+
+    if link.get("status") != "paid":
+        return ResendOut(status="pending", chapterSent=False, passwordSent=False)
+
+    order = (
+        Order.objects.select_related("user", "book")
+        .filter(payment_reference=link.get("id", ""))
+        .first()
+    )
+
+    # Never fulfilled — resending is meaningless, so do the thing they actually
+    # wanted and fulfil, which sends both messages on its way through.
+    if order is None:
+        status, detail, delivered = _fulfil(link)
+        return ResendOut(
+            status="sent" if status == "fulfilled" else status,
+            chapterSent=delivered,
+            passwordSent=delivered,
+            detail=detail,
+        )
+
+    user = order.user
+
+    if whatsapp.recently_sent(user, "chapter_delivery", settings.CHAPTER_SEND_COOLDOWN_MINUTES):
+        # Not an error (D45): it already went, and saying so is the useful answer.
+        return ResendOut(status="throttled", chapterSent=False, passwordSent=False)
+
+    chapter = grants.first_chapter_of(order.book)
+    if chapter is None:
+        return ResendOut(status="refused", chapterSent=False, passwordSent=False,
+                         detail="book_has_no_chapters")
+
+    # Reuse a live grant rather than minting: two taps must not leave two live
+    # links for one chapter (D27).
+    grant = grants.mint_or_reuse(user, chapter)
+    chapter_log = whatsapp.send_chapter(grant)
+    chapter_sent = chapter_log.status == MessageLog.SENT
+
+    # Only for a reader who still cannot log in, and only outside its own cooldown.
+    password_sent = False
+    if not user.has_usable_password() and not whatsapp.recently_sent(
+        user, "set_password", settings.RESET_REQUEST_COOLDOWN_MINUTES
+    ):
+        token = PasswordResetToken.objects.create(user=user)
+        password_sent = whatsapp.send_password_reset(token).status == MessageLog.SENT
+
+    log.info("resend for %s chapter=%s password=%s",
+             link.get("id"), chapter_sent, password_sent)
+
+    return ResendOut(
+        status="sent" if chapter_sent else "refused",
+        chapterSent=chapter_sent,
+        passwordSent=password_sent,
+        detail="" if chapter_sent else "delivery_failed",
+    )
 
 
 @router.post("/payments/webhook", auth=None, url_name="razorpay_webhook")

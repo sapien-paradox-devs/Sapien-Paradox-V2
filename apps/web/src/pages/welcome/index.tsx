@@ -12,12 +12,40 @@ import { useMachine } from "@xstate/react";
 import { Spinner } from "../../components/Spinner";
 import { labels } from "../../lib/labels";
 import { useNavigation } from "../useNavigation";
+import type { ResendOutcome } from "./machine";
 import { welcomeMachine } from "./machine";
+
+/** Say which messages actually left, rather than a bare "done". */
+function resendMessage(outcome: ResendOutcome): string {
+  if (outcome.status === "throttled") return labels.welcome.resentThrottled;
+  if (!outcome.chapterSent) return labels.welcome.resentFailed;
+  return outcome.passwordSent ? labels.welcome.resentBoth : labels.welcome.resentChapter;
+}
 import "./welcome.css";
 
 export function WelcomePage() {
-  const [state] = useMachine(welcomeMachine);
+  const [state, send] = useMachine(welcomeMachine);
   const { navigate } = useNavigation();
+
+  const resending = state.matches("resending");
+
+  // Offered wherever the reader might still be waiting on a message — which is
+  // every outcome except a refusal, where sending again cannot help.
+  const resend = (
+    <>
+      {state.context.resend && (
+        <p className="welcome-quiet">{resendMessage(state.context.resend)}</p>
+      )}
+      <button
+        type="button"
+        className="btn-quiet welcome-link"
+        onClick={() => send({ type: "RESEND" })}
+        disabled={resending}
+      >
+        {resending ? labels.welcome.resending : labels.welcome.resend}
+      </button>
+    </>
+  );
 
   const signIn = (
     <button type="button" className="btn-quiet welcome-link" onClick={() => navigate("/login")}>
@@ -37,7 +65,7 @@ export function WelcomePage() {
     );
   }
 
-  if (state.matches("fulfilled")) {
+  if (state.matches("fulfilled") || state.matches("resending") || state.matches("resent")) {
     // `delivered` is whether the chapter message actually left. Saying it is on
     // its way when Twilio refused it is the lie this page used to tell.
     const delivered = state.context.delivered;
@@ -50,6 +78,7 @@ export function WelcomePage() {
             {delivered ? labels.welcome.body : labels.welcome.sandboxNote}
           </p>
           <p className="welcome-quiet">{labels.welcome.password}</p>
+          {resend}
           {signIn}
         </div>
       </main>
@@ -63,6 +92,7 @@ export function WelcomePage() {
           <p className="welcome-mark">{labels.app.name}</p>
           <h1>{labels.welcome.pendingTitle}</h1>
           <p className="welcome-body">{labels.welcome.pendingBody}</p>
+          {resend}
           {signIn}
         </div>
       </main>
@@ -91,6 +121,7 @@ export function WelcomePage() {
         <p className="welcome-mark">{labels.app.name}</p>
         <h1>{labels.welcome.failedTitle}</h1>
         <p className="welcome-body">{labels.welcome.failedBody}</p>
+        {resend}
         {signIn}
       </div>
     </main>

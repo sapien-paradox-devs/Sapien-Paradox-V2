@@ -68,6 +68,13 @@ export const labels = {
     failedBody:
       "Your payment is safe. If your chapter does not arrive on WhatsApp shortly, contact us.",
 
+    resend: "Send it again",
+    resending: "Sending\u2026",
+    resentBoth: "Sent. Your chapter and your set-a-password link are on their way.",
+    resentChapter: "Sent. Your chapter is on its way.",
+    resentThrottled: "Already sent a moment ago \u2014 check WhatsApp before trying again.",
+    resentFailed: "That still could not be delivered. Your purchase is safe; contact us and we will sort it out.",
+
     login: "Go to sign in",
   },
   pace: {

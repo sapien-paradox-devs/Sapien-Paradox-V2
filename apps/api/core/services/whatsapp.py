@@ -21,6 +21,7 @@ protected than the database.
 
 import logging
 import time
+from datetime import timedelta
 
 from django.conf import settings
 from django.utils import timezone
@@ -106,6 +107,20 @@ def send_password_reset(reset_token) -> MessageLog:
 # The backend builds these and the frontend routes them. Drift means every link in
 # every message 404s, which is why the patterns live in one file read by both.
 # ─────────────────────────────────────────────────────────────────────────────
+
+def recently_sent(user, template_key: str, minutes: int) -> bool:
+    """Has this reader already been sent one of these, lately? (D31)
+
+    Counted from MessageLog rows rather than a counter: the rows are written
+    anyway, and a counter is a second truth that drifts from them. It lives here
+    rather than in one router because two callers need it — the signed-in resend
+    in `api/read.py`, and the post-checkout one, which has no session at all.
+    """
+    since = timezone.now() - timedelta(minutes=minutes)
+    return MessageLog.objects.filter(
+        user=user, template_key=template_key, created_at__gte=since
+    ).exists()
+
 
 def reader_link(token: str) -> str:
     return settings.APP_BASE_URL + ROUTES["reader"].replace(":token", token)

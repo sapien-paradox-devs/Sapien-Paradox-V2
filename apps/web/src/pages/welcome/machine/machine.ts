@@ -12,7 +12,7 @@
 export const welcomeConfig = {
   id: "welcome",
   initial: "confirming",
-  context: { delivered: false, detail: "" },
+  context: { delivered: false, detail: "", resend: null },
 
   states: {
     confirming: {
@@ -28,9 +28,24 @@ export const welcomeConfig = {
       },
     },
 
-    fulfilled: { type: "final" },
-    pending: {},
+    /*
+     * Not final any more. A reader whose chapter did not leave — the sandbox
+     * window being the usual reason — needs a way to ask again without paying
+     * again, and this is the only screen they are holding.
+     */
+    fulfilled: { on: { RESEND: "resending" } },
+    pending: { on: { RESEND: "resending" } },
     refused: {},
-    failed: {},
+    failed: { on: { RESEND: "resending" } },
+
+    resending: {
+      invoke: {
+        src: "resendActor",
+        onDone: { target: "resent", actions: "assignResend" },
+        onError: { target: "resent", actions: "assignResendFailed" },
+      },
+    },
+
+    resent: { on: { RESEND: "resending" } },
   },
 } as const;
