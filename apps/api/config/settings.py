@@ -301,6 +301,10 @@ else:
 # `User.phone` is unique (D19) and that is not relaxed here.
 ONBOARDING_ALLOW_PHONE_REUSE = os.getenv("ONBOARDING_ALLOW_PHONE_REUSE", "").lower() in ("1", "true", "yes")
 
+# Applied to a phone number typed without a country code. India-first (D28's
+# Razorpay INR, D35's Singapore region); change it before selling elsewhere.
+DEFAULT_COUNTRY_CODE = os.getenv("DEFAULT_COUNTRY_CODE", "+91")
+
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
 TWILIO_WHATSAPP_FROM = os.getenv("TWILIO_WHATSAPP_FROM", "")

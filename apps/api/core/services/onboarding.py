@@ -20,6 +20,7 @@ from django.db import transaction
 
 from ..models import Order, PasswordResetToken, TemporalGrant, User
 from . import grants as grants_service
+from . import phone as phone_service
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +107,10 @@ def _resolve_identity(full_name, email, phone) -> tuple[User, bool]:
     chapter links to a stranger's phone, and creating a second account loses the
     reader the book they paid for. An admin can tell in two seconds; we cannot.
     """
+    # One spelling, or `+918712740175` and `8712740175` become two readers —
+    # and `User.phone` is unique on the string, so one human holds two accounts.
+    phone = phone_service.normalize(phone)
+
     by_email = User.objects.filter(email__iexact=email).first()
     by_phone = User.objects.filter(phone=phone).first()
 
