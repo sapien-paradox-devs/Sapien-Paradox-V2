@@ -44,3 +44,12 @@ class ConfirmOut(Schema):
     status: str          # "fulfilled" | "pending" | "refused"
     delivered: bool      # whether the chapter message actually left
     detail: str = ""     # a refusal reason, for the page to explain
+
+
+class ResendOut(Schema):
+    """What was actually re-sent, so the page can say so rather than guess."""
+
+    status: str            # "sent" | "pending" | "refused" | "throttled"
+    chapterSent: bool
+    passwordSent: bool
+    detail: str = ""

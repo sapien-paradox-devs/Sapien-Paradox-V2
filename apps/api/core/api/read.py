@@ -23,16 +23,8 @@ from ..services import access, grants, whatsapp
 router = Router()
 
 
-def _recently_sent(user, template_key: str, minutes: int) -> bool:
-    """Has this reader already been sent one of these, lately? (D31)
-
-    Counted from rows rather than a counter: the MessageLog is written anyway,
-    and a separate counter is a second truth that drifts from it.
-    """
-    since = timezone.now() - timedelta(minutes=minutes)
-    return MessageLog.objects.filter(
-        user=user, template_key=template_key, created_at__gte=since
-    ).exists()
+# Moved to services/whatsapp.py — the post-checkout resend needs it too.
+_recently_sent = whatsapp.recently_sent
 
 
 @router.get("/read/{chapter_id}", auth=session_auth, url_name="read_chapter")

@@ -2,15 +2,19 @@ import { describe, expect, it } from "vitest";
 import { createActor, fromPromise } from "xstate";
 
 import { ApiError } from "../../../../lib/fetcher";
-import type { Outcome } from "../types";
+import type { Outcome, ResendOutcome } from "../types";
 import { welcomeMachine } from "..";
 
-function start(outcome: Outcome | ApiError) {
+function start(outcome: Outcome | ApiError, resend?: ResendOutcome | ApiError) {
   const machine = welcomeMachine.provide({
     actors: {
       confirmActor: fromPromise<Outcome, void>(async () => {
         if (outcome instanceof ApiError) throw outcome;
         return outcome;
+      }),
+      resendActor: fromPromise<ResendOutcome, void>(async () => {
+        if (resend instanceof ApiError) throw resend;
+        return resend ?? { status: "sent", chapterSent: true, passwordSent: true, detail: "" };
       }),
     },
   });
@@ -58,5 +62,58 @@ describe("the welcome machine", () => {
     await settle();
 
     expect(actor.getSnapshot().matches("failed")).toBe(true);
+  });
+
+  it("lets a reader ask for the messages again without paying again", async () => {
+    const actor = start({ status: "fulfilled", delivered: false, detail: "" });
+    await settle();
+
+    actor.send({ type: "RESEND" });
+    await settle();
+
+    expect(actor.getSnapshot().matches("resent")).toBe(true);
+    expect(actor.getSnapshot().context.resend?.chapterSent).toBe(true);
+  });
+
+  it("reports a throttled resend as its own outcome, not a failure", async () => {
+    const actor = start(
+      { status: "fulfilled", delivered: true, detail: "" },
+      { status: "throttled", chapterSent: false, passwordSent: false, detail: "" },
+    );
+    await settle();
+
+    actor.send({ type: "RESEND" });
+    await settle();
+
+    expect(actor.getSnapshot().context.resend?.status).toBe("throttled");
+  });
+
+  it("offers a retry from pending too, where the reader is also still waiting", async () => {
+    const actor = start({ status: "pending", delivered: false, detail: "" });
+    await settle();
+
+    actor.send({ type: "RESEND" });
+
+    expect(actor.getSnapshot().matches("resending")).toBe(true);
+  });
+
+  it("does not offer one from a refusal, where sending again cannot help", async () => {
+    const actor = start({ status: "refused", delivered: false, detail: "already_owns_book" });
+    await settle();
+
+    actor.send({ type: "RESEND" });
+
+    expect(actor.getSnapshot().matches("refused")).toBe(true);
+  });
+
+  it("survives the resend call itself failing", async () => {
+    const actor = start({ status: "fulfilled", delivered: false, detail: "" }, new ApiError(502, null));
+    await settle();
+
+    actor.send({ type: "RESEND" });
+    await settle();
+
+    expect(actor.getSnapshot().matches("resent")).toBe(true);
+    expect(actor.getSnapshot().context.resend?.chapterSent).toBe(false);
   });
 });

@@ -12,7 +12,7 @@ from unittest.mock import patch
 from django.core.files.base import ContentFile
 from django.test import TestCase, override_settings
 
-from core.models import Book, Chapter, Order, User
+from core.models import Book, Chapter, MessageLog, Order, TemporalGrant, User
 
 PDF = b"%PDF-1.7\n%tiny\n%%EOF\n"
 SECRET = "test-webhook-secret"
@@ -304,4 +304,103 @@ class ConfirmTests(Base):
 
     @override_settings(RAZORPAY_KEY_ID="", RAZORPAY_KEY_SECRET="")
     def test_confirm_is_closed_when_unconfigured(self):
+        self.assertEqual(self.post().status_code, 503)
+
+
+@override_settings(RAZORPAY_KEY_ID="rzp_test", RAZORPAY_KEY_SECRET="secret",
+                   RAZORPAY_WEBHOOK_SECRET=SECRET, WHATSAPP_BACKEND="console")
+class ResendTests(Base):
+    """Sending the chapter and the set-a-password link again after checkout.
+
+    The signed-in resend in api/read.py cannot serve this reader: D26 leaves them
+    unable to log in until the link they are asking for arrives.
+    """
+
+    def post(self, payment_link_id="plink_TEST0001"):
+        return self.client.post(
+            "/api/checkout/resend",
+            json.dumps({"paymentLinkId": payment_link_id}),
+            content_type="application/json",
+        )
+
+    def confirm(self, fetch, **kw):
+        fetch.return_value = paid_link(**kw)
+        return self.client.post(
+            "/api/checkout/confirm", json.dumps({"paymentLinkId": "plink_TEST0001"}),
+            content_type="application/json")
+
+    @patch("core.services.payments.fetch_link")
+    def test_it_sends_both_again(self, fetch):
+        self.confirm(fetch)
+        MessageLog.objects.all().delete()          # clear the cooldown window
+
+        response = self.post()
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["status"], "sent")
+        self.assertTrue(body["chapterSent"])
+        self.assertTrue(body["passwordSent"])
+
+    @patch("core.services.payments.fetch_link")
+    def test_it_does_not_mint_a_second_live_link_for_one_chapter(self, fetch):
+        """Two taps must not leave two live tokens (D27)."""
+        self.confirm(fetch)
+        MessageLog.objects.all().delete()
+        before = TemporalGrant.objects.count()
+
+        self.post()
+
+        self.assertEqual(TemporalGrant.objects.count(), before)
+
+    @patch("core.services.payments.fetch_link")
+    def test_a_second_press_inside_the_window_is_throttled_not_an_error(self, fetch):
+        self.confirm(fetch)
+
+        response = self.post()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "throttled")
+
+    @patch("core.services.payments.fetch_link")
+    def test_no_password_link_for_a_reader_who_has_one(self, fetch):
+        self.confirm(fetch)
+        user = User.objects.get(email="new@example.com")
+        user.set_password("longenough")
+        user.save(update_fields=["password"])
+        MessageLog.objects.all().delete()
+
+        self.assertFalse(self.post().json()["passwordSent"])
+
+    @patch("core.services.payments.fetch_link")
+    def test_an_unfulfilled_purchase_is_fulfilled_rather_than_resent(self, fetch):
+        """Resending nothing is meaningless — do what they actually wanted."""
+        fetch.return_value = paid_link()
+
+        response = self.post()
+
+        self.assertEqual(response.json()["status"], "sent")
+        self.assertTrue(User.objects.filter(email="new@example.com").exists())
+        self.assertEqual(Order.objects.count(), 1)
+
+    @patch("core.services.payments.fetch_link")
+    def test_an_unpaid_link_sends_nothing(self, fetch):
+        fetch.return_value = paid_link(status="created")
+
+        self.assertEqual(self.post().json()["status"], "pending")
+        self.assertEqual(MessageLog.objects.count(), 0)
+
+    @patch("core.services.payments.fetch_link")
+    def test_everything_goes_to_the_phone_on_the_account(self, fetch):
+        """Holding the id can make the OWNER receive a message; never the asker."""
+        self.confirm(fetch)
+        MessageLog.objects.all().delete()
+
+        self.post()
+
+        for row in MessageLog.objects.all():
+            self.assertEqual(row.to_phone, "+919111000111")
+
+    @override_settings(RAZORPAY_KEY_ID="", RAZORPAY_KEY_SECRET="")
+    def test_resend_is_closed_when_unconfigured(self):
         self.assertEqual(self.post().status_code, 503)
