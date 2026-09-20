@@ -6,7 +6,7 @@ already failed (BUILD.md S5).
 
 from datetime import timedelta
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from core.models import (
@@ -263,3 +263,71 @@ class SetPasswordDeliveryTests(TestCase):
 
         self.assertIsNone(result.reset_token)
         self.assertEqual(PasswordResetToken.objects.count(), before)
+
+
+@override_settings(ONBOARDING_ALLOW_PHONE_REUSE=True)
+class PhoneReuseTests(TestCase):
+    """TEMPORARY (ONBOARDING_ALLOW_PHONE_REUSE) — remove with the flag.
+
+    One phone number is all a Phase 0 tester has, and the strict rule makes the
+    flow impossible to exercise twice.
+    """
+
+    def setUp(self):
+        self.book = a_book()
+        self.second = a_book(slug="second-book")
+
+    def first_purchase(self):
+        return create_reader(full_name="Ada", email="ada@example.com",
+                             phone="+919876543210", book=self.book, pace="medium")
+
+    def test_a_known_phone_with_a_new_email_reuses_that_reader(self):
+        first = self.first_purchase()
+
+        again = create_reader(full_name="Ada", email="someone-else@example.com",
+                              phone="+919876543210", book=self.second, pace="medium")
+
+        self.assertFalse(again.created)
+        self.assertEqual(again.user.pk, first.user.pk)
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_it_never_creates_a_second_account_on_one_number(self):
+        """`User.phone` is unique (D19) and the flag does not relax that."""
+        self.first_purchase()
+
+        create_reader(full_name="Ada", email="third@example.com",
+                      phone="+919876543210", book=self.second, pace="medium")
+
+        self.assertEqual(User.objects.filter(phone="+919876543210").count(), 1)
+
+    def test_the_readers_email_is_not_silently_rewritten(self):
+        """Rewriting an account's email from a checkout form is the dangerous half."""
+        first = self.first_purchase()
+
+        create_reader(full_name="Ada", email="attacker@example.com",
+                      phone="+919876543210", book=self.second, pace="medium")
+
+        first.user.refresh_from_db()
+        self.assertEqual(first.user.email, "ada@example.com")
+
+    def test_the_same_book_twice_is_still_refused(self):
+        """Order has a DB-level unique (user, book); the flag does not touch it."""
+        self.first_purchase()
+
+        with self.assertRaises(OnboardingRefused) as caught:
+            self.first_purchase()
+
+        self.assertEqual(caught.exception.reason, "already_owns_book")
+
+
+class PhoneReuseIsOffByDefaultTests(TestCase):
+    def test_a_known_phone_with_a_new_email_is_refused(self):
+        book, second = a_book(), a_book(slug="second-book")
+        create_reader(full_name="Ada", email="ada@example.com",
+                      phone="+919876543210", book=book, pace="medium")
+
+        with self.assertRaises(OnboardingRefused) as caught:
+            create_reader(full_name="Ada", email="other@example.com",
+                          phone="+919876543210", book=second, pace="medium")
+
+        self.assertEqual(caught.exception.reason, "partial_identity_match")
