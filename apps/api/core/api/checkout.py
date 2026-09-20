@@ -15,7 +15,7 @@ from ninja import Router
 from ninja.errors import HttpError
 
 from ..models import Book, Order
-from ..models import MessageLog
+from ..models import MessageLog, User
 from ..models import PasswordResetToken
 from ..schemas.checkout import (
     BookCardOut,
@@ -84,6 +84,28 @@ def checkout(request, payload: CheckoutIn):
     return CheckoutOut(paymentUrl=link["short_url"])
 
 
+def _existing_order(notes, book):
+    """The reader's order for this book, found without the payment reference.
+
+    `payment_reference` is the idempotency key, but it only matches when the same
+    link is replayed. An order created by an earlier payment, or by concierge
+    onboarding with no reference at all, is invisible to it — and then a replay
+    runs `create_reader` and is refused for a book the reader already owns.
+    """
+    phone = (notes.get("phone") or "").strip()
+    email = (notes.get("email") or "").strip()
+
+    user = None
+    if phone:
+        user = User.objects.filter(phone=phone).first()
+    if user is None and email:
+        user = User.objects.filter(email__iexact=email).first()
+    if user is None:
+        return None
+
+    return Order.objects.select_related("user", "book").filter(user=user, book=book).first()
+
+
 def _fulfil(entity) -> tuple[str, str, bool]:
     """Create the reader for one paid payment-link entity. (status, detail, delivered)
 
@@ -116,6 +138,19 @@ def _fulfil(entity) -> tuple[str, str, bool]:
             pace=notes.get("pace", "medium"),
         )
     except OnboardingRefused as exc:
+        if exc.reason == "already_owns_book":
+            # Not a refusal from the reader's side: they own it, the grant exists,
+            # and what they want is the links again. Refusing here made the one
+            # case that is trivially serviceable into the only dead end.
+            owned = _existing_order(notes, book)
+            if owned is not None and payment_ref and not owned.payment_reference:
+                # Adopt the reference so the next replay short-circuits above.
+                Order.objects.filter(pk=owned.pk).update(payment_reference=payment_ref)
+            # Loud, because a SECOND payment for the same book may need refunding.
+            log.warning("already owned: %s (order %s)", payment_ref,
+                        owned.pk if owned else "not found")
+            return "owned", "already_owns_book", False
+
         log.warning("onboarding refused %s: %s", payment_ref, exc.reason)
         return "refused", exc.reason, False
 
@@ -188,6 +223,15 @@ def resend(request, payload: ConfirmIn):
         .filter(payment_reference=link.get("id", ""))
         .first()
     )
+
+    # The reference only matches when this exact link was the one fulfilled. A
+    # reader who paid twice, or was created by concierge onboarding, still owns
+    # the book and is still entitled to the links.
+    if order is None:
+        notes = link.get("notes", {}) or {}
+        book = Book.objects.filter(slug=notes.get("book_slug", "")).first()
+        if book is not None:
+            order = _existing_order(notes, book)
 
     # Never fulfilled — resending is meaningless, so do the thing they actually
     # wanted and fulfil, which sends both messages on its way through.
@@ -268,6 +312,8 @@ def webhook(request):
     status, detail, _delivered = _fulfil(entity)
 
     # The response shape is the webhook's contract, unchanged by D48's refactor.
-    if status == "refused":
+    # `owned` is a distinction the welcome page needs; to Razorpay it is the same
+    # fact as any other refusal — nothing was created, do not retry.
+    if status in ("refused", "owned"):
         return {"status": "ok", "refused": detail}
     return {"status": "ok", "duplicate": detail == "duplicate"}

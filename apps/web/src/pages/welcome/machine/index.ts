@@ -16,7 +16,11 @@ export const welcomeMachine = setup({
     assignResendFailed: assign(actions.resendFailed),
   },
   actors: { confirmActor, resendActor },
-  guards: { isFulfilled: guards.isFulfilled, isPending: guards.isPending },
+  guards: {
+    isFulfilled: guards.isFulfilled,
+    isOwned: guards.isOwned,
+    isPending: guards.isPending,
+  },
 }).createMachine(welcomeConfig);
 
 export type { Context, Event, Outcome, ResendOutcome } from "./types";

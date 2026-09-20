@@ -20,6 +20,7 @@ export const welcomeConfig = {
         src: "confirmActor",
         onDone: [
           { guard: "isFulfilled", target: "fulfilled", actions: "assignOutcome" },
+          { guard: "isOwned", target: "owned", actions: "assignOutcome" },
           { guard: "isPending", target: "pending", actions: "assignOutcome" },
           { target: "refused", actions: "assignOutcome" },
         ],
@@ -35,6 +36,13 @@ export const welcomeConfig = {
      */
     fulfilled: { on: { RESEND: "resending" } },
     pending: { on: { RESEND: "resending" } },
+
+    // Owning the book is the most serviceable outcome there is: the order and the
+    // grant already exist, so the links can just be sent again.
+    owned: { on: { RESEND: "resending" } },
+
+    // Only a genuine refusal — an identity we cannot resolve — is a dead end,
+    // because there is nothing to send.
     refused: {},
     failed: { on: { RESEND: "resending" } },
 

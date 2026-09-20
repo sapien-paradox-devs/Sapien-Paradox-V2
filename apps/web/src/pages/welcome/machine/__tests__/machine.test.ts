@@ -116,4 +116,25 @@ describe("the welcome machine", () => {
     expect(actor.getSnapshot().matches("resent")).toBe(true);
     expect(actor.getSnapshot().context.resend?.chapterSent).toBe(false);
   });
+
+  it("treats owning the book as its own state, not a refusal", async () => {
+    const actor = start({ status: "owned", delivered: false, detail: "already_owns_book" });
+    await settle();
+
+    expect(actor.getSnapshot().matches("owned")).toBe(true);
+    expect(actor.getSnapshot().matches("refused")).toBe(false);
+  });
+
+  it("lets a reader who owns the book send the links again", async () => {
+    // The case that sent them back to us: they own it, the grant exists, and the
+    // only thing they need is the message.
+    const actor = start({ status: "owned", delivered: false, detail: "already_owns_book" });
+    await settle();
+
+    actor.send({ type: "RESEND" });
+    await settle();
+
+    expect(actor.getSnapshot().matches("resent")).toBe(true);
+    expect(actor.getSnapshot().context.resend?.chapterSent).toBe(true);
+  });
 });
