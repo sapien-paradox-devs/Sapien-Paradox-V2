@@ -184,6 +184,12 @@ class WebhookTests(Base):
         self.assertEqual(Order.objects.count(), 1)
 
 
+def real_send(to_phone, body):
+    """Stands in for Twilio accepting a message. The console backend is not
+    delivery, and the tests that assert delivery must not lean on it."""
+    return "SMfake0000000000000000000000000000"
+
+
 def paid_link(payment_ref="plink_TEST0001", status="paid", book_slug="tsp",
               email="new@example.com", phone="+919111000111"):
     """What `payments.fetch_link` returns — the payment-link entity itself."""
@@ -332,8 +338,9 @@ class ResendTests(Base):
             "/api/checkout/confirm", json.dumps({"paymentLinkId": "plink_TEST0001"}),
             content_type="application/json")
 
+    @patch("core.services.whatsapp._backend", return_value=real_send)
     @patch("core.services.payments.fetch_link")
-    def test_it_sends_both_again(self, fetch):
+    def test_it_sends_both_again(self, fetch, _backend):
         self.confirm(fetch)
         MessageLog.objects.all().delete()          # clear the cooldown window
 
@@ -453,8 +460,9 @@ class AlreadyOwnedTests(Base):
 
         self.assertEqual(Order.objects.get().payment_reference, "plink_OTHER")
 
+    @patch("core.services.whatsapp._backend", return_value=real_send)
     @patch("core.services.payments.fetch_link")
-    def test_owning_the_book_still_lets_you_resend(self, fetch):
+    def test_owning_the_book_still_lets_you_resend(self, fetch, _backend):
         """The whole point: you own it, so send the links again."""
         fetch.return_value = paid_link()
         self.confirm()
@@ -491,3 +499,47 @@ class AlreadyOwnedTests(Base):
 
         self.assertEqual(response.json()["status"], "refused")
         self.assertEqual(response.json()["detail"], "partial_identity_match")
+
+
+
+@override_settings(RAZORPAY_KEY_ID="rzp_test", RAZORPAY_KEY_SECRET="secret",
+                   RAZORPAY_WEBHOOK_SECRET=SECRET, WHATSAPP_BACKEND="console")
+class ConsoleIsNotDeliveryTests(Base):
+    """A deployment with no Twilio credentials prints every message to its own
+    log, records `sent`, and told the reader "Sent." Nothing ever existed."""
+
+    @patch("core.services.payments.fetch_link")
+    def test_confirm_does_not_claim_delivery_on_the_console_backend(self, fetch):
+        fetch.return_value = paid_link()
+
+        response = self.client.post(
+            "/api/checkout/confirm", json.dumps({"paymentLinkId": "plink_TEST0001"}),
+            content_type="application/json")
+
+        self.assertEqual(response.json()["status"], "fulfilled")   # the reader exists
+        self.assertFalse(response.json()["delivered"])              # but nothing left
+
+    @patch("core.services.payments.fetch_link")
+    def test_resend_does_not_claim_delivery_on_the_console_backend(self, fetch):
+        fetch.return_value = paid_link()
+        self.client.post("/api/checkout/confirm", json.dumps({"paymentLinkId": "plink_TEST0001"}),
+                         content_type="application/json")
+        MessageLog.objects.all().delete()
+
+        response = self.client.post(
+            "/api/checkout/resend", json.dumps({"paymentLinkId": "plink_TEST0001"}),
+            content_type="application/json")
+
+        self.assertFalse(response.json()["chapterSent"])
+        self.assertFalse(response.json()["passwordSent"])
+
+    @patch("core.services.whatsapp._backend", return_value=real_send)
+    @patch("core.services.payments.fetch_link")
+    def test_a_real_backend_does_claim_delivery(self, fetch, _backend):
+        fetch.return_value = paid_link()
+
+        response = self.client.post(
+            "/api/checkout/confirm", json.dumps({"paymentLinkId": "plink_TEST0001"}),
+            content_type="application/json")
+
+        self.assertTrue(response.json()["delivered"])

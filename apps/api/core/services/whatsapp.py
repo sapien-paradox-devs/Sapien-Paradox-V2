@@ -108,6 +108,20 @@ def send_password_reset(reset_token) -> MessageLog:
 # every message 404s, which is why the patterns live in one file read by both.
 # ─────────────────────────────────────────────────────────────────────────────
 
+CONSOLE_PROVIDER_ID = "console"
+
+
+def left_the_building(log) -> bool:
+    """Did this message actually go out to a phone?
+
+    `status == sent` means the backend accepted it. The console backend accepts
+    everything — that is its job — so on a deployment with no Twilio credentials
+    every message is `sent` and none exist. A caller that reports delivery must
+    ask this, not the status.
+    """
+    return log.status == MessageLog.SENT and log.provider_message_id != CONSOLE_PROVIDER_ID
+
+
 def recently_sent(user, template_key: str, minutes: int) -> bool:
     """Has this reader already been sent one of these, lately? (D31)
 
@@ -219,7 +233,14 @@ def _console_send(to_phone, body) -> str:
     shipped anywhere. The rule about tokens is about persisted logs (D22).
     """
     print(f"\n─── whatsapp → {to_phone} ───\n{body}\n────────────────────────────\n")
-    return "console"
+    if not settings.DEBUG:
+        # A deployment reached this with no credentials. Every "sent" it records
+        # is a message that never existed, and nothing else will say so.
+        logger.error(
+            "WhatsApp console backend in a non-debug deployment: TWILIO_AUTH_TOKEN "
+            "is unset, so this message to %s was printed here and NOT sent.", to_phone,
+        )
+    return CONSOLE_PROVIDER_ID
 
 
 def _twilio_send(to_phone, body) -> str:
