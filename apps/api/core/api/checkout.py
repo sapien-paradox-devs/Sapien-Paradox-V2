@@ -158,7 +158,7 @@ def _fulfil(entity) -> tuple[str, str, bool]:
         Order.objects.filter(pk=result.order.pk).update(payment_reference=payment_ref)
 
     delivered = bool(
-        result.chapter_message and result.chapter_message.status == MessageLog.SENT
+        result.chapter_message and whatsapp.left_the_building(result.chapter_message)
     )
     log.info("fulfilled %s delivered=%s", payment_ref, delivered)
     return "fulfilled", "", delivered
@@ -259,7 +259,7 @@ def resend(request, payload: ConfirmIn):
     # links for one chapter (D27).
     grant = grants.mint_or_reuse(user, chapter)
     chapter_log = whatsapp.send_chapter(grant)
-    chapter_sent = chapter_log.status == MessageLog.SENT
+    chapter_sent = whatsapp.left_the_building(chapter_log)
 
     # Only for a reader who still cannot log in, and only outside its own cooldown.
     password_sent = False
@@ -267,7 +267,7 @@ def resend(request, payload: ConfirmIn):
         user, "set_password", settings.RESET_REQUEST_COOLDOWN_MINUTES
     ):
         token = PasswordResetToken.objects.create(user=user)
-        password_sent = whatsapp.send_password_reset(token).status == MessageLog.SENT
+        password_sent = whatsapp.left_the_building(whatsapp.send_password_reset(token))
 
     log.info("resend for %s chapter=%s password=%s",
              link.get("id"), chapter_sent, password_sent)
