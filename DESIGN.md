@@ -42,12 +42,14 @@ These are the **first slices of the real product**.
 
 | Later | Plugs into |
 |---|---|
-| Payments (Stripe) | `onboarding.create_reader(...)` |
 | Cadence | `TemporalGrant.unlock_at` + `access.can_read` |
-| Reminders | `opened_at` + a pre-approved template |
+| Reminders | `opened_at` + the `UNREAD_REMINDER` template |
+| Refunds | `Order.status` + `access.can_read` |
 | Subscriptions | `access.can_read` |
 | Admin tooling | `core/services/*` |
-| Public signup | replaced by concierge onboarding (D10) |
+
+Already landed from this table: payments (Razorpay, D28/D47/D48) and public signup (D47, which
+reversed D10's concierge-only onboarding).
 
 **The one structural consequence of cadence arriving later:** nothing computes a future unlock time
 yet, so every chapter is available immediately. `unlock_at` exists and stays null.
@@ -216,24 +218,9 @@ prompt; no retrieval. Claude Sonnet 5.
 
 ## 6. Roadmap
 
-Each phase is an independently demoable vertical slice, **deployed** (D5). A phase is done when its
-demo is true on the deployed instance, not just locally.
+**The roadmap is the GitHub milestones** (D49). One milestone is open at a time and holds only
+issues that have been locked; the next one has a name and nothing else. `STATUS.md` names the
+current milestone and the next obvious issue. Nothing here — a table in this file rotted twice.
 
-| Phase | Build | Demo |
-|---|---|---|
-| **−1** | Twilio sender application · **four** Meta templates · domain + DNS · Anthropic key · Stripe test account | applications in, domain resolves |
-| **0** | Monorepo, Django + Ninja, `DATABASE_URL`, `django-storages`, Vite + React + XState, `labels.ts`, `shared/constants.json`, path-filtered CI, **both sides deployed** | `api.<domain>/api/health` 200 in production; a fresh clone runs with zero credentials |
-| **1** | Auth endpoints, `/login` + machine, boot rehydration, cookie scoped to parent domain | log in on the deployed app, refresh, new tab — still logged in, **on Safari** |
-| **2** | Eight models + migrations, the three seams, `GET /api/home`, `/read/:chapterId`, Home screen, Django admin onboarding, `seed_dev` with PDFs in object storage | create a reader through admin on the deployed instance, log in as them, see the chapters |
-| **3** | Grant + PDF endpoints, `/r/:token` with `react-pdf`, sanctuary, 7-day expiry | read from Home; the same URL in a logged-out private window still works; hand-expire a grant and get sanctuary |
-| **4** | Twilio + console backends, `MessageLog`, admin action, CLI, sanctuary re-issue, Home send | a real message on a real phone with a working link; recover an expired link in one tap |
-| **5** | `text_content` extraction, `POST /api/chat`, caps and logging, the panel, versioned prompt file | open the panel and it opens with a question; it follows the thread; off-topic declines gracefully |
-| **6** | End-to-end test, complete seed, `docs/HOW_TO_START.md` | fresh clone → one seed command → whole flow works locally and deployed |
-
-```
-−1 ──▶ 0 ──▶ 1 ──▶ 2 ──┬──▶ 3 ──▶ 5 ──┐
-   (waiting runs        │              ├──▶ 6
-    in parallel)        └──▶ 4 ────────┘
-```
-
-Phase 4's *demo* depends on Phase −1 clearing; its *build* does not.
+Phases −1 through 5 of the original plan are built and deployed; the record of what each contained
+is the merged PRs (#86–#109) and the decisions they cite.

@@ -50,7 +50,7 @@ apps/api/     Django 6 + Django Ninja + Postgres   → has its own CLAUDE.md
 apps/web/     React (Vite) + TS + XState           → has its own CLAUDE.md
 docs/         operational docs (setup, deploy)
 DESIGN.md     what we're building and why
-STATUS.md     what's happening now
+STATUS.md     what's deployed, the current milestone, what to revert
 ```
 
 Monorepo, one git history. **A vertical slice is one PR** spanning both apps — V1 split repos by
@@ -88,23 +88,32 @@ Signatures, failure behaviour, and transaction boundaries: **D25–D27** in
 
 ## Workflow — issue first, then a branch, then a PR
 
+**The plan is the GitHub milestones and issues** (D49). One milestone is open at a time and holds
+only issues locked in a grilling session. **If it is not an issue in the open milestone, it is not
+planned.**
+
 **No work starts without a GitHub issue.** If there isn't one, stop and ask for it — don't open
 one unilaterally and don't start coding "just this once".
 
 ```
-issue  →  branch  →  one PR  →  merge  →  issue closes
+issue  →  branch  →  one PR  →  merge  →  issue closes  →  pick the next obvious issue
 ```
 
+- **A turn is one issue.** Build the most obvious next thing; plan the one after it only once
+  this one has merged. We do not plan everything at once.
 - **One issue, one PR, one branch.** Never two issues in a PR, never one issue across two PRs.
 - **Branch name carries the issue:** `<issue-number>-<short-slug>`, e.g. `14-grant-pdf-stream`.
 - **The PR body says `Closes #<n>`**, so merging closes the issue and the trail survives.
 - **A PR is a vertical slice** — schema, API, UI, tests — spanning both apps when the change does.
   That is the whole reason this is a monorepo (D6).
+- **A plan change edits `STATUS.md` in the same PR.** Reordered the next issue, added a temporary
+  hack, deployed something — the four blocks in `STATUS.md` change with it, never afterwards.
 - **Never commit code straight to `main`.**
 
 **Markdown is exempt.** Decision records, specs, `STATUS.md`, this file — write them directly and
 commit them. Decisions must land the moment they're made (sessions end abruptly), and routing a
-paragraph through an issue and a PR would guarantee they don't.
+paragraph through an issue and a PR would guarantee they don't. The one exception is the
+`STATUS.md` edit that belongs to a code PR: it rides in that PR.
 
 *Also exempt: repository bootstrap, which cannot be gated behind an issue that has nowhere to
 live yet.*
@@ -113,7 +122,7 @@ live yet.*
 
 - **BFS** — root before leaves, exhaust a level before descending. One question at a time, always
   with a recommended answer.
-- **Decisions land immediately** in `DESIGN.md`, not at end of turn. Sessions end abruptly.
+- **Decisions land immediately** in `decisions/`, not at end of turn. Sessions end abruptly.
 - **Every departure from V1** carries an `Inherited from V1` block: what V1 did, what V2 does,
   why, what would make us revisit.
 - **One canonical doc per question.** If a new doc would overlap an existing one, edit the

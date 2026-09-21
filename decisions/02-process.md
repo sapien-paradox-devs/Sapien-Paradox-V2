@@ -1,6 +1,6 @@
 # Process and conventions
 
-D2 · D3
+D2 · D3 · D49
 
 ---
 
@@ -68,3 +68,33 @@ was blocked for it.
 
 **Naming:** `sanctuary` means the expired/invalid link state (D8/D9). V1's reading-room machine
 reused the word for end-of-chapter — that state is `finished`.
+
+---
+
+## D49 — The plan lives in GitHub; `STATUS.md` is the mirror, not the source
+
+**Locked** 2026-09-22 · *amends D2's standing rule for the plan itself*
+
+**What:** milestones are the sequence, issues are the work. **One milestone open at a time**,
+holding only issues that have been locked in a grilling session; the next milestone gets a name
+and nothing else until the current one closes. **A turn is one issue** — the most obvious next
+thing, built, merged, and only then is the next one chosen. **A plan change edits `STATUS.md` in
+the same PR** that makes it. `STATUS.md` holds four blocks and nothing else: what is deployed, the
+current milestone, the temporary hacks to revert, the next obvious issue.
+
+**Why:** by 2026-09-22 the repo carried four sequencings — `DESIGN.md` §6 phases, `BUILD.md`
+S0–S11, issue "waves", `STATUS.md` tracks — and none agreed or was current. Three status
+surfaces (`STATUS.md`, issues, `scratchpad/`) meant each session updated one and the other two
+rotted; all 22 open issues described work that had already merged. Issues are the one surface
+that updates itself — `Closes #n` on merge — so they are the source, and everything else points
+at them.
+
+**Rejected:** `STATUS.md` as the single backlog (the option that already rotted once) · planning
+every feature up front into milestones (specs written today go stale before they're built — D2's
+own reasoning) · both surfaces with discipline (what we had; it did not hold).
+
+**Revisit if:** more than one person plans at once, or milestones start to hold issues nobody
+grilled.
+
+**Deleted with this decision, git keeps them:** `ALL_DOCUMENTATION.md`, `UNIFIED_SPEC.md`,
+`apps/api/BUILD.md`, `docs/HANDOFF-2026-08-30.md`, `scratchpad/`.

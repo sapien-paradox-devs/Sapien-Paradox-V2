@@ -42,9 +42,9 @@ Check it: `curl localhost:8000/api/health`
 | `CLAUDE.md` | how to work here — workflow, seams, mandates |
 | `DESIGN.md` | what we're building and how it fits together |
 | `decisions/` | every locked decision, with rejected alternatives |
-| `STATUS.md` | current state and open questions |
+| `STATUS.md` | what's deployed, the current milestone, what to revert |
 | `apps/*/CLAUDE.md` | per-app architecture |
-| `apps/api/BUILD.md` | backend build order |
+| GitHub milestones + issues | the plan (D49) |
 
 **Decisions live in `decisions/` and nowhere else.** If the same decision appears in two places,
 that's a bug.
