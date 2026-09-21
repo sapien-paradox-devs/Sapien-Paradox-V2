@@ -18,6 +18,7 @@ from ninja.errors import HttpError
 
 from ..models import PasswordResetToken, User
 from ..schemas.auth import ResetConfirmIn, ResetRequestIn
+from ..services import phone as phone_service
 from ..services import whatsapp
 
 router = Router()
@@ -36,7 +37,9 @@ def reset_request(request, payload: ResetRequestIn):
     per user rather than per request, so a stranger cannot spend someone else's
     quota by guessing their number repeatedly.
     """
-    phone = payload.phone.strip()
+    # Normalised, or a reader typing their own number in a different shape gets
+    # the same reassuring answer and no message (D19).
+    phone = phone_service.normalize(payload.phone)
     user = User.objects.filter(phone=phone).first()
 
     if user is not None:

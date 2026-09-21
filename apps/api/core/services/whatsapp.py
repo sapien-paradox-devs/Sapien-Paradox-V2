@@ -253,4 +253,9 @@ def _twilio_send(to_phone, body) -> str:
 
 
 def _whatsapp_address(phone: str) -> str:
-    return phone if phone.startswith("whatsapp:") else f"whatsapp:{phone}"
+    """`whatsapp:` + E.164. A number stored without its `+` is rejected."""
+    from . import phone as phone_service
+
+    if phone.startswith("whatsapp:"):
+        phone = phone[len("whatsapp:"):]
+    return f"whatsapp:{phone_service.normalize(phone)}"

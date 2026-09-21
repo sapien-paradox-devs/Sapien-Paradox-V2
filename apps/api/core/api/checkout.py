@@ -26,6 +26,7 @@ from ..schemas.checkout import (
     ResendOut,
 )
 from ..services import grants, payments, whatsapp
+from ..services import phone as phone_service
 from ..services.onboarding import OnboardingRefused, create_reader
 
 router = Router()
@@ -73,7 +74,7 @@ def checkout(request, payload: CheckoutIn):
             book=book,
             full_name=payload.fullName.strip(),
             email=payload.email.strip().lower(),
-            phone=payload.phone.strip(),
+            phone=phone_service.normalize(payload.phone),
             pace=payload.pace,
             callback_url=f"{settings.APP_BASE_URL}/welcome",
         )
@@ -92,7 +93,7 @@ def _existing_order(notes, book):
     onboarding with no reference at all, is invisible to it — and then a replay
     runs `create_reader` and is refused for a book the reader already owns.
     """
-    phone = (notes.get("phone") or "").strip()
+    phone = phone_service.normalize(notes.get("phone"))
     email = (notes.get("email") or "").strip()
 
     user = None
