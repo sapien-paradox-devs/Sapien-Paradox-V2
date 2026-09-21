@@ -22,8 +22,11 @@ null — every chapter unlocks at once), reminders, refunds, sign-out, any visua
 
 ## Current milestone
 
-**None locked yet.** The next grilling session picks it. Candidates, in the order recommended:
-safe for a real reader → cadence → the site looks like a product.
+**[Cadence](https://github.com/sapien-paradox-devs/Sapien-Paradox-V2/milestone/1)** — locked
+2026-09-22 as D50. Three issues: #112 the service, #113 the cron job, #114 what the reader sees.
+
+Next milestone, named only: **Safe for a real reader** — the hacks below, the webhook secret,
+#3's external accounts, refunds.
 
 Two issues stay open outside any milestone: #1 (the PRD) and #3 (external accounts — domain,
 Twilio WABA, template review, Razorpay KYC). #3 is calendar time and should start now.
@@ -40,5 +43,4 @@ Twilio WABA, template review, Razorpay KYC). #3 is calendar time and should star
 
 ## Next obvious issue
 
-Lock the first milestone. Then, whichever it is, the first issue inside it is almost certainly
-**revert the hacks above and set the webhook secret** — it is a prerequisite of every candidate.
+**#112** — `services/cadence.py`. Backend only; nothing else in the milestone can start before it.

@@ -72,6 +72,7 @@ back to. Without it these read as taste rather than as answers to specific, obse
 | D47 | Public signup; payments lead onboarding *(reverses D10, advances D28)* | [payments](08-payments.md) | locked |
 | D48 | Fulfil on the redirect as well as the webhook *(refines D47)* | [payments](08-payments.md) | locked |
 | D49 | The plan lives in GitHub; `STATUS.md` mirrors it *(amends D2)* | [process](02-process.md) | locked |
+| D50 | Cadence: schedule minted at purchase, Render Cron ticks it *(applies D39/D40)* | [cadence](12-cadence.md) | locked |
 
 ## Still open
 
