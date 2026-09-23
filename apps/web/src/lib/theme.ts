@@ -21,7 +21,7 @@ export const THEME_STORAGE_KEY = "sp-theme";
 const ORDER: ThemePreference[] = ["system", "light", "dark"];
 
 /** The browser bar colour per theme — the two `--paper` values in global.css. */
-const THEME_COLOR: Record<Theme, string> = { light: "#faf7f2", dark: "#1b1713" };
+const THEME_COLOR: Record<Theme, string> = { light: "#f5f6f2", dark: "#101714" };
 
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 
