@@ -133,7 +133,7 @@
 .pdf-page img { pointer-events: none; }
 
 /* Dark mode dims the page; it never inverts it, which wrecks images. */
-:root[data-theme="dark"] .pdf-page { background: #d9d4cc; }
+:root[data-theme="dark"] .pdf-page { background: #d3d9d4; }
 :root[data-theme="dark"] .pdf-page img { filter: brightness(0.82) contrast(0.95); }
 
 /* Printing shows a line, not the chapter (D73). */
@@ -180,7 +180,7 @@
 }
 
 .chamber-sections::backdrop {
-  background: rgba(20, 17, 14, 0.28);
+  background: var(--backdrop);
 }
 
 .chamber-sections[open] { animation: sections-in var(--dur-base) var(--ease-settle); }

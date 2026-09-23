@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- The mark: an open book on sienna. Pure shapes, no font, so it renders
+  <!-- The mark: an open book on sage. Pure shapes, no font, so it renders
        the same as a favicon, a home-screen icon, and in the share card. -->
-  <rect width="512" height="512" rx="112" fill="#9c4f24"/>
-  <g fill="#faf7f2">
+  <rect width="512" height="512" rx="112" fill="#2f6b4f"/>
+  <g fill="#f5f6f2">
     <path d="M248 168 C204 138 146 128 92 138 L92 364 C146 354 204 362 248 392 Z"/>
     <path d="M264 168 C308 138 366 128 420 138 L420 364 C366 354 308 362 264 392 Z"/>
   </g>
-  <g stroke="#9c4f24" stroke-width="10" stroke-linecap="round" opacity="0.35">
+  <g stroke="#2f6b4f" stroke-width="10" stroke-linecap="round" opacity="0.35">
     <path d="M128 196 C160 190 196 194 222 206"/>
     <path d="M128 236 C160 230 196 234 222 246"/>
     <path d="M128 276 C160 270 196 274 222 286"/>
@@ -14,5 +14,5 @@
     <path d="M290 246 C316 234 352 230 384 236"/>
   </g>
   <!-- the ribbon: the one reference to where you stopped -->
-  <path d="M340 150 L372 144 L372 262 L356 248 L340 266 Z" fill="#6e3516"/>
+  <path d="M340 150 L372 144 L372 262 L356 248 L340 266 Z" fill="#1d4533"/>
 </svg>
