@@ -1,5 +1,8 @@
 import type { AnyEventObject } from "xstate";
 
+import { PROGRESS_STEP } from "./actions";
+import type { Context, Event } from "./types";
+
 import { ApiError } from "../../../lib/fetcher";
 
 function status(event: AnyEventObject): number | null {
@@ -39,3 +42,26 @@ export const isCompleted = ({ event }: { event: AnyEventObject }) =>
   event.output !== null &&
   "completed" in event.output &&
   event.output.completed === true;
+
+// ── the progress region (D70) ──────────────────────────────────────────
+
+/** Further than the reader has been. */
+export const isFurther = ({ context, event }: { context: Context; event: Event }) =>
+  event.type === "PROGRESS" && event.fraction > context.latest;
+
+/** Far enough past what the server has to be worth a request — and not after completing. */
+export const movedEnough = ({ context, event }: { context: Context; event: Event }) =>
+  !context.completed &&
+  event.type === "PROGRESS" &&
+  event.fraction - context.sent >= PROGRESS_STEP;
+
+/** Something the server has not been told yet. */
+export const hasUnsent = ({ context }: { context: Context }) =>
+  !context.completed && context.latest - context.sent >= PROGRESS_STEP;
+
+/** The reader kept going while the last save was in flight. */
+export const moreToSend = ({ context, event }: { context: Context; event: AnyEventObject }) =>
+  "output" in event &&
+  typeof event.output === "number" &&
+  !context.completed &&
+  context.latest - event.output >= PROGRESS_STEP;

@@ -3,6 +3,7 @@ import { createActor, fromPromise } from "xstate";
 
 import { ApiError } from "../../../../lib/fetcher";
 import { readerMachine } from "..";
+import { nextSendDelay } from "../actions";
 import type { ChapterMeta } from "../types";
 
 const CHAPTER: ChapterMeta = {
@@ -20,13 +21,28 @@ function start(
     reissue?: "ok" | 429 | 500;
     firstOpen?: boolean;
     completed?: boolean;
+    furthest?: number;
     complete?: "ok" | 500;
+    save?: "ok" | 500;
+    saved?: number[];
+    flushed?: number[];
   } = {},
 ) {
   const machine = readerMachine.provide({
-    // One beat of the ceremony, shrunk so the tests do not wait on it.
-    delays: { beat: 5 },
+    // One beat of the ceremony, and the progress region's wait, shrunk so the
+    // tests do not wait on them.
+    delays: { beat: 5, sendDelay: 10 },
+    actions: {
+      sendOnExit: ({ context }) => {
+        options.flushed?.push(context.latest);
+      },
+    },
     actors: {
+      saveProgress: fromPromise<number, { token: string; furthest: number }>(async ({ input }) => {
+        if (options.save === 500) throw new ApiError(500, null);
+        options.saved?.push(input.furthest);
+        return input.furthest;
+      }),
       fetchGrant: fromPromise<ChapterMeta, { token: string }>(async () => {
         const outcome = options.grant ?? "ok";
         if (outcome !== "ok") throw new ApiError(outcome, null);
@@ -34,6 +50,7 @@ function start(
           ...CHAPTER,
           firstOpen: options.firstOpen ?? false,
           completed: options.completed ?? false,
+          furthest: options.furthest ?? 0,
         };
       }),
       completeChapter: fromPromise<void, { token: string }>(async () => {
@@ -222,5 +239,100 @@ describe("marking a chapter complete (D70)", () => {
     await settle();
 
     expect(actor.getSnapshot().matches({ chamber: "finished" })).toBe(true);
+  });
+});
+
+describe("the progress region (D70, D42)", () => {
+  const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  it("sends once after the reader moves, with the furthest point reached", async () => {
+    const saved: number[] = [];
+    const actor = start({ saved });
+    await settle();
+
+    actor.send({ type: "PROGRESS", fraction: 0.2 });
+    actor.send({ type: "PROGRESS", fraction: 0.35 });
+    actor.send({ type: "PROGRESS", fraction: 0.3 });
+    expect(actor.getSnapshot().matches({ progress: "waiting" })).toBe(true);
+
+    await wait(40);
+    expect(saved).toEqual([0.35]);
+    expect(actor.getSnapshot().matches({ progress: "idle" })).toBe(true);
+  });
+
+  it("ignores movements too small to be worth a request", async () => {
+    const actor = start({ furthest: 0.5 });
+    await settle();
+
+    actor.send({ type: "PROGRESS", fraction: 0.505 });
+
+    expect(actor.getSnapshot().matches({ progress: "idle" })).toBe(true);
+  });
+
+  it("starts from where the reader left off, so nothing is re-sent", async () => {
+    const actor = start({ furthest: 0.6 });
+    await settle();
+
+    actor.send({ type: "PROGRESS", fraction: 0.4 });
+
+    expect(actor.getSnapshot().matches({ progress: "idle" })).toBe(true);
+    expect(actor.getSnapshot().context.latest).toBe(0.6);
+  });
+
+  it("goes round again when the reader kept going during a save", async () => {
+    const saved: number[] = [];
+    const actor = start({ saved });
+    await settle();
+
+    actor.send({ type: "PROGRESS", fraction: 0.2 });
+    await wait(15);
+    actor.send({ type: "PROGRESS", fraction: 0.5 });
+    await wait(60);
+
+    expect(saved.at(-1)).toBe(0.5);
+  });
+
+  it("flushes what is unsent when the page closes, and nothing when there is nothing", async () => {
+    const flushed: number[] = [];
+    const actor = start({ flushed });
+    await settle();
+
+    actor.send({ type: "FLUSH" });
+    expect(flushed).toEqual([]);
+
+    actor.send({ type: "PROGRESS", fraction: 0.4 });
+    actor.send({ type: "FLUSH" });
+    expect(flushed).toEqual([0.4]);
+    expect(actor.getSnapshot().matches({ progress: "idle" })).toBe(true);
+  });
+
+  it("sends nothing more once the chapter is complete", async () => {
+    const saved: number[] = [];
+    const actor = start({ saved });
+    await settle();
+
+    actor.send({ type: "FINISH" });
+    await settle();
+    actor.send({ type: "PROGRESS", fraction: 0.9 });
+
+    expect(actor.getSnapshot().matches({ progress: "idle" })).toBe(true);
+    expect(actor.getSnapshot().context.completed).toBe(true);
+  });
+
+  it("a failed save leaves the region ready for the next movement", async () => {
+    const actor = start({ save: 500 });
+    await settle();
+
+    actor.send({ type: "PROGRESS", fraction: 0.3 });
+    await wait(40);
+
+    expect(actor.getSnapshot().matches({ progress: "idle" })).toBe(true);
+  });
+});
+
+describe("nextSendDelay", () => {
+  it("waits for the settle, and never sends more often than every five seconds", () => {
+    expect(nextSendDelay(100_000, 0)).toBe(1500);
+    expect(nextSendDelay(10_000, 9_000)).toBe(4000);
   });
 });

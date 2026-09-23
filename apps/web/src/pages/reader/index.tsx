@@ -4,6 +4,7 @@
  */
 
 import { useMachine } from "@xstate/react";
+import { useCallback, useEffect, useLayoutEffect } from "react";
 
 import { Companion } from "../../components/Companion";
 import { PdfChamber } from "../../components/PdfChamber";
@@ -11,7 +12,6 @@ import { labels } from "../../lib/labels";
 import { readerMachine } from "./machine";
 import { Sanctuary } from "./Sanctuary";
 import { Threshold, type ThresholdBeat } from "./Threshold";
-import { useProgressSync } from "./useProgressSync";
 import "./reader.css";
 
 type ReissueState = "idle" | "sending" | "sent" | "limited" | "failed";
@@ -26,8 +26,31 @@ export function ReaderPage() {
 
   // Before any early return: hooks run on every render.
   const finished = state.matches({ chamber: "finished" });
-  const startAt = finished ? 1 : (state.context.chapter?.furthest ?? 0);
-  const onProgress = useProgressSync(token, startAt, state.context.chapter !== null && !finished);
+  const startAt = state.context.completed ? 1 : (state.context.chapter?.furthest ?? 0);
+
+  // The chamber reports; the `progress` region decides what to send and when (D70).
+  const onProgress = useCallback(
+    (fraction: number) => send({ type: "PROGRESS", fraction }),
+    [send],
+  );
+
+  // Closing the tab, or backgrounding it on a phone, flushes what is unsent.
+  useEffect(() => {
+    const flush = () => send({ type: "FLUSH" });
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [send]);
+
+  // Leaving for another page in the app: a layout cleanup runs before
+  // useMachine stops the actor, so the flush still lands.
+  useLayoutEffect(() => () => send({ type: "FLUSH" }), [send]);
 
   if (state.matches({ chamber: "sanctuary" })) {
     return (

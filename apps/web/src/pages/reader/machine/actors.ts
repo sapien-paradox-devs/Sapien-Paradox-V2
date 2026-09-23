@@ -17,3 +17,13 @@ export const reissueGrant = fromPromise<void, { token: string }>(({ input }) =>
 export const completeChapter = fromPromise<void, { token: string }>(({ input }) =>
   mappedFetcher.post<void>(`/api/grants/${input.token}/complete`),
 );
+
+/** Saves the reader's furthest point (D70); resolves with the number it sent. */
+export const saveProgress = fromPromise<number, { token: string; furthest: number }>(
+  async ({ input }) => {
+    await mappedFetcher.post<void>(`/api/grants/${input.token}/progress`, {
+      furthest: input.furthest,
+    });
+    return input.furthest;
+  },
+);
