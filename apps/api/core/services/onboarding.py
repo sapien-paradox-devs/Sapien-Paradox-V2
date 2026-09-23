@@ -15,7 +15,6 @@ import logging
 from dataclasses import dataclass
 from typing import Any
 
-from django.conf import settings
 from django.db import transaction
 
 from ..models import Order, PasswordResetToken, TemporalGrant, User
@@ -48,8 +47,25 @@ class OnboardingResult:
     password_message: Any = None
 
 
-def create_reader(full_name, email, phone, book, pace) -> OnboardingResult:
-    user, created = _resolve_identity(full_name, email, phone)
+def create_reader(full_name, email, phone, book, pace, user=None) -> OnboardingResult:
+    """The only way a reader comes into existence (D26).
+
+    **This function no longer decides who the reader is** (D59, D69). The
+    acquisition machine resolves the identity and passes `user`: `None` for a
+    genuinely new reader, the resolved reader for one we already know. Every
+    other guarantee D26 locked is unchanged — three rows atomic, delivery after
+    the block, the `MessageLog` returned in the result.
+    """
+    # One spelling, or `+918712740175` and `8712740175` become two readers —
+    # and `User.phone` is unique on the string, so one human holds two accounts.
+    phone = phone_service.normalize(phone)
+
+    created = user is None
+    if created:
+        user = User(email=email, full_name=full_name, phone=phone)
+        # No password. They read chapter 1 from the WhatsApp link, and the
+        # reset link is how they reach Home (D26).
+        user.set_unusable_password()
 
     with transaction.atomic():
         if created:
@@ -96,50 +112,4 @@ def create_reader(full_name, email, phone, book, pace) -> OnboardingResult:
         created=created,
         chapter_message=chapter_message,
         password_message=password_message,
-    )
-
-
-def _resolve_identity(full_name, email, phone) -> tuple[User, bool]:
-    """D26's four cases. Reuse on an exact match, refuse on a partial one.
-
-    A changed phone number and a typo'd phone number are *identical* to the
-    code, and guessing wrong is expensive both ways: updating silently sends
-    chapter links to a stranger's phone, and creating a second account loses the
-    reader the book they paid for. An admin can tell in two seconds; we cannot.
-    """
-    # One spelling, or `+918712740175` and `8712740175` become two readers —
-    # and `User.phone` is unique on the string, so one human holds two accounts.
-    phone = phone_service.normalize(phone)
-
-    by_email = User.objects.filter(email__iexact=email).first()
-    by_phone = User.objects.filter(phone=phone).first()
-
-    if by_email is None and by_phone is None:
-        user = User(email=email, full_name=full_name, phone=phone)
-        # No password. They read chapter 1 from the WhatsApp link, and the
-        # reset link is how they reach Home (D26).
-        user.set_unusable_password()
-        return user, True
-
-    if by_email is not None and by_email == by_phone:
-        return by_email, False
-
-    if by_email is not None and by_phone is not None:
-        raise OnboardingRefused("identity_belongs_to_two_readers", "email,phone")
-
-    # TEMPORARY (settings.ONBOARDING_ALLOW_PHONE_REUSE) — revert before real readers.
-    # A known phone with an unknown email is normally refused, which makes the flow
-    # untestable with one phone number. When the flag is on we treat the phone as
-    # the identity and reuse that reader; the new email is ignored rather than
-    # overwriting theirs, because silently rewriting an account's email from a
-    # checkout form is the more dangerous half of this.
-    if by_phone is not None and settings.ONBOARDING_ALLOW_PHONE_REUSE:
-        logger.warning(
-            "ONBOARDING_ALLOW_PHONE_REUSE: reusing reader %s for a signup that gave "
-            "a different email. This must not be on in production.", by_phone.pk
-        )
-        return by_phone, False
-
-    raise OnboardingRefused(
-        "partial_identity_match", "phone" if by_email is not None else "email"
     )

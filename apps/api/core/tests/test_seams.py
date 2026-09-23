@@ -128,6 +128,7 @@ class CreateReaderTests(TestCase):
             phone=phone,
             book=book or self.book,
             pace="medium",
+            user=User.objects.filter(email=email).first(),
         )
 
     def test_a_new_reader_gets_a_user_an_order_and_a_grant(self):
@@ -150,61 +151,6 @@ class CreateReaderTests(TestCase):
         self.assertEqual(result.chapter_message.status, MessageLog.SENT)
         self.assertEqual(result.chapter_message.grant, result.grant)
 
-    def test_a_returning_reader_buying_another_book_is_normal(self):
-        self.submit()
-        other = a_book(slug="second-book")
-
-        result = self.submit(book=other)
-
-        self.assertFalse(result.created)
-        self.assertEqual(User.objects.count(), 1)
-        self.assertEqual(Order.objects.count(), 2)
-
-    def test_buying_the_same_book_twice_is_refused(self):
-        self.submit()
-
-        with self.assertRaises(OnboardingRefused) as caught:
-            self.submit()
-
-        self.assertEqual(caught.exception.reason, "already_owns_book")
-
-    def test_a_known_email_with_a_new_phone_is_refused_naming_the_field(self):
-        self.submit()
-
-        with self.assertRaises(OnboardingRefused) as caught:
-            self.submit(phone="+910000000000", book=a_book(slug="third"))
-
-        self.assertEqual(caught.exception.reason, "partial_identity_match")
-        self.assertEqual(caught.exception.field, "phone")
-
-    def test_a_known_phone_with_a_new_email_is_refused(self):
-        self.submit()
-
-        with self.assertRaises(OnboardingRefused) as caught:
-            self.submit(email="grace@example.com", book=a_book(slug="fourth"))
-
-        self.assertEqual(caught.exception.field, "email")
-
-    def test_fields_pointing_at_two_readers_are_refused(self):
-        self.submit()
-        self.submit(email="grace@example.com", phone="+911111111111",
-                    book=a_book(slug="fifth"))
-
-        with self.assertRaises(OnboardingRefused) as caught:
-            self.submit(email="ada@example.com", phone="+911111111111",
-                        book=a_book(slug="sixth"))
-
-        self.assertEqual(caught.exception.reason, "identity_belongs_to_two_readers")
-
-    def test_a_refusal_creates_nothing(self):
-        self.submit()
-        before = Order.objects.count()
-
-        with self.assertRaises(OnboardingRefused):
-            self.submit()
-
-        self.assertEqual(Order.objects.count(), before)
-
 
 class SetPasswordDeliveryTests(TestCase):
     """Who is sent a set-a-password link, and who is not.
@@ -219,12 +165,15 @@ class SetPasswordDeliveryTests(TestCase):
         self.second = a_book(slug="second-book")
 
     def submit(self, book=None):
+        # Identity resolution is the machine's job now (D59); the seam is told
+        # who the reader is. `test_acquisition_machine.py` covers the deciding.
         return create_reader(
             full_name="Ada",
             email="ada@example.com",
             phone="+919876543210",
             book=book or self.book,
             pace="medium",
+            user=User.objects.filter(email="ada@example.com").first(),
         )
 
     def test_a_new_reader_is_sent_one(self):
@@ -264,70 +213,3 @@ class SetPasswordDeliveryTests(TestCase):
         self.assertIsNone(result.reset_token)
         self.assertEqual(PasswordResetToken.objects.count(), before)
 
-
-@override_settings(ONBOARDING_ALLOW_PHONE_REUSE=True)
-class PhoneReuseTests(TestCase):
-    """TEMPORARY (ONBOARDING_ALLOW_PHONE_REUSE) — remove with the flag.
-
-    One phone number is all a Phase 0 tester has, and the strict rule makes the
-    flow impossible to exercise twice.
-    """
-
-    def setUp(self):
-        self.book = a_book()
-        self.second = a_book(slug="second-book")
-
-    def first_purchase(self):
-        return create_reader(full_name="Ada", email="ada@example.com",
-                             phone="+919876543210", book=self.book, pace="medium")
-
-    def test_a_known_phone_with_a_new_email_reuses_that_reader(self):
-        first = self.first_purchase()
-
-        again = create_reader(full_name="Ada", email="someone-else@example.com",
-                              phone="+919876543210", book=self.second, pace="medium")
-
-        self.assertFalse(again.created)
-        self.assertEqual(again.user.pk, first.user.pk)
-        self.assertEqual(User.objects.count(), 1)
-
-    def test_it_never_creates_a_second_account_on_one_number(self):
-        """`User.phone` is unique (D19) and the flag does not relax that."""
-        self.first_purchase()
-
-        create_reader(full_name="Ada", email="third@example.com",
-                      phone="+919876543210", book=self.second, pace="medium")
-
-        self.assertEqual(User.objects.filter(phone="+919876543210").count(), 1)
-
-    def test_the_readers_email_is_not_silently_rewritten(self):
-        """Rewriting an account's email from a checkout form is the dangerous half."""
-        first = self.first_purchase()
-
-        create_reader(full_name="Ada", email="attacker@example.com",
-                      phone="+919876543210", book=self.second, pace="medium")
-
-        first.user.refresh_from_db()
-        self.assertEqual(first.user.email, "ada@example.com")
-
-    def test_the_same_book_twice_is_still_refused(self):
-        """Order has a DB-level unique (user, book); the flag does not touch it."""
-        self.first_purchase()
-
-        with self.assertRaises(OnboardingRefused) as caught:
-            self.first_purchase()
-
-        self.assertEqual(caught.exception.reason, "already_owns_book")
-
-
-class PhoneReuseIsOffByDefaultTests(TestCase):
-    def test_a_known_phone_with_a_new_email_is_refused(self):
-        book, second = a_book(), a_book(slug="second-book")
-        create_reader(full_name="Ada", email="ada@example.com",
-                      phone="+919876543210", book=book, pace="medium")
-
-        with self.assertRaises(OnboardingRefused) as caught:
-            create_reader(full_name="Ada", email="other@example.com",
-                          phone="+919876543210", book=second, pace="medium")
-
-        self.assertEqual(caught.exception.reason, "partial_identity_match")

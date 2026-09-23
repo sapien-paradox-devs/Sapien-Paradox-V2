@@ -77,27 +77,6 @@ class ResetRequestFindsTheReaderTests(TestCase):
         self.assertEqual(PasswordResetToken.objects.count(), 0)
 
 
-class OneHumanOneAccountTests(TestCase):
-    def test_two_spellings_do_not_become_two_readers(self):
-        """`User.phone` is unique on the string, so without normalising this
-        would have created a second account for one person."""
-        from core.models import Book, Chapter
-        from django.core.files.base import ContentFile
-        from core.services.onboarding import create_reader, OnboardingRefused
-
-        book = Book.objects.create(title="A", slug="a", price_cents=100, is_published=True)
-        Chapter.objects.create(book=book, order_index=1, title="One",
-                               file=ContentFile(b"%PDF-1.7\n%%EOF\n", name="a.pdf"))
-        second = Book.objects.create(title="B", slug="b", price_cents=100, is_published=True)
-        Chapter.objects.create(book=second, order_index=1, title="One",
-                               file=ContentFile(b"%PDF-1.7\n%%EOF\n", name="b.pdf"))
-
-        create_reader(full_name="Ada", email="ada@example.com",
-                      phone="+918712740175", book=book, pace="medium")
-
-        # Same human, same email, number typed differently.
-        result = create_reader(full_name="Ada", email="ada@example.com",
-                               phone="8712740175", book=second, pace="medium")
-
-        self.assertFalse(result.created)
-        self.assertEqual(User.objects.count(), 1)
+# `test_two_spellings_do_not_become_two_readers` moved to
+# test_acquisition_machine.py — it exercises identity resolution, which is now
+# the machine's (D59). `normalize` itself is still covered above.

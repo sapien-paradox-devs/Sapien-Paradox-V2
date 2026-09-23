@@ -14,9 +14,11 @@ from django.conf import settings
 from ninja import Router
 from ninja.errors import HttpError
 
-from ..models import Book, Order
-from ..models import MessageLog, User
-from ..models import PasswordResetToken
+from types import SimpleNamespace
+
+from ..machines import dispatch
+from ..machines.acquisition import PurchaseAttempt, acquisition_machine
+from ..models import Book, MessageLog, Order, PasswordResetToken, User
 from ..schemas.checkout import (
     BookCardOut,
     CheckoutIn,
@@ -85,84 +87,75 @@ def checkout(request, payload: CheckoutIn):
     return CheckoutOut(paymentUrl=link["short_url"])
 
 
-def _existing_order(notes, book):
-    """The reader's order for this book, found without the payment reference.
+def _deps():
+    """What the acquisition machine's guards and actions are handed (D37).
 
-    `payment_reference` is the idempotency key, but it only matches when the same
-    link is replayed. An order created by an earlier payment, or by concierge
-    onboarding with no reference at all, is invisible to it — and then a replay
-    runs `create_reader` and is refused for a book the reader already owns.
+    Plain callables. The machine imports no Django, which is why its tests run
+    with no database.
     """
-    phone = phone_service.normalize(notes.get("phone"))
-    email = (notes.get("email") or "").strip()
+    return SimpleNamespace(
+        find_by_email=lambda email: User.objects.filter(
+            email__iexact=(email or "").strip()).first(),
+        find_by_phone=lambda phone: (
+            User.objects.filter(phone=phone_service.normalize(phone)).first()
+            if (phone or "").strip() else None
+        ),
+        book_by_slug=lambda slug: Book.objects.filter(slug=(slug or "").strip()).first(),
+        order_for=lambda user, book: (
+            Order.objects.select_related("user", "book").filter(user=user, book=book).first()
+            if user is not None and book is not None else None
+        ),
+        order_by_reference=lambda ref: Order.objects.filter(payment_reference=ref).first(),
+        adopt_reference=lambda order, ref: Order.objects.filter(pk=order.pk).update(
+            payment_reference=ref),
+        create_reader=create_reader,
+        OnboardingRefused=OnboardingRefused,
+        phone_reuse_allowed=lambda: settings.ONBOARDING_ALLOW_PHONE_REUSE,
+    )
 
-    user = None
-    if phone:
-        user = User.objects.filter(phone=phone).first()
-    if user is None and email:
-        user = User.objects.filter(email__iexact=email).first()
-    if user is None:
-        return None
 
-    return Order.objects.select_related("user", "book").filter(user=user, book=book).first()
+def _attempt_from(entity) -> PurchaseAttempt:
+    notes = entity.get("notes", {}) or {}
+    return PurchaseAttempt(
+        full_name=(notes.get("full_name") or "").strip(),
+        email=(notes.get("email") or "").strip(),
+        phone=(notes.get("phone") or "").strip(),
+        book_slug=(notes.get("book_slug") or "").strip(),
+        pace=notes.get("pace") or "medium",
+        payment_reference=entity.get("id", ""),
+    )
 
 
 def _fulfil(entity) -> tuple[str, str, bool]:
     """Create the reader for one paid payment-link entity. (status, detail, delivered)
 
-    Shared by the webhook and the redirect (D48). Idempotent on
-    `Order.payment_reference`, which the webhook already relied on for Razorpay's
-    own retries — two legs is that same property with a different caller.
+    Shared by the webhook and the redirect (D48). **Every branch lives in the
+    transition table**, not here: this builds the attempt, dispatches, and turns
+    the refusal code into the shape the two callers already speak (D38).
     """
-    notes = entity.get("notes", {}) or {}
-    payment_ref = entity.get("id", "")
+    attempt = _attempt_from(entity)
+    result = dispatch(acquisition_machine, attempt, "PAID", deps=_deps())
 
-    if payment_ref and Order.objects.filter(payment_reference=payment_ref).exists():
-        log.info("already fulfilled: %s", payment_ref)
+    if result.ok:
+        delivered = bool(
+            result.data
+            and result.data.chapter_message
+            and whatsapp.left_the_building(result.data.chapter_message)
+        )
+        log.info("fulfilled %s delivered=%s", attempt.payment_reference, delivered)
+        return "fulfilled", "", delivered
+
+    if result.refusal == "duplicate":
+        log.info("already fulfilled: %s", attempt.payment_reference)
         return "fulfilled", "duplicate", True
 
-    try:
-        book = Book.objects.get(slug=notes.get("book_slug", ""))
-    except Book.DoesNotExist:
-        log.error("unknown book %r on %s", notes.get("book_slug"), payment_ref)
-        return "refused", "unknown_book", False
+    if result.refusal == "already_owns_book":
+        # Loud, because a SECOND payment for the same book may need refunding.
+        log.warning("already owned: %s", attempt.payment_reference)
+        return "owned", "already_owns_book", False
 
-    # No outer transaction: `create_reader` opens its own (D26), and wrapping it in a
-    # second one means a refusal raised inside leaves the outer marked for rollback,
-    # so even the handled path can no longer touch the database.
-    try:
-        result = create_reader(
-            full_name=notes.get("full_name", ""),
-            email=notes.get("email", ""),
-            phone=notes.get("phone", ""),
-            book=book,
-            pace=notes.get("pace", "medium"),
-        )
-    except OnboardingRefused as exc:
-        if exc.reason == "already_owns_book":
-            # Not a refusal from the reader's side: they own it, the grant exists,
-            # and what they want is the links again. Refusing here made the one
-            # case that is trivially serviceable into the only dead end.
-            owned = _existing_order(notes, book)
-            if owned is not None and payment_ref and not owned.payment_reference:
-                # Adopt the reference so the next replay short-circuits above.
-                Order.objects.filter(pk=owned.pk).update(payment_reference=payment_ref)
-            # Loud, because a SECOND payment for the same book may need refunding.
-            log.warning("already owned: %s (order %s)", payment_ref,
-                        owned.pk if owned else "not found")
-            return "owned", "already_owns_book", False
-
-        log.warning("onboarding refused %s: %s", payment_ref, exc.reason)
-        return "refused", exc.reason, False
-
-    if payment_ref:
-        Order.objects.filter(pk=result.order.pk).update(payment_reference=payment_ref)
-
-    delivered = bool(
-        result.chapter_message and whatsapp.left_the_building(result.chapter_message)
-    )
-    log.info("fulfilled %s delivered=%s", payment_ref, delivered)
-    return "fulfilled", "", delivered
+    log.warning("acquisition refused %s: %s", attempt.payment_reference, result.refusal)
+    return "refused", result.refusal or "refused", False
 
 
 @router.post("/checkout/confirm", response=ConfirmOut, auth=None, url_name="checkout_confirm")
@@ -229,10 +222,11 @@ def resend(request, payload: ConfirmIn):
     # reader who paid twice, or was created by concierge onboarding, still owns
     # the book and is still entitled to the links.
     if order is None:
-        notes = link.get("notes", {}) or {}
-        book = Book.objects.filter(slug=notes.get("book_slug", "")).first()
-        if book is not None:
-            order = _existing_order(notes, book)
+        deps, attempt = _deps(), _attempt_from(link)
+        # Email first, then phone — the same identity the machine resolves, so
+        # resend and fulfil can never disagree about who this is.
+        user = deps.find_by_email(attempt.email) or deps.find_by_phone(attempt.phone)
+        order = deps.order_for(user, deps.book_by_slug(attempt.book_slug))
 
     # Never fulfilled — resending is meaningless, so do the thing they actually
     # wanted and fulfil, which sends both messages on its way through.
