@@ -18,6 +18,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { labels } from "../../lib/labels";
 import { pdfMachine } from "./machine";
+import { PageSkeletons } from "./PageSkeletons";
 import { Pages } from "./Pages";
 import { activeSection, type Section } from "./position";
 import { Sections } from "./Sections";
@@ -138,7 +139,10 @@ export function PdfChamber({ token, bookTitle, title, footer, startAt = 0, onPro
           />
         </>
       ) : (
-        <p className="chamber-message">{labels.pdf.loading}</p>
+        <>
+          <p className="visually-hidden" role="status">{labels.pdf.loading}</p>
+          <PageSkeletons />
+        </>
       )}
     </div>
   );

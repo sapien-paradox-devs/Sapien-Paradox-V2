@@ -29,8 +29,9 @@ export function ChapterList({
 }) {
   return (
     <ul className="ui-chapters">
-      {chapters.map((chapter) => (
-        <li key={chapter.id} className="ui-chapter">
+      {chapters.map((chapter, index) => (
+        // Rows arrive one after another, once, on first render (#161).
+        <li key={chapter.id} className="ui-chapter" style={{ animationDelay: `${index * 40}ms` }}>
           <button className="ui-chapter-open" onClick={() => onOpen(chapter.id)}>
             <span className="ui-chapter-n">{chapter.number}</span>
             <span className="ui-chapter-title">{chapter.title}</span>

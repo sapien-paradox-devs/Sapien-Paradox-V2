@@ -9,9 +9,9 @@ import { useMachine } from "@xstate/react";
 
 import { ChapterList } from "../../components/ChapterList";
 import { ErrorNotice } from "../../components/ErrorNotice";
-import { Spinner } from "../../components/Spinner";
 import { labels } from "../../lib/labels";
 import { useNavigation } from "../useNavigation";
+import { HomeSkeleton } from "./HomeSkeleton";
 import { homeMachine } from "./machine";
 import "./home.css";
 
@@ -27,7 +27,7 @@ export function HomePage() {
     <main className="home">
       <h1>{labels.home.greeting}</h1>
 
-      {state.matches({ list: "loading" }) && <Spinner label={labels.health.booting} />}
+      {state.matches({ list: "loading" }) && <HomeSkeleton />}
 
       {state.matches({ list: "empty" }) && <p className="home-empty">{labels.home.empty}</p>}
 

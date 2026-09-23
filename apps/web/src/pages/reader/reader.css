@@ -204,3 +204,17 @@
 @keyframes threshold-lift {
   to { opacity: 0; transform: translateY(calc(var(--rise) * -2)); }
 }
+
+/* While the link is checked (#161). */
+.reader-skeleton-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* The chamber arrives as a whole once the link checks out. */
+.reader {
+  animation: reader-in var(--dur-base) var(--ease-settle) both;
+}
+
+@keyframes reader-in { from { opacity: 0; } }

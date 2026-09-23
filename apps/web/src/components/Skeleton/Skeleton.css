@@ -1,0 +1,31 @@
+/* Placeholders (#161): a sunk shape with a slow shimmer passing over it.
+   The shimmer moves by transform only (D54). Reduced motion's global rule
+   lets it sweep once and stop, which leaves a still, quiet block. */
+
+.ui-skeleton {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  background: var(--paper-sunk);
+  border-radius: var(--radius);
+}
+
+.ui-skeleton-round { border-radius: 999px; }
+
+.ui-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--paper-raised) 75%, transparent),
+    transparent
+  );
+  animation: ui-shimmer 1.6s var(--ease-settle) infinite;
+}
+
+@keyframes ui-shimmer {
+  to { transform: translateX(100%); }
+}

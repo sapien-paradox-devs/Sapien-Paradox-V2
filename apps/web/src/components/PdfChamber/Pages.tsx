@@ -76,7 +76,8 @@ function Page({
 
   return (
     <div
-      className="pdf-page"
+      // A page shimmers until its image arrives, then the image fades in (#161).
+      className={`pdf-page${url ? "" : " is-loading"}`}
       data-page={index}
       style={{ aspectRatio: `${size.width} / ${size.height}` }}
     >
