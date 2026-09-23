@@ -31,3 +31,11 @@ export const isFirstOpen = ({ event }: { event: AnyEventObject }) =>
   event.output !== null &&
   "firstOpen" in event.output &&
   event.output.firstOpen === true;
+
+/** The chapter was already marked complete — reopen it at its end state (D70). */
+export const isCompleted = ({ event }: { event: AnyEventObject }) =>
+  "output" in event &&
+  typeof event.output === "object" &&
+  event.output !== null &&
+  "completed" in event.output &&
+  event.output.completed === true;

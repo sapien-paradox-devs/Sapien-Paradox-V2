@@ -10,6 +10,8 @@ const CHAPTER: ChapterMeta = {
   number: 1,
   title: "The Long Descent",
   firstOpen: false,
+  furthest: 0,
+  completed: false,
 };
 
 function start(
@@ -17,6 +19,8 @@ function start(
     grant?: "ok" | 404 | 410 | 403 | 500;
     reissue?: "ok" | 429 | 500;
     firstOpen?: boolean;
+    completed?: boolean;
+    complete?: "ok" | 500;
   } = {},
 ) {
   const machine = readerMachine.provide({
@@ -26,7 +30,14 @@ function start(
       fetchGrant: fromPromise<ChapterMeta, { token: string }>(async () => {
         const outcome = options.grant ?? "ok";
         if (outcome !== "ok") throw new ApiError(outcome, null);
-        return { ...CHAPTER, firstOpen: options.firstOpen ?? false };
+        return {
+          ...CHAPTER,
+          firstOpen: options.firstOpen ?? false,
+          completed: options.completed ?? false,
+        };
+      }),
+      completeChapter: fromPromise<void, { token: string }>(async () => {
+        if (options.complete === 500) throw new ApiError(500, null);
       }),
       reissueGrant: fromPromise<void, { token: string }>(async () => {
         if (options.reissue && options.reissue !== "ok") {
@@ -85,6 +96,7 @@ describe("the chamber", () => {
     await settle();
 
     actor.send({ type: "FINISH" });
+    await settle();
 
     expect(actor.getSnapshot().matches({ chamber: "finished" })).toBe(true);
   });
@@ -178,5 +190,37 @@ describe("the threshold ceremony (#116)", () => {
     await settle();
 
     expect(actor.getSnapshot().matches({ chamber: "reading" })).toBe(true);
+  });
+});
+
+describe("marking a chapter complete (D70)", () => {
+  it("saves before it shows the chapter as finished", async () => {
+    const actor = start();
+    await settle();
+
+    actor.send({ type: "FINISH" });
+    expect(actor.getSnapshot().matches({ chamber: "completing" })).toBe(true);
+
+    await settle();
+    expect(actor.getSnapshot().matches({ chamber: "finished" })).toBe(true);
+  });
+
+  it("offers the button again when the save fails", async () => {
+    const actor = start({ complete: 500 });
+    await settle();
+
+    actor.send({ type: "FINISH" });
+    await settle();
+    expect(actor.getSnapshot().matches({ chamber: "completeFailed" })).toBe(true);
+
+    actor.send({ type: "FINISH" });
+    expect(actor.getSnapshot().matches({ chamber: "completing" })).toBe(true);
+  });
+
+  it("reopens a completed chapter at its end state", async () => {
+    const actor = start({ completed: true });
+    await settle();
+
+    expect(actor.getSnapshot().matches({ chamber: "finished" })).toBe(true);
   });
 });

@@ -4,6 +4,9 @@ export type ChapterMeta = {
   title: string;
   /** True only when this request stamped `opened_at` — the ceremony plays (#116). */
   firstOpen: boolean;
+  /** Where the reader got to last time, 0–1, and whether they marked it complete (D70). */
+  furthest: number;
+  completed: boolean;
 };
 
 export type Context = {

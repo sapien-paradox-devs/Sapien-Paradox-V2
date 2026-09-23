@@ -11,6 +11,7 @@ import { labels } from "../../lib/labels";
 import { readerMachine } from "./machine";
 import { Sanctuary } from "./Sanctuary";
 import { Threshold, type ThresholdBeat } from "./Threshold";
+import { useProgressSync } from "./useProgressSync";
 import "./reader.css";
 
 type ReissueState = "idle" | "sending" | "sent" | "limited" | "failed";
@@ -22,6 +23,11 @@ const BEATS: ThresholdBeat[] = ["gathering", "titled", "ruled", "lifting"];
 export function ReaderPage() {
   const token = window.location.pathname.split("/r/")[1] ?? "";
   const [state, send] = useMachine(readerMachine, { input: { token } });
+
+  // Before any early return: hooks run on every render.
+  const finished = state.matches({ chamber: "finished" });
+  const startAt = finished ? 1 : (state.context.chapter?.furthest ?? 0);
+  const onProgress = useProgressSync(token, startAt, state.context.chapter !== null && !finished);
 
   if (state.matches({ chamber: "sanctuary" })) {
     return (
@@ -71,16 +77,28 @@ export function ReaderPage() {
         token={token}
         bookTitle={chapter?.bookTitle ?? ""}
         title={chapter?.title ?? ""}
+        startAt={startAt}
+        onProgress={onProgress}
         footer={
           <footer className="reader-end">
             <Fleuron />
-            {state.matches({ chamber: "finished" }) ? (
+            {finished ? (
               <p className="reader-end-done">{labels.reader.finished}</p>
             ) : (
               <>
                 <p className="reader-end-hint">{labels.reader.completeHint}</p>
-                <button type="button" className="btn" onClick={() => send({ type: "FINISH" })}>
-                  {labels.reader.complete}
+                {state.matches({ chamber: "completeFailed" }) && (
+                  <p className="notice" role="alert">{labels.reader.completeFailed}</p>
+                )}
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={state.matches({ chamber: "completing" })}
+                  onClick={() => send({ type: "FINISH" })}
+                >
+                  {state.matches({ chamber: "completing" })
+                    ? labels.reader.completing
+                    : labels.reader.complete}
                 </button>
               </>
             )}

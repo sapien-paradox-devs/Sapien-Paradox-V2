@@ -102,6 +102,9 @@ export const labels = {
     retry: "Try again",
     chapter: "Chapter",
     read: "Read",
+    completed: "Completed",
+    // Follows a number: "42% read" (D70).
+    percentRead: "% read",
     send: "Send to WhatsApp",
     sending: "Sending…",
     sent: "Sent — check WhatsApp.",
@@ -127,6 +130,8 @@ export const labels = {
     // The end of the chapter.
     completeHint: "When you are done, mark it complete. You can always come back to it.",
     complete: "Mark chapter complete",
+    completing: "Saving\u2026",
+    completeFailed: "That did not save. Try again \u2014 your place is kept.",
     threshold: {
       chapter: "Chapter",
       begin: "Tap anywhere to begin",

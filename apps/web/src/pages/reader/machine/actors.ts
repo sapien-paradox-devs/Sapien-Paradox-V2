@@ -12,3 +12,8 @@ export const fetchGrant = fromPromise<ChapterMeta, { token: string }>(({ input }
 export const reissueGrant = fromPromise<void, { token: string }>(({ input }) =>
   mappedFetcher.post<void>(`/api/grants/${input.token}/reissue`),
 );
+
+/** The reader marks the chapter complete — the only way to 100% (D70). */
+export const completeChapter = fromPromise<void, { token: string }>(({ input }) =>
+  mappedFetcher.post<void>(`/api/grants/${input.token}/complete`),
+);

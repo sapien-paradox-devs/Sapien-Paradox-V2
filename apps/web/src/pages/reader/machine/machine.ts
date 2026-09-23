@@ -34,6 +34,8 @@ export const readerConfig = {
             input: ({ context }: { context: Context }) => ({ token: context.token }),
             onDone: [
               { guard: "isFirstOpen", target: "threshold", actions: "assignChapter" },
+              // Coming back to a chapter already marked complete (D70).
+              { guard: "isCompleted", target: "finished", actions: "assignChapter" },
               { target: "reading", actions: "assignChapter" },
             ],
             onError: [
@@ -58,7 +60,18 @@ export const readerConfig = {
             lifting: { after: { beat: { target: "#reader.chamber.reading" } } },
           },
         },
-        reading: { on: { FINISH: { target: "finished" } } },
+        reading: { on: { FINISH: { target: "completing" } } },
+        // Marking complete is saved before it is shown: 100% on Home must be
+        // true, not hoped for (D70).
+        completing: {
+          invoke: {
+            src: "completeChapter",
+            input: ({ context }: { context: Context }) => ({ token: context.token }),
+            onDone: { target: "finished" },
+            onError: { target: "completeFailed" },
+          },
+        },
+        completeFailed: { on: { FINISH: { target: "completing" } } },
         // Rendered minimally. No celebration — it is the anchor D14's deferred
         // end-of-chapter question attaches to.
         finished: {},

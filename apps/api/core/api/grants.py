@@ -17,8 +17,9 @@ from ninja.errors import HttpError
 from ..auth import grant_auth
 from ..machines.binding import dispatch_model
 from ..machines.reading import reading_machine
-from ..schemas.common import ChapterOut, PageLayoutOut
-from ..services import access, grants, pages, whatsapp
+from ..schemas.common import ChapterOut, PageLayoutOut, ProgressIn
+from .. import selectors
+from ..services import access, grants, pages, progress, whatsapp
 
 router = Router()
 
@@ -77,11 +78,14 @@ def grant_detail(request, token: str):
     _open_or_refuse(grant)
 
     chapter = grant.chapter
+    place = selectors.progress_for(grant.user, chapter)
     return ChapterOut(
         bookTitle=chapter.book.title,
         number=chapter.order_index,
         title=chapter.title,
         firstOpen=first_open,
+        furthest=place.furthest,
+        completed=place.completed,
     )
 
 
@@ -124,3 +128,25 @@ def grant_page(request, token: str, number: int):
     response["Cache-Control"] = "private, no-store"
     response["X-Content-Type-Options"] = "nosniff"
     return response
+
+
+@router.post("/grants/{token}/progress", auth=grant_auth, response={204: None}, url_name="grant_progress")
+def grant_progress(request, token: str, payload: ProgressIn):
+    """The reader has got this far (D70). Idempotent; only ever moves forward.
+
+    Keyed on the reader and the chapter, not this grant, so a re-issued link
+    keeps its place. CSRF-exempt like every grant endpoint (D30).
+    """
+    grant = request.auth
+    _open_or_refuse(grant)
+    progress.record(grant.user, grant.chapter, payload.furthest)
+    return 204, None
+
+
+@router.post("/grants/{token}/complete", auth=grant_auth, response={204: None}, url_name="grant_complete")
+def grant_complete(request, token: str):
+    """The reader marks the chapter complete — the only way to 100% (D70)."""
+    grant = request.auth
+    _open_or_refuse(grant)
+    progress.complete(grant.user, grant.chapter)
+    return 204, None
