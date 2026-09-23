@@ -28,17 +28,20 @@ class Grant:
         self.chapter = "chapter-1"
 
 
-def deps(owns=True, sent=True, minted="fresh-grant"):
+def deps(owns=True, sent=True, minted="fresh-grant", calls=None):
+    calls = calls if calls is not None else []
     return SimpleNamespace(
         now=lambda: NOW,
         can_read=lambda user, chapter: owns,
         send_chapter=lambda grant: SimpleNamespace(status="sent" if sent else "failed"),
         mint_grant=lambda user, chapter: minted,
+        record_progress=lambda user, chapter, furthest: calls.append(("record", furthest)),
+        complete_chapter=lambda user, chapter: calls.append(("complete",)),
     )
 
 
-def send(grant, event, **kw):
-    return dispatch(reading_machine, grant, event, deps=deps(**kw))
+def send(grant, event, payload=None, **kw):
+    return dispatch(reading_machine, grant, event, deps=deps(**kw), **(payload or {}))
 
 
 class OpenTests(TestCase):
@@ -146,3 +149,45 @@ class UnlockTests(TestCase):
                  persist=saved.append)
 
         self.assertEqual(saved, [])
+
+
+class ProgressTests(TestCase):
+    """D70: progress and completion are rows of this table, guarded like OPEN."""
+
+    def test_an_opened_grant_records_progress_without_changing_state(self):
+        calls = []
+        result = send(Grant(state=OPENED), "RECORD_PROGRESS", {"furthest": 0.4}, calls=calls)
+
+        self.assertTrue(result.ok)
+        self.assertEqual(result.state, OPENED)
+        self.assertEqual(calls, [("record", 0.4)])
+
+    def test_an_opened_grant_can_be_marked_complete(self):
+        calls = []
+        result = send(Grant(state=OPENED), "COMPLETE", calls=calls)
+
+        self.assertTrue(result.ok)
+        self.assertEqual(calls, [("complete",)])
+
+    def test_an_expired_link_records_nothing(self):
+        calls = []
+        for event, payload in (("RECORD_PROGRESS", {"furthest": 0.5}), ("COMPLETE", None)):
+            result = send(Grant(state=OPENED, expires_in=timedelta(seconds=-1)), event, payload,
+                          calls=calls)
+            self.assertEqual(result.refusal, "expired")
+        self.assertEqual(calls, [])
+
+    def test_a_reader_who_no_longer_owns_the_book_records_nothing(self):
+        calls = []
+        for event, payload in (("RECORD_PROGRESS", {"furthest": 0.5}), ("COMPLETE", None)):
+            result = send(Grant(state=OPENED), event, payload, owns=False, calls=calls)
+            self.assertEqual(result.refusal, "not_owner")
+        self.assertEqual(calls, [])
+
+    def test_a_scheduled_chapter_cannot_record_progress(self):
+        """Nothing to read yet: no row fires, so nothing is written."""
+        calls = []
+        result = send(Grant(state=SCHEDULED), "RECORD_PROGRESS", {"furthest": 0.5}, calls=calls)
+
+        self.assertFalse(result.ok)
+        self.assertEqual(calls, [])

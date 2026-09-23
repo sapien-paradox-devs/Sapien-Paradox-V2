@@ -140,6 +140,8 @@ siblings.
 | `GET /api/grants/{token}` | **grant** | validate, chapter meta, stamp `opened_at` |
 | `GET /api/grants/{token}/pages` | **grant** | page sizes + sections, no storage paths (D73) |
 | `GET /api/grants/{token}/pages/{n}` | **grant** | one watermarked page image, `no-store` (D73) |
+| `POST /api/grants/{token}/progress` | **grant** | `RECORD_PROGRESS` on the reading machine (D70) |
+| `POST /api/grants/{token}/complete` | **grant** | `COMPLETE` on the reading machine (D70) |
 | `POST /api/grants/{token}/reissue` | **grant** | one-tap fresh link (D9), rate-limited |
 | `POST /api/chat` | **grant** | companion, capped and logged (D7) |
 

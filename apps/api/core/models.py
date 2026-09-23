@@ -324,6 +324,41 @@ class TemporalGrant(models.Model):
         return timezone.now() >= self.expires_at
 
 
+class ReadingProgress(models.Model):
+    """D70. How far a reader has got through a chapter, and whether they finished it.
+
+    **Keyed on (user, chapter), not on the grant.** A re-issued link (D9) is a new grant,
+    and the reader's place must survive it. A reader with only a token writes through
+    `grant.user`, so progress needs no session.
+
+    `furthest` only ever grows — rereading a paragraph is not losing ground — and stays
+    below 1 until the reader marks the chapter complete. Completion is declared, never
+    inferred from reaching the last page.
+
+    **Nothing in access, delivery or cadence may read this** (D70). Chapters unlock on a
+    schedule, never on completion. A ninth table: amends D18, born in `core/` per D72,
+    bound for `apps/reading`.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reading_progress"
+    )
+    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name="progress")
+
+    furthest = models.FloatField(default=0.0, help_text="0–1. Only ever increases.")
+    completed_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["user", "chapter"], name="unique_progress_per_reader_chapter")
+        ]
+
+    def __str__(self):
+        state = "complete" if self.completed_at else f"{round(self.furthest * 100)}%"
+        return f"{self.user} — {self.chapter}: {state}"
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Records
 # ─────────────────────────────────────────────────────────────────────────────
