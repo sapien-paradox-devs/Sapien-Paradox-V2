@@ -12,12 +12,15 @@ class ChapterOut(Schema):
     id: str
     number: int
     title: str
-    read: bool          # a quiet mark, from `opened_at` — not a progress bar
+    read: bool          # opened at least once, from `opened_at`
+    progress: float     # 0–1; 1 only once marked complete (D70)
+    completed: bool
 
 
 class BookOut(Schema):
     id: str
     title: str
+    progress: float     # the mean across its chapters (D70)
     chapters: list[ChapterOut]
 
 

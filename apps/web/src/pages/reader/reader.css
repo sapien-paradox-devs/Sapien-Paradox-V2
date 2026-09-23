@@ -131,9 +131,10 @@
   font-size: clamp(4rem, 16vw, 6.5rem);
   font-weight: 400;
   line-height: 1;
-  /* Fraunces at its most characterful — soft and a little wonky — for the one
-     moment that is allowed to be decorative. */
-  font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 1;
+  /* Newsreader at its largest optical size and a light weight: the one
+     moment that is allowed to be decorative (D74). */
+  font-variation-settings: "opsz" 72;
+  font-weight: 300;
   color: var(--accent);
 }
 

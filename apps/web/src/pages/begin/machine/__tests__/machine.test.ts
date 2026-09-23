@@ -1,9 +1,9 @@
-/** The landing machine — one test per row of its table (D47). */
+/** The begin machine — one test per row of its table (D47). */
 
 import { assign, createActor, fromPromise, setup } from "xstate";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { landingConfig } from "../machine";
+import { beginConfig } from "../machine";
 import * as actions from "../actions";
 import type { Book, Context, Event, Signup } from "../types";
 
@@ -37,7 +37,7 @@ function machine(options: { books?: "ok" | "fail"; checkout?: "ok" | "fail" } = 
         return { paymentUrl: "https://rzp.io/i/abc" };
       }),
     },
-  }).createMachine(landingConfig);
+  }).createMachine(beginConfig);
 }
 
 function start(options = {}) {
@@ -50,7 +50,7 @@ const settle = () => new Promise((r) => setTimeout(r, 0));
 
 beforeEach(() => { left.length = 0; });
 
-describe("landing", () => {
+describe("begin", () => {
   it("loads what is for sale", async () => {
     const actor = start();
     await settle();

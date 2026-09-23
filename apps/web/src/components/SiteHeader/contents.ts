@@ -12,6 +12,7 @@ export type HeaderPage =
   | "login"
   | "reset"
   | "welcome"
+  | "begin"
   | "opening"
   | "unknown";
 
@@ -39,6 +40,7 @@ export function headerContents(page: HeaderPage, signedIn: boolean): HeaderConte
       return { ...NOTHING, account: true };
 
     case "landing":
+    case "begin":
       return { ...NOTHING, signIn: true };
 
     // A WhatsApp visitor has no session and must not be pushed towards one:

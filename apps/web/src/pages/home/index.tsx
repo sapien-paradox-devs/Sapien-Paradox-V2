@@ -2,7 +2,8 @@
  * Home — the chapters this reader has earned. Who they are, and the way out,
  * live in the site header.
  *
- * No progress bars, no timers. A quiet read mark is the only status (D11).
+ * No timers, no nudges. Progress is quiet: a ring per chapter and a total per
+ * book (D70, reversing D11's "no progress bars").
  */
 
 import { useMachine } from "@xstate/react";
@@ -42,7 +43,15 @@ export function HomePage() {
       {state.matches({ list: "ready" }) &&
         state.context.books.map((book) => (
           <section key={book.id} className="home-book">
-            <h2>{book.title}</h2>
+            <div className="home-book-head">
+              <h2>{book.title}</h2>
+              {book.progress > 0 && (
+                <p className="home-book-progress">
+                  {Math.round(book.progress * 100)}
+                  {labels.home.percentRead}
+                </p>
+              )}
+            </div>
             <ChapterList
               chapters={book.chapters}
               sendingChapterId={sendingId}

@@ -20,6 +20,7 @@ import { OpeningPage } from "./opening";
 import { ReaderPage } from "./reader";
 import { ResetPage } from "./reset";
 import { WelcomePage } from "./welcome";
+import { BeginPage } from "./begin";
 import { navigationMachine } from "./machine";
 import { startRouteSync } from "./machine/sync";
 import { NavigationContext, type Navigation } from "./useNavigation";
@@ -57,6 +58,9 @@ export function Navigator() {
   if (state.matches({ page: "login" })) {
     page = <LoginPage />;
     headerPage = "login";
+  } else if (state.matches({ page: "begin" })) {
+    page = <BeginPage />;
+    headerPage = "begin";
   } else if (state.matches({ page: "welcome" })) {
     page = <WelcomePage />;
     headerPage = "welcome";

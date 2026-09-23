@@ -17,8 +17,9 @@ from ninja.errors import HttpError
 from ..auth import grant_auth
 from ..machines.binding import dispatch_model
 from ..machines.reading import reading_machine
-from ..schemas.common import ChapterOut, PageLayoutOut
-from ..services import access, grants, pages, whatsapp
+from ..schemas.common import ChapterOut, PageLayoutOut, ProgressIn
+from .. import selectors
+from ..services import access, grants, pages, progress, whatsapp
 
 router = Router()
 
@@ -34,11 +35,18 @@ def _deps():
         can_read=access.can_read,
         send_chapter=whatsapp.send_chapter,
         mint_grant=grants.mint_or_reuse,
+        record_progress=progress.record,
+        complete_chapter=progress.complete,
     )
 
 
 def _open_or_refuse(grant):
-    """Send OPEN to the reading machine and turn a refusal into a status code.
+    """Send OPEN to the reading machine — see `_dispatch_or_refuse`."""
+    return _dispatch_or_refuse(grant, "OPEN")
+
+
+def _dispatch_or_refuse(grant, event: str, **payload):
+    """Send `event` to the reading machine and turn a refusal into a status code.
 
     The mapping lives here and nowhere below: no layer under the API knows what
     a 403 is (D38). `410` rather than `404` for an expired token is what tells
@@ -48,7 +56,7 @@ def _open_or_refuse(grant):
     from types import SimpleNamespace
 
     result = dispatch_model(
-        reading_machine, grant, "OPEN", deps=SimpleNamespace(**_deps()), user=grant.user
+        reading_machine, grant, event, deps=SimpleNamespace(**_deps()), user=grant.user, **payload
     )
 
     if result.ok:
@@ -77,11 +85,14 @@ def grant_detail(request, token: str):
     _open_or_refuse(grant)
 
     chapter = grant.chapter
+    place = selectors.progress_for(grant.user, chapter)
     return ChapterOut(
         bookTitle=chapter.book.title,
         number=chapter.order_index,
         title=chapter.title,
         firstOpen=first_open,
+        furthest=place.furthest,
+        completed=place.completed,
     )
 
 
@@ -124,3 +135,21 @@ def grant_page(request, token: str, number: int):
     response["Cache-Control"] = "private, no-store"
     response["X-Content-Type-Options"] = "nosniff"
     return response
+
+
+@router.post("/grants/{token}/progress", auth=grant_auth, response={204: None}, url_name="grant_progress")
+def grant_progress(request, token: str, payload: ProgressIn):
+    """The reader has got this far (D70). Idempotent; only ever moves forward.
+
+    Keyed on the reader and the chapter, not this grant, so a re-issued link
+    keeps its place. CSRF-exempt like every grant endpoint (D30).
+    """
+    _dispatch_or_refuse(request.auth, "RECORD_PROGRESS", furthest=payload.furthest)
+    return 204, None
+
+
+@router.post("/grants/{token}/complete", auth=grant_auth, response={204: None}, url_name="grant_complete")
+def grant_complete(request, token: str):
+    """The reader marks the chapter complete — the only way to 100% (D70)."""
+    _dispatch_or_refuse(request.auth, "COMPLETE")
+    return 204, None

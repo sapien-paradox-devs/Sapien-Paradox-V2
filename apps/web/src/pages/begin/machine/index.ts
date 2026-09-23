@@ -4,10 +4,10 @@ import { assign, setup } from "xstate";
 
 import * as actions from "./actions";
 import * as actors from "./actors";
-import { landingConfig } from "./machine";
+import { beginConfig } from "./machine";
 import type { Context, Event } from "./types";
 
-export const landingMachine = setup({
+export const beginMachine = setup({
   types: {} as { context: Context; events: Event },
   actions: {
     assignBooks: assign(actions.booksFrom),
@@ -15,6 +15,6 @@ export const landingMachine = setup({
     leaveForPayment: actions.leaveForPayment,
   },
   actors: { fetchBooks: actors.fetchBooks, startCheckout: actors.startCheckout },
-}).createMachine(landingConfig);
+}).createMachine(beginConfig);
 
 export type { Book, Context, Event, Signup } from "./types";

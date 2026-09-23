@@ -52,6 +52,9 @@ line here saying which interaction required it.
   re-lays out text on every frame, which breaks the first rule above. The axes are loaded and
   set statically instead.
 
+> **Amended by D74** (2026-09-24): Fraunces is retired for Newsreader; the rule stands: variable
+> axes are set statically, never animated.
+
 ### Inherited from V1
 
 **V1:** Framer Motion was named in the stack and used ad hoc per component; the reading room's

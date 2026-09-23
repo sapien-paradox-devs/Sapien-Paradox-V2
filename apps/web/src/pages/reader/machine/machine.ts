@@ -2,9 +2,10 @@
  * The chamber — level 1. The only page reachable without a session, and the one
  * the whole product exists to deliver.
  *
- * Two parallel regions (D42): `chamber` holds what is on screen, `reissue`
+ * Three parallel regions (D42): `chamber` holds what is on screen, `reissue`
  * holds a re-issue request in flight, so asking for a fresh link does not blank
- * the sanctuary screen.
+ * the sanctuary screen, and `progress` saves how far the reader has got (D70)
+ * without the chamber ever waiting on it.
  *
  * `sanctuary` means an expired or invalid link and nothing else. The end of a
  * chapter is `finished` — V1 used one word for both.
@@ -17,7 +18,14 @@
 
 import type { Context } from "./types";
 
-const initialContext: Context = { token: "", chapter: null };
+const initialContext: Context = {
+  token: "",
+  chapter: null,
+  latest: 0,
+  sent: 0,
+  lastSentAt: 0,
+  completed: false,
+};
 
 export const readerConfig = {
   id: "reader",
@@ -34,6 +42,8 @@ export const readerConfig = {
             input: ({ context }: { context: Context }) => ({ token: context.token }),
             onDone: [
               { guard: "isFirstOpen", target: "threshold", actions: "assignChapter" },
+              // Coming back to a chapter already marked complete (D70).
+              { guard: "isCompleted", target: "finished", actions: "assignChapter" },
               { target: "reading", actions: "assignChapter" },
             ],
             onError: [
@@ -58,7 +68,18 @@ export const readerConfig = {
             lifting: { after: { beat: { target: "#reader.chamber.reading" } } },
           },
         },
-        reading: { on: { FINISH: { target: "finished" } } },
+        reading: { on: { FINISH: { target: "completing" } } },
+        // Marking complete is saved before it is shown: 100% on Home must be
+        // true, not hoped for (D70).
+        completing: {
+          invoke: {
+            src: "completeChapter",
+            input: ({ context }: { context: Context }) => ({ token: context.token }),
+            onDone: { target: "finished", actions: "assignCompleted" },
+            onError: { target: "completeFailed" },
+          },
+        },
+        completeFailed: { on: { FINISH: { target: "completing" } } },
         // Rendered minimally. No celebration — it is the anchor D14's deferred
         // end-of-chapter question attaches to.
         finished: {},
@@ -86,6 +107,47 @@ export const readerConfig = {
         sent: {},
         limited: {},
         failed: { on: { REISSUE: { target: "sending" } } },
+      },
+    },
+
+    // How far the reader has got (D70) — quietly and rarely. A movement opens
+    // `waiting`; the send goes once the delay allows (at least 1.5 s after the
+    // first movement, never more than every 5 s); anything further that arrived
+    // meanwhile goes in the next round. Leaving the page flushes the rest.
+    progress: {
+      initial: "idle",
+      states: {
+        idle: {
+          on: {
+            PROGRESS: { guard: "movedEnough", target: "waiting", actions: "assignLatest" },
+            FLUSH: { guard: "hasUnsent", actions: ["sendOnExit", "assignFlushed"] },
+          },
+        },
+        waiting: {
+          after: { sendDelay: { target: "sending" } },
+          on: {
+            PROGRESS: { guard: "isFurther", actions: "assignLatest" },
+            FLUSH: { guard: "hasUnsent", target: "idle", actions: ["sendOnExit", "assignFlushed"] },
+          },
+        },
+        sending: {
+          invoke: {
+            src: "saveProgress",
+            input: ({ context }: { context: Context }) => ({
+              token: context.token,
+              furthest: context.latest,
+            }),
+            onDone: [
+              { guard: "moreToSend", target: "waiting", actions: "assignSent" },
+              { target: "idle", actions: "assignSent" },
+            ],
+            // Lost this time; the next movement carries the same or a larger number.
+            onError: { target: "idle" },
+          },
+          on: {
+            PROGRESS: { guard: "isFurther", actions: "assignLatest" },
+          },
+        },
       },
     },
   },
