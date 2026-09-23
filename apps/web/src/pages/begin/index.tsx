@@ -13,6 +13,7 @@ import { useState } from "react";
 import { labels } from "../../lib/labels";
 import { PACE, type Pace } from "../../lib/constants";
 import { useNavigation } from "../useNavigation";
+import { BeginSkeleton } from "./BeginSkeleton";
 import { beginMachine } from "./machine";
 import { bookFrom, paceFrom } from "./params";
 import "./begin.css";
@@ -37,7 +38,7 @@ export function BeginPage() {
   const busy = state.matches("submitting") || state.matches("redirecting");
 
   if (state.matches("loading")) {
-    return <main className="shell"><p className="begin-quiet">{labels.begin.loading}</p></main>;
+    return <BeginSkeleton />;
   }
 
   if (state.matches("failed")) {
