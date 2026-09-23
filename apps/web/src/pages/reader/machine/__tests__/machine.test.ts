@@ -9,17 +9,24 @@ const CHAPTER: ChapterMeta = {
   bookTitle: "The Sapien Paradox",
   number: 1,
   title: "The Long Descent",
+  firstOpen: false,
 };
 
 function start(
-  options: { grant?: "ok" | 404 | 410 | 403 | 500; reissue?: "ok" | 429 | 500 } = {},
+  options: {
+    grant?: "ok" | 404 | 410 | 403 | 500;
+    reissue?: "ok" | 429 | 500;
+    firstOpen?: boolean;
+  } = {},
 ) {
   const machine = readerMachine.provide({
+    // One beat of the ceremony, shrunk so the tests do not wait on it.
+    delays: { beat: 5 },
     actors: {
       fetchGrant: fromPromise<ChapterMeta, { token: string }>(async () => {
         const outcome = options.grant ?? "ok";
         if (outcome !== "ok") throw new ApiError(outcome, null);
-        return CHAPTER;
+        return { ...CHAPTER, firstOpen: options.firstOpen ?? false };
       }),
       reissueGrant: fromPromise<void, { token: string }>(async () => {
         if (options.reissue && options.reissue !== "ok") {
@@ -124,5 +131,52 @@ describe("re-issue from sanctuary", () => {
     actor.send({ type: "REISSUE" });
 
     expect(actor.getSnapshot().matches({ reissue: "sending" })).toBe(true);
+  });
+});
+
+describe("the threshold ceremony (#116)", () => {
+  const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  it("plays on the first open of a link", async () => {
+    const actor = start({ firstOpen: true });
+    await settle();
+
+    expect(actor.getSnapshot().matches({ chamber: { threshold: "gathering" } })).toBe(true);
+    expect(actor.getSnapshot().context.chapter?.title).toBe(CHAPTER.title);
+  });
+
+  it("walks its four beats in order, then opens the chamber", async () => {
+    const actor = start({ firstOpen: true });
+    await settle();
+
+    const seen: string[] = [];
+    actor.subscribe((snapshot) => {
+      for (const beat of ["gathering", "titled", "ruled", "lifting"] as const) {
+        if (snapshot.matches({ chamber: { threshold: beat } }) && seen.at(-1) !== beat) {
+          seen.push(beat);
+        }
+      }
+    });
+
+    await wait(60);
+
+    expect(seen).toEqual(["titled", "ruled", "lifting"]);
+    expect(actor.getSnapshot().matches({ chamber: "reading" })).toBe(true);
+  });
+
+  it("skips straight to the chamber on a tap", async () => {
+    const actor = start({ firstOpen: true });
+    await settle();
+
+    actor.send({ type: "SKIP" });
+
+    expect(actor.getSnapshot().matches({ chamber: "reading" })).toBe(true);
+  });
+
+  it("does not play when the link has been opened before", async () => {
+    const actor = start({ firstOpen: false });
+    await settle();
+
+    expect(actor.getSnapshot().matches({ chamber: "reading" })).toBe(true);
   });
 });

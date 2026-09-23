@@ -54,3 +54,27 @@ export function transition(update: () => void, { kind, skip = false }: Options):
     if (root.dataset.transition === kind) delete root.dataset.transition;
   });
 }
+
+const DEFAULT_BEAT_MS = 650;
+
+/**
+ * One beat of the chapter ceremony, in ms (#116). The duration lives in CSS as
+ * `--dur-ceremony`, where reduced motion already shortens it; reading it here
+ * keeps the machine's timing and the animations' timing one number.
+ */
+export function ceremonyBeat(): number {
+  if (typeof window === "undefined" || typeof getComputedStyle !== "function") {
+    return DEFAULT_BEAT_MS;
+  }
+  const raw = getComputedStyle(document.documentElement).getPropertyValue("--dur-ceremony");
+  return parseDuration(raw) ?? DEFAULT_BEAT_MS;
+}
+
+/** "650ms" → 650, "0.65s" → 650, anything else → null. */
+export function parseDuration(raw: string): number | null {
+  const match = /^\s*([\d.]+)(ms|s)\s*$/.exec(raw);
+  if (!match) return null;
+  const value = Number(match[1]);
+  if (!Number.isFinite(value)) return null;
+  return match[2] === "s" ? value * 1000 : value;
+}
