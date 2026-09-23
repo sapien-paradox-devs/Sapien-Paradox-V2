@@ -1,6 +1,6 @@
 # Stewardship — how the owner runs it
 
-D75–D80
+D75–D80, D82
 
 Locked 2026-09-24 in one grilling session. The owner asked for: a good admin UI with full CRUD on
 readers; books uploaded as a folder of PDFs, not chapter by chapter; video uploads; and a library
@@ -12,13 +12,16 @@ moves it in one piece (#138 `apps/catalog`, #137 `apps/identity`). It shares no 
 (#112–#114), so the two tracks run in parallel.
 
 **Issues:** #165 metadata + video (D76, D77) → #166 folder upload (D78) and #168 cover library (D79) ·
-#167 admin theme + reader CRUD (D75, D80) → #169 reader dossier (D75).
+#167 admin shell + reader CRUD (D82, D80) → #169 reader dossier (D82).
 
 ---
 
 ## D75 — The admin is an upgraded Django admin, not a React admin
 
 **Locked** 2026-09-24 · owner's call
+
+> **Superseded by D82** (below), the same day: the admin moves into the app. The services D75
+> asked for are unchanged; only the screens move.
 
 ### Decision
 
@@ -142,7 +145,8 @@ people start sharing it (→ Stream's signed tokens and watermarking).
 
 ### Decision
 
-The admin picks a folder in the browser (`<input webkitdirectory>`). The folder follows a
+The admin picks a folder in the browser (`<input webkitdirectory>`), on the app's `/admin` Books
+screen (D82). The folder follows a
 convention:
 
 ```
@@ -254,3 +258,61 @@ to be weighed against the obligation to keep accounting records.
   request allows, so the import may need to be split into steps. Measure before designing.
 - **The admin theme** (unfold or an alternative) and the dossier's exact contents.
 - **Video formats**: MP4/H.264 only, with a size cap. Set it in the issue.
+
+---
+
+## D82 — The admin lives in the app, at `/admin`, with its own login page
+
+**Locked** 2026-09-24 · owner's call · supersedes D75
+
+### Why it changed
+
+The owner's reason: an admin should not have to leave the product and open a second,
+technical-looking application to run it. D75's own revisit clause, someone non-technical running
+content every day, is that case arriving early.
+
+### Decision
+
+- **The admin is part of the SPA**, under `app.<domain>/admin`: Readers (list, add, edit,
+  deactivate, erase), Books (list, edit, upload a folder), and each reader's dossier. Same
+  components, labels and palette (D81) as the reader side.
+- **`/admin/login` is its own page, with the same login behind it.** It calls the same
+  `POST /api/auth/login` and gets the same session cookie (D6). An account that is not staff is
+  refused on that page and never sees `/admin`. One login system, two doors: no second password
+  store, no second session.
+- **A staff-only API under `/api/admin/*`**, with a third auth class, `StaffAuth`: a session whose
+  user is `is_staff`, CSRF-enforced like every session endpoint (D30). Ninja schemas on every body
+  (mandate 4). `GET /api/auth/me` reports `isStaff` so the root machine can route.
+- **Endpoints stay thin.** Every admin action is a service function: `onboarding.create_reader`
+  (D26), the D80 deactivate/erase functions, `catalog.import_book` (D78). A React screen is a new
+  front on the same services, which is what D75 asked of them.
+- **The frontend follows D15:** `admin` is a page region of the root machine; each admin screen
+  is a page machine with the 5-file split. The root machine learns one fact, whether the session
+  is staff, and nothing about readers or books.
+- **Django admin stays running, unlinked**, as a fallback for the owner alone. Nothing in the
+  product points to it, and no workflow depends on it.
+
+### Why a separate login page, recorded
+
+The recommendation was one `/login` with an Admin link for staff. The owner chose a separate page.
+Putting the same login endpoint behind it keeps the cost to one extra screen.
+
+### Rejected
+
+- **Upgraded Django admin (D75).** It means leaving the product to run it.
+- **One `/login`, with an Admin link shown to staff.** The recommendation; the owner preferred a
+  distinct entrance.
+- **Staff land on `/admin` instead of Home.** The owner could no longer see what a reader sees
+  from the same account.
+- **A separate admin app at `admin.<domain>`.** Still rejected, for D75's reasons.
+
+### Costs accepted
+
+About three times D75's work: a staff API and its schemas, and React screens for each thing the
+Django admin gave for free (tables, search, forms, file inputs, confirmations). #166, #167 and #169
+are rewritten for this.
+
+### Revisit if
+
+The admin surface grows past what the reader app's shell holds comfortably (dozens of screens, many
+roles). Then it becomes its own app, keeping the same `/api/admin/*`.

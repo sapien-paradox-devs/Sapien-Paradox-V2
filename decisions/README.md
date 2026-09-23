@@ -88,13 +88,14 @@ back to. Without it these read as taste rather than as answers to specific, obse
 | D72 | Landing, chamber and progress proceed on the current structure *(amends structure-D67, `14-structure.md`)* | [reading](15-reading.md) | locked |
 | D73 | Pages are rendered on the server, watermarked; the PDF never reaches the browser *(supersedes D71, D29)* | [reading](15-reading.md) | locked |
 | D74 | Visual identity: Ink & Sage — palette and type *(amends D54's Fraunces note)* | [identity](16-identity.md) | **palette superseded by D81**; type stands |
-| D75 | The admin is an upgraded Django admin, not a React admin | [stewardship](17-stewardship.md) | locked |
+| D75 | The admin is an upgraded Django admin, not a React admin | [stewardship](17-stewardship.md) | **superseded by D82** |
 | D76 | Video: one optional video per chapter, one public sample per book *(amends D19: Book gains author, description, cover)* | [stewardship](17-stewardship.md) | locked |
 | D77 | Videos play from short-lived signed R2 URLs *(amends mandate 3, for video only)* | [stewardship](17-stewardship.md) | locked |
 | D78 | A book is uploaded as a folder: filename convention, then a preview | [stewardship](17-stewardship.md) | locked |
 | D79 | The library is a cover grid: Home shelf and public catalogue share one BookCard | [stewardship](17-stewardship.md) | locked |
 | D80 | Removing a reader deactivates; erasing personal data is a separate action | [stewardship](17-stewardship.md) | locked |
 | D81 | Jewel: a bright four-colour palette on the old near-black *(supersedes D74's palette)* | [identity](16-identity.md) | locked |
+| D82 | The admin lives in the app, at `/admin`, with its own login page *(supersedes D75)* | [stewardship](17-stewardship.md) | locked |
 
 **Claim the number in this index first, then write the file.** Three collisions happened in one day
 because a number locked on an unmerged branch is invisible here. The index on `main` is the lock.
