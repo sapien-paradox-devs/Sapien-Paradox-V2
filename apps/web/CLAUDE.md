@@ -13,6 +13,8 @@ Root context: `../../CLAUDE.md`. Design and decisions: `../../DESIGN.md`.
 | `/` | session | Home — account block + chapters |
 | `/read/:chapterId` | session | mints-or-reuses a grant, then redirects (D11) |
 | `/r/:token` | **token only** | the chamber. **No session required** — this is what makes WhatsApp links work |
+| `/admin/login` | public | the admin's own sign-in; same login endpoint, non-staff refused (D82) |
+| `/admin/*` | **staff** | the in-app admin; sub-screens chosen by `pages/admin/useAdminPath.ts` (D82) |
 
 Full surface map: `DESIGN.md` D7.
 

@@ -113,3 +113,108 @@ def create_reader(full_name, email, phone, book, pace, user=None) -> OnboardingR
         chapter_message=chapter_message,
         password_message=password_message,
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# After a reader exists: the admin's other actions on an account (D80, D82).
+# Each leaves an `AccountChange` row. None of them deletes a reader: orders,
+# grants and payment references are what refunds and accounting read.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def record_change(user, action: str, by=None) -> None:
+    from ..models import AccountChange
+
+    AccountChange.objects.create(user=user, action=action, by=by)
+
+
+def update_reader(user, *, full_name=None, email=None, phone=None, by=None) -> User:
+    """Change a reader's name, email or phone. Refuses a clash with another reader.
+
+    The phone is normalised first, for the same reason as in `create_reader`: two
+    spellings of one number would otherwise be two accounts.
+    """
+    from ..models import AccountChange
+
+    if email is not None:
+        email = email.strip()
+        if User.objects.filter(email__iexact=email).exclude(pk=user.pk).exists():
+            raise OnboardingRefused("email_taken", "email")
+        user.email = email
+    if phone is not None:
+        phone = phone_service.normalize(phone)
+        if User.objects.filter(phone=phone).exclude(pk=user.pk).exists():
+            raise OnboardingRefused("phone_taken", "phone")
+        user.phone = phone
+    if full_name is not None:
+        user.full_name = full_name.strip()
+
+    with transaction.atomic():
+        user.save()
+        record_change(user, AccountChange.UPDATED, by)
+    return user
+
+
+def deactivate_reader(user, by=None) -> User:
+    """Remove, reversibly (D80). They cannot log in, and `access.can_read` refuses
+    them, so every link they hold stops working on its next request. Nothing is
+    deleted."""
+    from ..models import AccountChange
+
+    with transaction.atomic():
+        user.is_active = False
+        user.save(update_fields=["is_active"])
+        record_change(user, AccountChange.DEACTIVATED, by)
+    return user
+
+
+def reactivate_reader(user, by=None) -> User:
+    from ..models import AccountChange
+
+    if is_erased(user):
+        raise OnboardingRefused("erased", None)
+    with transaction.atomic():
+        user.is_active = True
+        user.save(update_fields=["is_active"])
+        record_change(user, AccountChange.REACTIVATED, by)
+    return user
+
+
+ERASED_NAME = "Erased reader"
+
+
+def is_erased(user) -> bool:
+    from .. import selectors
+
+    return selectors.is_erased(user)
+
+
+def erase_reader(user, by=None) -> User:
+    """Erase personal data, irreversibly (D80). The answer to a deletion request.
+
+    Name, email and phone become placeholders that still satisfy their unique
+    constraints; the password becomes unusable; the phone copied into every
+    `MessageLog` is blanked. **Orders, grants and payment references stay**, as
+    anonymised rows, because accounting and Razorpay reconciliation read them.
+    Unused reset links are spent so none can be redeemed.
+    """
+    from django.utils import timezone
+
+    from ..models import AccountChange, MessageLog, PasswordResetToken
+
+    with transaction.atomic():
+        user.full_name = ERASED_NAME
+        user.email = f"erased-{user.pk}@erased.invalid"
+        user.phone = f"+0{user.pk:09d}"[:20]
+        user.is_active = False
+        user.is_staff = False
+        user.is_superuser = False
+        user.set_unusable_password()
+        user.save()
+
+        MessageLog.objects.filter(user=user).update(to_phone="")
+        PasswordResetToken.objects.filter(user=user, used_at__isnull=True).update(
+            used_at=timezone.now()
+        )
+        record_change(user, AccountChange.ERASED, by)
+    return user

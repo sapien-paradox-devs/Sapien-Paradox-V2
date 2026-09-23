@@ -1,10 +1,11 @@
-"""The two Ninja auth classes (D7).
+"""The Ninja auth classes (D7, D82).
 
 **Each endpoint declares exactly one. No endpoint accepts both.** An endpoint
 that took either would have to decide which identity wins, and that decision
 would live in every such endpoint rather than in one place.
 
   SessionAuth  the SPA, cookie-borne, CSRF enforced (D30)
+  StaffAuth    SessionAuth, and the user is staff: the in-app admin (D82)
   GrantAuth    a WhatsApp link, token in the path, CSRF exempt (D29, D30)
 
 `GrantAuth` is what makes the product's main path work: a reader arriving from
@@ -15,7 +16,9 @@ its own cookie jar. The token *is* the credential.
 import json
 import re
 
+from ninja.errors import HttpError
 from ninja.security import HttpBearer  # noqa: F401  (kept for future bearer use)
+from ninja.utils import check_csrf
 
 from ..services import grants
 
@@ -76,5 +79,29 @@ class GrantAuth:
         return None
 
 
+class StaffAuth(SessionAuth):
+    """The in-app admin (D82). A session, and the account is staff.
+
+    A reader's session is not enough, and gets a 401 like an anonymous one: Ninja
+    has no "authenticated but not allowed" from an auth class. The admin screens
+    only ever run for staff, so the distinction would help nobody.
+
+    **CSRF is checked here, explicitly.** Ninja only checks CSRF for its own
+    cookie auth classes, so `SessionAuth` above does not get it, whatever D30 and
+    this module's docstring say (tracked separately). A staff session is the
+    last place that gap may exist. Safe methods pass; unsafe ones need the
+    `X-CSRFToken` header matching the `csrftoken` cookie.
+    """
+
+    def __call__(self, request):
+        user = super().__call__(request)
+        if user is None or not user.is_active or not user.is_staff:
+            return None
+        if check_csrf(request) is not None:
+            raise HttpError(403, "csrf_failed")
+        return user
+
+
 session_auth = SessionAuth()
+staff_auth = StaffAuth()
 grant_auth = GrantAuth()

@@ -41,7 +41,7 @@ export function userFromCheck({ event }: { event: AnyEventObject }): Pick<Contex
 
 /** A malformed /api/auth/me leaves the reader logged out, not half-signed-in. */
 function isUser(value: unknown): value is User {
-  return typeof value === "object" && value !== null && "email" in value;
+  return typeof value === "object" && value !== null && "email" in value && "isStaff" in value;
 }
 
 /** The single place a URL is pushed. `sync.ts` turns it back into a ROUTE. */
@@ -57,6 +57,11 @@ export function pushUrl({ event }: { event: Event }) {
 
 export function goToHome() {
   push(ROUTES.home);
+}
+
+/** After a sign-in: where the page asked to go, or home. */
+export function goAfterLogin({ event }: { event: Event }) {
+  push(event.type === "AUTHENTICATED" && event.next ? event.next : ROUTES.home);
 }
 
 export function goToLogin() {

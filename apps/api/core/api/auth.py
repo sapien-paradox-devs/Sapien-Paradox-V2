@@ -11,6 +11,7 @@ defends against, so it stays on here and stays off there.
 """
 
 from django.contrib.auth import authenticate, login, logout
+from django.middleware.csrf import get_token
 from ninja import Router
 from ninja.errors import HttpError
 
@@ -26,6 +27,7 @@ def _as_user_out(user) -> UserOut:
         fullName=user.full_name,
         email=user.email,
         phone=user.phone,
+        isStaff=user.is_staff,
     )
 
 
@@ -43,6 +45,8 @@ def login_view(request, payload: LoginIn):
         raise HttpError(401, "invalid_credentials")
 
     login(request, user)
+    # Login rotates the CSRF token; setting it here hands the SPA the new one.
+    get_token(request)
     return _as_user_out(user)
 
 
@@ -59,4 +63,7 @@ def me(request):
     401 when anonymous, which is the answer the root machine expects — it starts
     in `waiting` and never assumes anonymous before asking.
     """
+    # Makes sure the `csrftoken` cookie exists, so the SPA can send X-CSRFToken
+    # on its first unsafe request after a reload (D30).
+    get_token(request)
     return _as_user_out(request.auth)

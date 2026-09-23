@@ -28,6 +28,9 @@ export const navigationConfig = {
     // sync.ts is the only sender: mount, popstate, and after any pushUrl.
     ROUTE: [
       { guard: "isReaderPath", target: ".page.reader" },
+      // Before isAdminPath: `/admin/login` is its own page (D82).
+      { guard: "isAdminLoginPath", target: ".page.adminLogin" },
+      { guard: "isAdminPath", target: ".page.admin" },
       { guard: "isLoginPath", target: ".page.login" },
       { guard: "isResetPath", target: ".page.reset" },
       { guard: "isOpeningPath", target: ".page.opening" },
@@ -59,7 +62,7 @@ export const navigationConfig = {
           on: {
             AUTHENTICATED: {
               target: "authenticated",
-              actions: ["assignUser", "goToHome"],
+              actions: ["assignUser", "goAfterLogin"],
             },
           },
         },
@@ -67,6 +70,9 @@ export const navigationConfig = {
         authenticated: {
           on: {
             LOGOUT: { target: "loggingOut" },
+            // Signing in again while signed in: a reader switching to their
+            // staff account on `/admin/login` (D82).
+            AUTHENTICATED: { actions: ["assignUser", "goAfterLogin"] },
           },
         },
 
@@ -101,6 +107,10 @@ export const navigationConfig = {
         reset: {},
         welcome: {},
         begin: {},
+        // The in-app admin (D82). The root knows only that these are pages;
+        // what is inside them belongs to the admin's own machines.
+        adminLogin: {},
+        admin: {},
       },
     },
   },

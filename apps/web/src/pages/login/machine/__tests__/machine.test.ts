@@ -11,6 +11,7 @@ const READER: User = {
   fullName: "Ada",
   email: "ada@example.com",
   phone: "+919876543210",
+  isStaff: false,
 };
 
 function start(outcome: "ok" | 401 | 500 = "ok") {

@@ -28,6 +28,14 @@ export const isOpeningPath = ({ event }: { event: Event }) =>
 export const isResetPath = ({ event }: { event: Event }) =>
   path(event).startsWith("/reset/");
 
+/** `/admin/login` — the admin's own door (D82). Same login endpoint behind it. */
+export const isAdminLoginPath = ({ event }: { event: Event }) =>
+  path(event) === "/admin/login";
+
+/** `/admin` and everything under it (D82). */
+export const isAdminPath = ({ event }: { event: Event }) =>
+  path(event) === "/admin" || path(event).startsWith("/admin/");
+
 /** `/begin` — buying a book, on its own page (#160). */
 export const isBeginPath = ({ event }: { event: Event }) => path(event) === "/begin";
 

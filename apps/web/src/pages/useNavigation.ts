@@ -14,8 +14,9 @@ export type Navigation = {
   /** False while the boot session check is still in flight. */
   sessionSettled: boolean;
   navigate: (to: string) => void;
-  /** A page reporting a successful sign-in. The root owns what happens next. */
-  authenticated: (user: User) => void;
+  /** A page reporting a successful sign-in. The root owns what happens next;
+   *  `next` is where to land, home when absent. */
+  authenticated: (user: User, next?: string) => void;
   logout: () => void;
 };
 

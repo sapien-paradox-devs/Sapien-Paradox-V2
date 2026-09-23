@@ -14,6 +14,8 @@ export type HeaderPage =
   | "welcome"
   | "begin"
   | "opening"
+  | "admin"
+  | "adminLogin"
   | "unknown";
 
 export type HeaderContents = {
@@ -49,9 +51,14 @@ export function headerContents(page: HeaderPage, signedIn: boolean): HeaderConte
     case "reader":
       return { ...NOTHING, library: signedIn };
 
+    // The admin has its own nav; the header keeps the name and sign out (D82).
+    case "admin":
+      return { ...NOTHING, account: true };
+
     case "login":
     case "reset":
     case "welcome":
+    case "adminLogin":
       return NOTHING;
   }
 }
