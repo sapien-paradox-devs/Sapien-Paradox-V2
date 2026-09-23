@@ -61,8 +61,8 @@ function ChapterState({ chapter }: { chapter: ChapterRowData }) {
     return (
       <span className="ui-chapter-done">
         <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-          <circle cx="8" cy="8" r="7" fill="var(--accent)" />
-          <path d="M4.8 8.2l2.2 2.1 4.2-4.4" fill="none" stroke="var(--on-accent)" strokeWidth="1.6"
+          <circle cx="8" cy="8" r="7" fill="var(--teal)" />
+          <path d="M4.8 8.2l2.2 2.1 4.2-4.4" fill="none" stroke="var(--on-bright)" strokeWidth="1.6"
             strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         <span className="ui-chapter-done-label">{labels.home.completed}</span>
@@ -90,7 +90,7 @@ function ChapterState({ chapter }: { chapter: ChapterRowData }) {
         cy="8"
         r="6"
         fill="none"
-        stroke="var(--accent)"
+        stroke="var(--saffron)"
         strokeWidth="2"
         strokeLinecap="round"
         strokeDasharray={circumference}

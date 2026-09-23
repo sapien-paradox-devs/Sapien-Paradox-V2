@@ -1,8 +1,9 @@
 /* Vanilla CSS, no framework. Tokens here; component styles live beside their component.
  *
  * The direction is the product's own: depth over velocity, digital monasticism.
- * Ink & Sage (D74): cool paper rather than a screen, a book serif for anything
- * you read, and one restrained accent. Nothing glows. A reader spends an hour here.
+ * Jewel (D81): cool paper, the warm near-black the product began with, a book
+ * serif for anything you read (D74), and four bright colours — cobalt leading,
+ * saffron, coral and teal beside it. A reader spends an hour here.
  */
 
 /* Newsreader — a book serif with an optical-size axis and a true italic, for
@@ -11,11 +12,11 @@
 @import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..700&family=Inter:wght@400;500;600&display=swap");
 
 :root {
-  /* Ink — green-black, never pure black. Pure black on paper reads as a
-     screenshot. Every text/ground pair clears WCAG AA in both themes (D74). */
-  --ink: #16211c;
-  --ink-soft: #56625b;
-  --ink-faint: #5e6a63;
+  /* Ink — a warm near-black, never pure black. Pure black on paper reads as a
+     screenshot. Every text/ground pair clears WCAG AA in both themes (D81). */
+  --ink: #1f1b16;
+  --ink-soft: #5d554a;
+  --ink-faint: #6b6358;
 
   /* Ground — a cool off-white, like uncoated book paper in daylight. */
   --paper: #f5f6f2;
@@ -25,17 +26,30 @@
   --rule: #d9ded7;
   --rule-soft: #e6e9e3;
 
-  /* One accent: forest sage. Quiet enough to belong on a page, dark enough
-     to carry white text without shouting. */
-  --accent: #2f6b4f;
-  --accent-hover: #245640;
-  --accent-wash: #e6efe9;
+  /* The main colour: cobalt. Buttons, links, focus — anything you act on. */
+  --accent: #2952e3;
+  --accent-hover: #1f42c2;
+  --accent-wash: #e8edfd;
   /* Text on a solid accent fill. White here; dark ink in the dark theme,
      where the accent is lightened. */
   --on-accent: #fff;
 
-  --danger: #a13a30;
-  --good: #2f6b4f;
+  /* Three supporting colours (D81). Each is a pair: the bright shade is for
+     fills — bars, rings, marks, covers — and the `-text` shade is for text on
+     paper, where the bright one fails contrast. Text on a bright fill is
+     `--on-bright`, dark in both themes. */
+  --saffron: #f5a623;      /* progress, highlights */
+  --saffron-text: #9a5b00;
+  --saffron-wash: #fdf1dc;
+  --coral: #ff6b57;        /* chapter numerals, covers */
+  --coral-text: #c23a28;
+  --teal: #14b8a6;         /* done, new, the companion */
+  --teal-text: #0a7266;
+  --teal-wash: #e0f5f2;
+  --on-bright: #1f1b16;
+
+  --danger: #b42318;
+  --good: #0a7266;
 
   --font-display: "Newsreader", Georgia, "Times New Roman", serif;
   --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -55,10 +69,10 @@
 
   color-scheme: light;
 
-  --shadow-card: 0 1px 2px rgba(22, 33, 28, 0.04), 0 8px 24px -12px rgba(22, 33, 28, 0.12);
-  --shadow-lift: 0 2px 4px rgba(22, 33, 28, 0.06), 0 16px 40px -16px rgba(22, 33, 28, 0.18);
+  --shadow-card: 0 1px 2px rgba(31, 27, 22, 0.04), 0 8px 24px -12px rgba(31, 27, 22, 0.12);
+  --shadow-lift: 0 2px 4px rgba(31, 27, 22, 0.06), 0 16px 40px -16px rgba(31, 27, 22, 0.18);
   /* The veil behind a drawer or sheet. */
-  --backdrop: rgba(11, 17, 14, 0.3);
+  --backdrop: rgba(16, 14, 11, 0.3);
 
   /* The site header's height. `.shell` subtracts it so a centred page does
      not scroll by exactly this much. */
@@ -79,7 +93,7 @@
 
   /* Paper grain — a fractal noise tile, drawn under everything on the body so
      raised surfaces (cards, fields) read as smoother sheets on top of it. */
-  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .20  0 0 0 0 .28  0 0 0 0 .24  0 0 0 .06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .12  0 0 0 0 .11  0 0 0 0 .09  0 0 0 .06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
 
 *,
@@ -139,9 +153,9 @@ input, select {
 }
 
 /*
- * Dark — deep forest at night (D74). Never pure black, for the same reason
- * the ink is never pure black. Every text/ground pair here clears WCAG AA
- * (4.5:1); the lowest is ink-faint on paper-raised, 5.69.
+ * Dark — warm night, the near-black of the old theme (D81). Never pure black,
+ * for the same reason the ink is never pure black. Every text/ground pair here
+ * clears WCAG AA (4.5:1); the lowest is ink-faint on paper-raised, 5.45.
  *
  * One block, keyed on the attribute alone. `data-theme` is always resolved to
  * "light" or "dark" — by the inline script in index.html before first paint,
@@ -151,33 +165,45 @@ input, select {
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --ink: #e4ebe6;
-  --ink-soft: #aab6af;
-  --ink-faint: #8d9a92;
+  --ink: #ece4d6;
+  --ink-soft: #b9ae9d;
+  --ink-faint: #9a9083;
 
-  --paper: #101714;
-  --paper-raised: #17201c;
-  --paper-sunk: #0b110e;
+  --paper: #16130f;
+  --paper-raised: #1f1b16;
+  --paper-sunk: #100e0b;
 
-  --rule: #2a3731;
-  --rule-soft: #1f2a25;
+  --rule: #352e26;
+  --rule-soft: #28231d;
 
-  --accent: #7fb89a;
-  --accent-hover: #97c9ae;
-  --accent-wash: #1c2c24;
-  --on-accent: #101714;
+  --accent: #8fa8ff;
+  --accent-hover: #afc0ff;
+  --accent-wash: #1c2240;
+  --on-accent: #16130f;
 
-  --danger: #e58a80;
-  --good: #93c29a;
+  /* Lightened for the dark ground, where the bright shade is also readable
+     as text, so each pair collapses to one colour. */
+  --saffron: #ffc152;
+  --saffron-text: #ffc152;
+  --saffron-wash: #2e2410;
+  --coral: #ff8a7a;
+  --coral-text: #ff8a7a;
+  --teal: #3dd6c3;
+  --teal-text: #3dd6c3;
+  --teal-wash: #102b28;
+  --on-bright: #16130f;
+
+  --danger: #ff8a80;
+  --good: #3dd6c3;
 
   /* Shadow barely reads on a dark ground, so it goes deeper and a faint top
      highlight does the lifting instead. */
-  --shadow-card: 0 1px 0 rgba(228, 235, 230, 0.04) inset, 0 8px 24px -12px rgba(0, 0, 0, 0.6);
-  --shadow-lift: 0 1px 0 rgba(228, 235, 230, 0.05) inset, 0 16px 40px -16px rgba(0, 0, 0, 0.7);
+  --shadow-card: 0 1px 0 rgba(236, 228, 214, 0.04) inset, 0 8px 24px -12px rgba(0, 0, 0, 0.6);
+  --shadow-lift: 0 1px 0 rgba(236, 228, 214, 0.05) inset, 0 16px 40px -16px rgba(0, 0, 0, 0.7);
   --backdrop: rgba(0, 0, 0, 0.5);
 
   /* Night grain: faint pale specks on the dark ground. */
-  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .89  0 0 0 0 .93  0 0 0 0 .90  0 0 0 .04 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .93  0 0 0 0 .89  0 0 0 0 .84  0 0 0 .04 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
 
 /* ── shared primitives, until #76 extracts them properly ───────────── */

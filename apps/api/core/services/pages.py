@@ -30,7 +30,7 @@ WEBP_QUALITY = 80
 
 # The watermark: ink at ~8% opacity, diagonal, tiled. Visible in a screenshot,
 # invisible to someone reading.
-WATERMARK_RGBA = (22, 33, 28, 22)  # the ink (D74), ~8% opacity
+WATERMARK_RGBA = (31, 27, 22, 22)  # the ink (D81), ~8% opacity
 WATERMARK_ANGLE = 30
 
 

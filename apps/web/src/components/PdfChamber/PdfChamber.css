@@ -82,7 +82,7 @@
 .chamber-progress span {
   display: block;
   height: 100%;
-  background: var(--accent);
+  background: var(--saffron);   /* progress is saffron (D81) */
   transform-origin: left center;
   transition: transform var(--dur-base) var(--ease-settle);
 }
@@ -133,7 +133,7 @@
 .pdf-page img { pointer-events: none; }
 
 /* Dark mode dims the page; it never inverts it, which wrecks images. */
-:root[data-theme="dark"] .pdf-page { background: #d3d9d4; }
+:root[data-theme="dark"] .pdf-page { background: #ddd6ca; }
 :root[data-theme="dark"] .pdf-page img { filter: brightness(0.82) contrast(0.95); }
 
 /* Printing shows a line, not the chapter (D73). */
