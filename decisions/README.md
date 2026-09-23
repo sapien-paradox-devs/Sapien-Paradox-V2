@@ -72,6 +72,9 @@ back to. Without it these read as taste rather than as answers to specific, obse
 | D47 | Public signup; payments lead onboarding *(reverses D10, advances D28)* | [payments](08-payments.md) | locked |
 | D48 | Fulfil on the redirect as well as the webhook *(refines D47)* | [payments](08-payments.md) | locked |
 | D54 | Motion is native-first; no animation library, no WebGL | [surface](13-surface.md) | locked |
+| D70 | Reading progress, shown quietly *(reverses D11's "no progress bars"; amends D18: a ninth table)* | [reading](15-reading.md) | locked |
+| D71 | The chamber renders the PDF itself, with pdf.js *(reopens the #31 departure)* | [reading](15-reading.md) | locked |
+| D72 | Landing, chamber and progress proceed on the current structure *(amends structure-D67, `14-structure.md`)* | [reading](15-reading.md) | locked |
 
 ## Still open
 

@@ -55,6 +55,9 @@ grants for chapters never clicked, and puts a pile of live tokens in one respons
 **Display:** number, title, and a quiet read/unread mark from `opened_at`. Flat for one book,
 grouped for several. No progress bars, percentages, or badges — they fight the product's restraint.
 
+> **Superseded in part by D70** (2026-09-23): reading progress is now shown, quietly — a ring per
+> chapter and a total per book. Badges and rewards remain out.
+
 **Account block at top:** name, email, phone, book, logout.
 
 ### Send a chapter to my WhatsApp

@@ -203,6 +203,9 @@ hierarchy.
 metadata, no nudges. Once you're in, the room respects you."* A companion that speaks first is
 structurally a nudge, so its entry point is constrained.
 
+> **Amended by D70** (2026-09-23): a quiet progress hairline is allowed in the chamber, fading
+> with the chrome. Timers and nudges remain out.
+
 **Locked:** the panel sits closed and silent while you read — nothing pulses, nothing appears.
 When *you* open it, the companion speaks first, with a question about the chapter rather than a
 greeting. Opening the panel is you leaving the room voluntarily, so the room stays uninterrupted.
