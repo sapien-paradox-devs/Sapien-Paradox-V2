@@ -91,7 +91,8 @@ proposed in §3.4** — that is deliberate, and it is what makes the two trees o
 │   ├── 1.1.1 GET /api/books, published only                          ✅
 │   ├── 1.1.2 Landing page that sells one book                        ✅
 │   ├── 1.1.3 Book detail — sample chapter, table of contents         ○
-│   └── 1.1.4 More than one book on sale at once                      ◐  works; never exercised
+│   ├── 1.1.4 More than one book on sale at once                      ◐  → catalogue grid (D79)
+│   └── 1.1.5 Library: BookCard, Home shelf + catalogue at / (D79)    ○
 ├── 1.2 Checkout
 │   ├── 1.2.1 Razorpay payment link, hosted page                      ✅
 │   ├── 1.2.2 Pace chosen at purchase (slow/medium/fast)              ✅  inert until 3
@@ -290,7 +291,7 @@ Decide before the prompt is written, because the prompt shape depends on it.
 │   ├── 7.1.1 Eight model screens                                     ✅
 │   ├── 7.1.2 Resend action                                           ✅
 │   ├── 7.1.3 Concierge onboarding through admin (D10)                ◐  now behind D47
-│   └── 7.1.4 One screen: "everything about this reader"              ○  the real ops need
+│   └── 7.1.4 One screen: "everything about this reader"              ○  a D75 custom view
 ├── 7.2 Commands
 │   ├── 7.2.1 seed_dev, idempotent                                    ✅
 │   ├── 7.2.2 send_chapter                                            ✅
@@ -298,7 +299,14 @@ Decide before the prompt is written, because the prompt shape depends on it.
 │   └── 7.2.4 cadence_tick                                            ○  = 3.2.1
 ├── 7.3 Content operations
 │   ├── 7.3.1 Upload a book and its chapters                          ◐  admin only, no validation
-│   └── 7.3.2 Publish / unpublish                                     ✅
+│   ├── 7.3.2 Publish / unpublish                                     ✅
+│   ├── 7.3.3 Upload a book as a folder, with preview (D78)           ○
+│   ├── 7.3.4 Chapter video + public book sample (D76, D77)           ○
+│   └── 7.3.5 Book author, description, cover (D76)                   ○
+├── 7.5 Admin surface (D75)
+│   ├── 7.5.1 Admin theme                                             ○
+│   ├── 7.5.2 Add Reader form over create_reader                      ○
+│   └── 7.5.3 Deactivate / erase a reader (D80)                       ○
 └── 7.4 Observability
     ├── 7.4.1 stdout to the host viewer (D22)                         ✅
     ├── 7.4.2 Delivery failure is visible somewhere                   ◐  MessageLog, unsurfaced
