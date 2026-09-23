@@ -214,7 +214,11 @@ Free instances also do not support `preDeployCommand`, which is why migrations r
 
 Readers never receive a PDF. Each page is rendered to a WebP image at upload and served
 watermarked (D73). Chapters uploaded **before** D73 have no page images, and the reader cannot
-open them until they do. Once, after the deploy:
+open them until they do; they show "The pages did not load."
+
+**On Render this is automatic:** `render.yaml`'s start command runs `render_chapters` after
+`migrate`. If the service was created by hand rather than from the Blueprint, copy that start
+command into the dashboard (Settings → Start Command). To run it yourself, anywhere:
 
 ```bash
 .venv/bin/python manage.py render_chapters          # renders chapters with no pages yet
