@@ -117,7 +117,16 @@ export const labels = {
   },
   reader: {
     loading: "Opening the chapter…",
-    finish: "Finish chapter",
+    // The chamber's bar and drawer (#150, D70–D71).
+    sections: "Sections",
+    sectionsTitle: "In this chapter",
+    page: "Page",
+    close: "Close",
+    progress: "How far through the chapter you are",
+    noPrint: "Chapters can\u2019t be printed. They are here to read whenever you like.",
+    // The end of the chapter.
+    completeHint: "When you are done, mark it complete. You can always come back to it.",
+    complete: "Mark chapter complete",
     threshold: {
       chapter: "Chapter",
       begin: "Tap anywhere to begin",

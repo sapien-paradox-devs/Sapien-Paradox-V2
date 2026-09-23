@@ -9,14 +9,14 @@ import type { Context, Event } from "./types";
 
 export const pdfMachine = setup({
   types: {} as { context: Context; events: Event; input: { token: string } },
-  actions: { assignUrl: assign(actions.urlFrom) },
-  actors: { loadPdf: actors.loadPdf },
+  actions: { assignLayout: assign(actions.layoutFrom) },
+  actors: { loadLayout: actors.loadLayout },
 }).createMachine({
   ...pdfConfig,
   context: ({ input }: { input: { token: string } }) => ({
     token: input.token,
-    objectUrl: null,
+    layout: null,
   }),
 });
 
-export type { Context, Event } from "./types";
+export type { Context, Event, Layout, PageSize } from "./types";

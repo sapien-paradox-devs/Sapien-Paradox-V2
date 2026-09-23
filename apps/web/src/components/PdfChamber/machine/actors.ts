@@ -1,20 +1,15 @@
 import { fromPromise } from "xstate";
 
-import { API_BASE } from "../../../lib/env";
+import { mappedFetcher } from "../../../lib/fetcher";
+import type { Layout } from "./types";
 
 /**
- * Fetches the proxied bytes and hands back a blob URL.
+ * The chapter's layout: page sizes and sections (D73). The pages themselves are
+ * fetched one at a time as they come into view — see `Pages.tsx`.
  *
- * The PDF is never a storage URL — always `/api/grants/{token}/pdf` (D29), which
- * is what keeps object storage swappable and the file unreachable without a
- * live grant.
+ * There is no PDF to fetch. The file stays on the server; the browser only
+ * ever receives watermarked images of its pages.
  */
-export const loadPdf = fromPromise<string, { token: string }>(async ({ input }) => {
-  const response = await fetch(`${API_BASE}/api/grants/${input.token}/pdf`, {
-    credentials: "include",
-  });
-
-  if (!response.ok) throw new Error(`pdf ${response.status}`);
-
-  return URL.createObjectURL(await response.blob());
-});
+export const loadLayout = fromPromise<Layout, { token: string }>(({ input }) =>
+  mappedFetcher.get<Layout>(`/api/grants/${input.token}/pages`),
+);

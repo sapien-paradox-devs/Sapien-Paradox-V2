@@ -34,3 +34,29 @@ class ChatIn(Schema):
 
 class ChatOut(Schema):
     answer: str
+
+
+class PageSizeOut(Schema):
+    """A page's size in PDF points, so the chamber can shape its box before the image loads."""
+
+    width: float
+    height: float
+
+
+class SectionOut(Schema):
+    """One of the PDF's bookmarks. `page` is zero-based."""
+
+    title: str
+    page: int
+    depth: int
+
+
+class PageLayoutOut(Schema):
+    """Everything the chamber needs to lay a chapter out (D73).
+
+    Deliberately not where the page images live: those are storage paths, and a
+    storage path must never reach a client (D19).
+    """
+
+    pages: list[PageSizeOut]
+    sections: list[SectionOut]

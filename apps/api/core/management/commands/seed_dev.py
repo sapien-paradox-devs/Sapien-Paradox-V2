@@ -13,7 +13,7 @@ from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 
 from core.models import Book, Chapter, User
-from core.services import extraction
+from core.services import extraction, pages
 from core.services.onboarding import OnboardingRefused, create_reader
 
 BOOK = {"title": "The Sapien Paradox", "slug": "sapien-paradox", "price_cents": 190000}
@@ -131,6 +131,9 @@ class Command(BaseCommand):
                 chapter.file.save(f"{index}.pdf", a_pdf(title, index), save=True)
                 # Explicit, never a signal (D19).
                 extraction.extract_and_save(chapter)
+            if created or not chapter.page_layout:
+                # The chamber shows images of the pages, never the PDF (D73).
+                pages.render_and_save(chapter)
             self.say(f"chapter {index}", title, created)
 
         if User.objects.filter(email=READER["email"]).exists():

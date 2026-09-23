@@ -61,25 +61,47 @@ export function ReaderPage() {
     )}
     <main className="reader">
       {chapter && (
-        <header>
-          <p>{chapter.bookTitle}</p>
+        <header className="reader-opening">
+          <p className="reader-book">{chapter.bookTitle}</p>
           <h1>{chapter.title}</h1>
         </header>
       )}
 
-      <PdfChamber token={token} />
-
-      <Companion token={token} />
-
-      {state.matches({ chamber: "finished" }) ? (
-        <p>{labels.reader.finished}</p>
-      ) : (
-        <button onClick={() => send({ type: "FINISH" })}>
-          {labels.reader.finish}
-        </button>
-      )}
+      <PdfChamber
+        token={token}
+        bookTitle={chapter?.bookTitle ?? ""}
+        title={chapter?.title ?? ""}
+        footer={
+          <footer className="reader-end">
+            <Fleuron />
+            {state.matches({ chamber: "finished" }) ? (
+              <p className="reader-end-done">{labels.reader.finished}</p>
+            ) : (
+              <>
+                <p className="reader-end-hint">{labels.reader.completeHint}</p>
+                <button type="button" className="btn" onClick={() => send({ type: "FINISH" })}>
+                  {labels.reader.complete}
+                </button>
+              </>
+            )}
+            {/* Discussion comes after reading, and only when asked for (D14). */}
+            <Companion token={token} />
+          </footer>
+        }
+      />
     </main>
     </>
+  );
+}
+
+/** A printer's ornament: the chapter is over. */
+function Fleuron() {
+  return (
+    <svg className="reader-fleuron" viewBox="0 0 60 16" aria-hidden="true">
+      <path d="M2 8h18M40 8h18" stroke="currentColor" strokeWidth="1" />
+      <path d="M30 2c3 3 3 9 0 12c-3-3-3-9 0-12Z M24 8c2-2 4-2 6 0c-2 2-4 2-6 0Z M36 8c-2-2-4-2-6 0c2 2 4 2 6 0Z"
+        fill="currentColor" />
+    </svg>
   );
 }
 

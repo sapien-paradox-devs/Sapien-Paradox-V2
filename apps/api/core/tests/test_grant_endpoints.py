@@ -38,12 +38,11 @@ class GrantEndpointTests(TestCase):
             "firstOpen": True,
         })
 
-    def test_the_pdf_streams(self):
+    def test_there_is_no_pdf_endpoint(self):
+        """D73: the PDF never leaves the server. Readers get page images only."""
         response = self.client.get(f"/api/grants/{self.grant.token}/pdf")
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Type"], "application/pdf")
-        self.assertEqual(b"".join(response.streaming_content), PDF_BYTES)
+        self.assertEqual(response.status_code, 404)
 
     def test_opening_stamps_opened_at_once_only(self):
         self.client.get(f"/api/grants/{self.grant.token}")
@@ -99,13 +98,15 @@ class GrantEndpointTests(TestCase):
         response = self.client.get("/api/grants/not-a-real-token")
         self.assertIn(response.status_code, (401, 404))
 
-    def test_the_pdf_is_refused_for_an_expired_token(self):
+    def test_pages_are_refused_for_an_expired_token(self):
         self.grant.expires_at = timezone.now() - timedelta(seconds=1)
         self.grant.save(update_fields=["expires_at"])
 
-        response = self.client.get(f"/api/grants/{self.grant.token}/pdf")
+        layout = self.client.get(f"/api/grants/{self.grant.token}/pages")
+        page = self.client.get(f"/api/grants/{self.grant.token}/pages/1")
 
-        self.assertEqual(response.status_code, 410)
+        self.assertEqual(layout.status_code, 410)
+        self.assertEqual(page.status_code, 410)
 
     # ── the one #71 asks for ─────────────────────────────────────────
     def test_no_response_ever_resembles_a_storage_url(self):
@@ -113,12 +114,13 @@ class GrantEndpointTests(TestCase):
         revocation at the infrastructure layer while this code still looked
         correct (D19). Nothing may leak one."""
         meta = self.client.get(f"/api/grants/{self.grant.token}")
-        pdf = self.client.get(f"/api/grants/{self.grant.token}/pdf")
+        pages = self.client.get(f"/api/grants/{self.grant.token}/pages")
 
         haystack = (
             meta.content.decode().lower()
             + " ".join(f"{k}:{v}" for k, v in meta.items()).lower()
-            + " ".join(f"{k}:{v}" for k, v in pdf.items()).lower()
+            + pages.content.decode().lower()
+            + " ".join(f"{k}:{v}" for k, v in pages.items()).lower()
         )
 
         for needle in ("http://", "https://", "r2.cloudflarestorage", "amazonaws",

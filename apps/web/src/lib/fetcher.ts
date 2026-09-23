@@ -59,7 +59,17 @@ async function readDetail(response: Response): Promise<string | null> {
   }
 }
 
+/** Binary bodies — a chapter's page images (D73). Same credentials, same errors. */
+async function blob(path: string): Promise<Blob> {
+  const response = await fetch(API_BASE + path, { credentials: "include" });
+  if (!response.ok) {
+    throw new ApiError(response.status, await readDetail(response));
+  }
+  return response.blob();
+}
+
 export const mappedFetcher = {
   get: <T>(path: string) => request<T>("GET", path),
   post: <T>(path: string, body?: unknown) => request<T>("POST", path, body),
+  blob,
 };
