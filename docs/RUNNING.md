@@ -147,6 +147,12 @@ devices and work fine on yours.
 | Health | `{"status":"ok","database":"ok"}` |
 | Tables | all eight present, migrations `0001` and `0002` applied |
 
+**Start command, set on the live service 2026-09-23 through the Render API** (the dashboard does
+not read `render.yaml`, see below): `python manage.py migrate --no-input && python manage.py
+render_chapters && gunicorn config.wsgi:application --workers 2 --threads 4 --timeout 120`. Until
+then production had no page images and every chapter showed "The pages did not load" (D73). **If
+you change `startCommand` in `render.yaml`, change it on the service too.**
+
 **The service was created through the Render REST API, not the Blueprint**, because neither the
 API nor the MCP can apply a `render.yaml`. The payload was generated *from* `render.yaml` so the
 file stays the source of truth — but the two can now drift, and nothing enforces agreement. Re-check
