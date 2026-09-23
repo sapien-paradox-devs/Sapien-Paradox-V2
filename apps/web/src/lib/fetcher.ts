@@ -48,6 +48,12 @@ function csrfToken(): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
+/** The CSRF header for a request made outside `request` (an upload's XHR, D85). */
+export function csrfHeader(): Record<string, string> {
+  const token = csrfToken();
+  return token ? { "X-CSRFToken": token } : {};
+}
+
 function headersFor(method: string, hasBody: boolean): Record<string, string> {
   const headers: Record<string, string> = {};
   if (hasBody) headers["Content-Type"] = "application/json";
@@ -134,6 +140,7 @@ export const mappedFetcher = {
   get: <T>(path: string) => request<T>("GET", path),
   post: <T>(path: string, body?: unknown) => request<T>("POST", path, body),
   patch: <T>(path: string, body?: unknown) => request<T>("PATCH", path, body),
+  delete: <T>(path: string) => request<T>("DELETE", path),
   blob,
   send,
 };

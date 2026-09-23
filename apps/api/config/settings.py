@@ -272,6 +272,14 @@ RESET_TOKEN_TTL_MINUTES = int(os.getenv("RESET_TOKEN_TTL_MINUTES", "60"))  # D21
 # making Range requests against it; two hours covers any chapter video.
 VIDEO_URL_TTL_SECONDS = int(os.getenv("VIDEO_URL_TTL_SECONDS", "7200"))
 VIDEO_MAX_MB = int(os.getenv("VIDEO_MAX_MB", "500"))
+# Uploads from the in-app admin (D85). A signed upload URL lives this long; a
+# large video on a slow connection needs the time. Files above the threshold go
+# up in parts, so a dropped connection retries one part, not the whole file.
+PDF_MAX_MB = int(os.getenv("PDF_MAX_MB", "100"))
+COVER_MAX_MB = int(os.getenv("COVER_MAX_MB", "10"))
+UPLOAD_URL_TTL_SECONDS = int(os.getenv("UPLOAD_URL_TTL_SECONDS", "21600"))
+UPLOAD_MULTIPART_THRESHOLD_MB = int(os.getenv("UPLOAD_MULTIPART_THRESHOLD_MB", "50"))
+UPLOAD_PART_MB = int(os.getenv("UPLOAD_PART_MB", "16"))  # R2's minimum is 5
 # Where this API is reached from a browser. Only used when storage is local (no R2), to
 # turn a `/media/...` path into a URL the SPA, on another origin, can play.
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")

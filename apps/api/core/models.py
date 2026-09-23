@@ -73,6 +73,11 @@ def book_cover_upload_path(instance, filename):
     return f"covers/{instance.slug}-{uuid.uuid4()}.{ext}"
 
 
+def book_video_upload_path(instance, filename):
+    """`book-videos/<book-slug>-<uuid>.mp4`. The owners-only book video (D83)."""
+    return f"book-videos/{instance.slug}-{uuid.uuid4()}.mp4"
+
+
 def book_sample_upload_path(instance, filename):
     """`samples/<book-slug>-<uuid>.mp4`."""
     return f"samples/{instance.slug}-{uuid.uuid4()}.mp4"
@@ -183,6 +188,12 @@ class Book(models.Model):
         blank=True,
         validators=[FileExtensionValidator(["jpg", "jpeg", "png", "webp"])],
         help_text="Proxied through the API, never linked directly (mandate 3).",
+    )
+    video = models.FileField(
+        upload_to=book_video_upload_path,
+        blank=True,
+        validators=VIDEO_VALIDATORS,
+        help_text="Optional video for the whole book, MP4, for owners only (D83).",
     )
     sample_video = models.FileField(
         upload_to=book_sample_upload_path,

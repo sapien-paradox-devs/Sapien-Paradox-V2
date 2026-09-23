@@ -61,3 +61,111 @@ class RefusalOut(Schema):
 
     code: str
     field: str | None = None
+
+
+# ── books (D83–D86) ───────────────────────────────────────────────────────────
+
+
+class BookRowOut(Schema):
+    id: str
+    slug: str
+    title: str
+    author: str
+    isPublished: bool
+    chapterCount: int
+    readyCount: int
+    hasCover: bool
+    readerCount: int
+    createdAt: str
+
+
+class BookListOut(Schema):
+    books: list[BookRowOut]
+
+
+class ChapterAdminOut(Schema):
+    id: str
+    number: int
+    title: str
+    # `ready`: pages rendered, readable. `failed`: the PDF did not render (D73).
+    status: str
+    pageCount: int | None
+    hasVideo: bool
+    hasReaders: bool
+
+
+class ChecklistOut(Schema):
+    hasChapters: bool
+    allReady: bool
+    hasCover: bool
+    passes: bool
+
+
+class BookDetailOut(BookRowOut):
+    description: str
+    priceMinorUnits: int
+    hasVideo: bool
+    hasSample: bool
+    chapters: list[ChapterAdminOut]
+    checklist: ChecklistOut
+
+
+class BookIn(Schema):
+    title: str
+    author: str = ""
+    description: str = ""
+    priceMinorUnits: int = 0
+
+
+class BookUpdateIn(Schema):
+    title: str | None = None
+    author: str | None = None
+    description: str | None = None
+    priceMinorUnits: int | None = None
+
+
+class ChapterTitleIn(Schema):
+    title: str
+
+
+class ChapterOrderIn(Schema):
+    chapterIds: list[int]
+
+
+class UploadStartIn(Schema):
+    """What the file is and where it goes (D85). `chapterId` for a chapter's PDF
+    or video; `title` for a new chapter, cleaned from its filename (D86)."""
+
+    destination: str
+    bookId: int
+    chapterId: int | None = None
+    filename: str
+    size: int
+    title: str = ""
+
+
+class UploadPlanOut(Schema):
+    ticket: str
+    mode: str                      # single | multipart | direct
+    url: str | None = None
+    uploadId: str | None = None
+    partSize: int | None = None
+    partUrls: list[str] | None = None
+    contentType: str
+
+
+class UploadPartIn(Schema):
+    partNumber: int
+    etag: str
+
+
+class UploadCompleteIn(Schema):
+    ticket: str
+    parts: list[UploadPartIn] | None = None
+
+
+class UploadDoneOut(Schema):
+    """The book as it is after the upload landed, so the workspace redraws from truth."""
+
+    book: BookDetailOut
+    chapterId: str | None = None

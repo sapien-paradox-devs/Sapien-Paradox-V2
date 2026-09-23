@@ -72,3 +72,29 @@ def is_erased(user) -> bool:
     from .models import AccountChange
 
     return user.account_changes.filter(action=AccountChange.ERASED).exists()
+
+
+def books_for_admin():
+    """Every book, drafts included, newest first, with the counts the list shows."""
+    from django.db.models import Count, Q
+
+    from .models import Book
+
+    return Book.objects.annotate(
+        chapter_count=Count("chapters", distinct=True),
+        ready_count=Count("chapters", filter=Q(chapters__page_layout__isnull=False), distinct=True),
+        reader_count=Count("orders", distinct=True),
+    ).order_by("-created_at")
+
+
+def book_for_admin(book_id):
+    return books_for_admin().filter(pk=book_id).first()
+
+
+def chapters_with_readers(book) -> set[int]:
+    """Chapter ids someone holds a grant for: those stay put (D84)."""
+    from .models import TemporalGrant
+
+    return set(
+        TemporalGrant.objects.filter(chapter__book=book).values_list("chapter_id", flat=True)
+    )

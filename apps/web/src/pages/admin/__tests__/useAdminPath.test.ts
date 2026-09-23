@@ -11,6 +11,8 @@ describe("adminRoute (D82)", () => {
     ["/admin/readers/42", { screen: "reader", id: "42" }],
     ["/admin/readers/abc", { screen: "readers" }],
     ["/admin/books", { screen: "books" }],
+    ["/admin/books/new", { screen: "newBook" }],
+    ["/admin/books/3", { screen: "book", id: "3" }],
     ["/admin/whatever", { screen: "readers" }],
   ])("%s", (path, expected) => {
     expect(adminRoute(path)).toEqual(expected);

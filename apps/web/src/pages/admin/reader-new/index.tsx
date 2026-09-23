@@ -10,7 +10,6 @@ import { PACE } from "../../../lib/constants";
 import { labels } from "../../../lib/labels";
 import { refusalText } from "../refusal";
 import { newReaderMachine, type NewReader } from "./machine";
-import "./reader-new.css";
 
 const EMPTY: NewReader = { fullName: "", email: "", phone: "", bookSlug: "", pace: "medium" };
 
