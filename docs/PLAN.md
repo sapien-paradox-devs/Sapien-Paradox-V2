@@ -17,7 +17,7 @@ For a session picking this up cold.
 | | |
 |---|---|
 | **Done** | Repo survey (both apps, every file) · web research (§4) · the feature tree (§2) · the restructuring diagnosis and target (§3) · the self-review (§5) |
-| **Next** | Open the issues in §6 · write D49–D52 · land R0–R1 |
+| **Next** | Open the issues in §6 · write D49–D52 · land R0–R1 · Surface track: #117 on real phones, then #118 → #119 → #120 (§2.9) |
 | **Not started** | Any code. Nothing in this document has been implemented. |
 
 ---
@@ -321,6 +321,62 @@ Not everything above is next. Ordered by *what breaks if we skip it*:
 | 6 | **6.2.2 / 6.4.3 the prompt** | the companion currently has no voice |
 | 7 | **1.3.5 refund** | money is one-way today |
 | 8 | **2.5.1 change phone** | one changed number = one permanently unreachable reader |
+
+---
+
+### 2.9 SURFACE — how it looks, moves, and is found
+
+Not a clause of the promise, like STEWARDSHIP: it is how every clause is presented. It has its
+own GitHub milestone, **Surface**. Each leaf's full implementation plan is in its issue; this is
+the overview and the order.
+
+**The direction is already set** in `global.css`: warm paper, Fraunces, one sienna accent, "nothing
+glows". "Advanced but professional" means going further in that style, not adding gloss on
+top of it.
+
+```
+S SURFACE
+├── S1 Basics every visitor expects
+│   ├── S1.1 Site header: back to the library from every page       ○  #118
+│   ├── S1.2 Link preview card, favicon, app manifest               ○  #119
+│   ├── S1.3 Dark mode: walnut and candlelight, follows the system  ○  #120  ← needs #118
+│   ├── S1.4 Legal pages + footer (Razorpay KYC checks for them)    ○  #121  HITL: owner copy
+│   └── S1.5 A 404 page that is not the landing page                ○
+├── S2 The chamber actually renders
+│   ├── S2.1 Verify on Android + iPhone + inside WhatsApp           ○  #117  HITL: real phones
+│   └── S2.2 Render pages ourselves with pdf.js                     ○  only if #117 fails;
+│                                                                       reopens #31 (STATUS q13)
+├── S3 Motion
+│   ├── S3.1 Foundation: tokens, View Transitions, grain, Fraunces axes, reduced-motion  ○  #115
+│   ├── S3.2 Opening ceremony, first open of each link (server decides)                 ○  #116
+│   ├── S3.3 Home as a path; locked rows with seal + date                               ○  #114 (spec in comment)
+│   ├── S3.4 Landing: cover tilt, scroll-linked reveals, cadence demo on a phone        ○
+│   ├── S3.5 Reader: auto-fading controls, pages fade in, flourish at the end           ◐  5.2.4
+│   ├── S3.6 Companion: sheet panel, questions set as margin notes, slow "thinking"     ○
+│   └── S3.7 Details: hairline loader, drawn underlines, ink-wash press, sanctuary ribbon ○
+└── S4 Later: reading comfort (all easier after S2.2)
+    ├── S4.1 Resume where I stopped                                 ○  = 5.4.3
+    ├── S4.2 Text size / zoom                                       ○
+    ├── S4.3 Highlights and notes, which the companion can use      ○  needs a decision
+    ├── S4.4 Typographic cover generated per book                   ○
+    └── S4.5 Preview card per book (served per URL)                 ○  after #119
+```
+
+**Rules for everything in S3**
+- Native first: CSS, the View Transitions API, scroll-linked CSS animations. Add `motion` only if
+  a spring or drag genuinely needs it. **Rejected: three.js / WebGL** (page curls, 3D scenes):
+  too heavy for the phone every WhatsApp link opens on, and it breaks "nothing glows". Record
+  this in #115's decision so nobody proposes it again.
+- Animate only position, scale and opacity, so it holds 60 fps on a mid-range Android phone.
+- **Nothing moves while the reader is reading.**
+- Show dates, never countdowns (D11).
+- Any sequence of steps is states in a machine, not a timer chain (mandate 2).
+- Copy in `labels.ts`.
+- Reduced motion keeps fades and drops movement.
+
+**#117 is the hinge.** If phones cannot show a chapter, S2.2 jumps ahead of all of S3: nothing
+can be animated or styled inside the browser's own PDF viewer, and a reader who cannot read will
+not notice the polish.
 
 ---
 
@@ -668,6 +724,24 @@ lands directly.
 | **R4** | Wire `onboarding` and `delivery`; delete `auth` (§3.6) | R3 — this is what shrinks `checkout.py` |
 | **R5** | `git mv` into `domains/` + `platform/` (§3.4) | R3, R4 — pure move, no logic |
 | **R6** | Frontend: `src/app/`, `labels/` split, six files everywhere (§3.8) | independent of R1–R5 |
+
+### Surface: runs alongside the tracks above (§2.9, milestone **Surface**)
+
+Frontend almost entirely, so it does not collide with R1–R5. Settle #117 first; everything else
+here assumes its answer.
+
+| | Item | Issue | Depends on |
+|---|---|---|---|
+| **S-a** | Verify the chamber on real phones | #117 | a person with an Android and an iPhone |
+| **S-b** | Site header | #118 | — |
+| **S-c** | Link preview + favicon + manifest | #119 | `VITE_APP_URL` on Vercel |
+| **S-d** | Dark mode | #120 | #118 (the toggle's slot) |
+| **S-e** | pdf.js renderer, *only if S-a fails* | not opened | S-a; goes **ahead of** S-f |
+| **S-f** | Motion foundation + its decision record | #115 | — |
+| **S-g** | Opening ceremony | #116 | #115 |
+| **S-h** | Home as a path, locked rows | #114 | F1 (#112) · #115 optional |
+| **S-i** | Legal pages + footer | #121 | owner's business details; **before KYC review** |
+| **S-j** | S3.4–S3.7, then S4 | not opened | #115 |
 
 ### After
 
