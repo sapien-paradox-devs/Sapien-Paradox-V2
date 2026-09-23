@@ -4,6 +4,39 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sapien Paradox</title>
+    <meta
+      name="description"
+      content="A book, one chapter at a time. Chapters arrive on WhatsApp as they unlock; read them here and talk them through with a companion."
+    />
+
+    <!--
+      The share card (#119). One card for every URL: this is a static SPA, so
+      per-book cards need the tags served per URL (PLAN.md S4.5). A chapter
+      link /r/:token gets this same card on purpose — a preview must never
+      reveal what a token opens.
+
+      og:image must be absolute. __APP_URL__ is filled in at build time by the
+      appUrl plugin in vite.config.ts.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Sapien Paradox" />
+    <meta property="og:title" content="Sapien Paradox — a book, one chapter at a time" />
+    <meta
+      property="og:description"
+      content="Chapters arrive on WhatsApp as they unlock. Read slowly, then talk it through."
+    />
+    <meta property="og:url" content="__APP_URL__/" />
+    <meta property="og:image" content="__APP_URL__/og-default.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="An open book with a sienna ribbon, beside the words: A book, one chapter at a time." />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#faf7f2" />
   </head>
   <body>
     <div id="root"></div>
