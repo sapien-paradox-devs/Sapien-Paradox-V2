@@ -1,0 +1,15 @@
+.ui-theme {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin-right: calc(var(--space-2) * -1);
+  border-radius: 50%;
+  color: var(--ink-soft);
+  transition: color 0.18s var(--ease-settle), background 0.18s var(--ease-settle);
+}
+
+.ui-theme:hover {
+  color: var(--ink);
+  background: var(--paper-sunk);
+}

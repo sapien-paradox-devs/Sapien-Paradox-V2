@@ -15,6 +15,11 @@ export const labels = {
     signIn: "Sign in",
     signOut: "Sign out",
   },
+  theme: {
+    system: "Theme: follows your device. Tap for light.",
+    light: "Theme: light. Tap for dark.",
+    dark: "Theme: dark. Tap to follow your device.",
+  },
   health: {
     booting: "Opening the room…",
   },

@@ -26,6 +26,9 @@
   --accent: #9c4f24;
   --accent-hover: #83411d;
   --accent-wash: #f6ece4;
+  /* Text on a solid accent fill. White here; dark ink in the dark theme,
+     where the accent is lightened. */
+  --on-accent: #fff;
 
   --danger: #8e2f2a;
   --good: #3f6b47;
@@ -45,6 +48,8 @@
 
   --radius: 6px;
   --radius-lg: 12px;
+
+  color-scheme: light;
 
   --shadow-card: 0 1px 2px rgba(31, 27, 22, 0.04), 0 8px 24px -12px rgba(31, 27, 22, 0.12);
   --shadow-lift: 0 2px 4px rgba(31, 27, 22, 0.06), 0 16px 40px -16px rgba(31, 27, 22, 0.18);
@@ -112,6 +117,44 @@ input, select {
   padding: var(--space-8) var(--space-4);
 }
 
+/*
+ * Dark — walnut and candlelight (#120). Never pure black, for the same reason
+ * the ink is never pure black. Every text/ground pair here clears WCAG AA
+ * (4.5:1); the lowest is ink-faint on paper-raised, 4.87.
+ *
+ * One block, keyed on the attribute alone. `data-theme` is always resolved to
+ * "light" or "dark" — by the inline script in index.html before first paint,
+ * then by lib/theme.ts — so the system preference never needs a second copy
+ * of these values under a media query.
+ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --ink: #ece4d6;
+  --ink-soft: #b9ae9d;
+  --ink-faint: #948a7c;
+
+  --paper: #1b1713;
+  --paper-raised: #231e19;
+  --paper-sunk: #14110e;
+
+  --rule: #3a322a;
+  --rule-soft: #2b251f;
+
+  --accent: #d98f5f;
+  --accent-hover: #e6a275;
+  --accent-wash: #2e2119;
+  --on-accent: #1b1713;
+
+  --danger: #e58a80;
+  --good: #93c29a;
+
+  /* Shadow barely reads on a dark ground, so it goes deeper and a faint top
+     highlight does the lifting instead. */
+  --shadow-card: 0 1px 0 rgba(236, 228, 214, 0.04) inset, 0 8px 24px -12px rgba(0, 0, 0, 0.6);
+  --shadow-lift: 0 1px 0 rgba(236, 228, 214, 0.05) inset, 0 16px 40px -16px rgba(0, 0, 0, 0.7);
+}
+
 /* ── shared primitives, until #76 extracts them properly ───────────── */
 
 .field {
@@ -146,7 +189,7 @@ input, select {
   padding: 0.75rem 1.25rem;
   border-radius: var(--radius);
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 500;
   letter-spacing: 0.01em;
   transition: background 0.18s var(--ease-settle), transform 0.18s var(--ease-settle);
