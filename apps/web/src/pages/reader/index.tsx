@@ -4,6 +4,7 @@
  */
 
 import { useMachine } from "@xstate/react";
+import { useCallback, useEffect, useLayoutEffect } from "react";
 
 import { Companion } from "../../components/Companion";
 import { PdfChamber } from "../../components/PdfChamber";
@@ -22,6 +23,34 @@ const BEATS: ThresholdBeat[] = ["gathering", "titled", "ruled", "lifting"];
 export function ReaderPage() {
   const token = window.location.pathname.split("/r/")[1] ?? "";
   const [state, send] = useMachine(readerMachine, { input: { token } });
+
+  // Before any early return: hooks run on every render.
+  const finished = state.matches({ chamber: "finished" });
+  const startAt = state.context.completed ? 1 : (state.context.chapter?.furthest ?? 0);
+
+  // The chamber reports; the `progress` region decides what to send and when (D70).
+  const onProgress = useCallback(
+    (fraction: number) => send({ type: "PROGRESS", fraction }),
+    [send],
+  );
+
+  // Closing the tab, or backgrounding it on a phone, flushes what is unsent.
+  useEffect(() => {
+    const flush = () => send({ type: "FLUSH" });
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [send]);
+
+  // Leaving for another page in the app: a layout cleanup runs before
+  // useMachine stops the actor, so the flush still lands.
+  useLayoutEffect(() => () => send({ type: "FLUSH" }), [send]);
 
   if (state.matches({ chamber: "sanctuary" })) {
     return (
@@ -71,16 +100,28 @@ export function ReaderPage() {
         token={token}
         bookTitle={chapter?.bookTitle ?? ""}
         title={chapter?.title ?? ""}
+        startAt={startAt}
+        onProgress={onProgress}
         footer={
           <footer className="reader-end">
             <Fleuron />
-            {state.matches({ chamber: "finished" }) ? (
+            {finished ? (
               <p className="reader-end-done">{labels.reader.finished}</p>
             ) : (
               <>
                 <p className="reader-end-hint">{labels.reader.completeHint}</p>
-                <button type="button" className="btn" onClick={() => send({ type: "FINISH" })}>
-                  {labels.reader.complete}
+                {state.matches({ chamber: "completeFailed" }) && (
+                  <p className="notice" role="alert">{labels.reader.completeFailed}</p>
+                )}
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={state.matches({ chamber: "completing" })}
+                  onClick={() => send({ type: "FINISH" })}
+                >
+                  {state.matches({ chamber: "completing" })
+                    ? labels.reader.completing
+                    : labels.reader.complete}
                 </button>
               </>
             )}

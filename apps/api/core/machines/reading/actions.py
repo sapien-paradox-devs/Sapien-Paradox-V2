@@ -25,6 +25,17 @@ def stamp_opened(grant, ctx):
         touched(grant, "opened_at")
 
 
+def record_progress(grant, ctx):
+    """Move the reader's furthest point forward (D70). The service clamps and
+    keeps the maximum; this only carries the number there."""
+    ctx.deps.record_progress(grant.user, grant.chapter, ctx.payload.furthest)
+
+
+def complete_chapter(grant, ctx):
+    """The reader declares the chapter done (D70). Idempotent in the service."""
+    ctx.deps.complete_chapter(grant.user, grant.chapter)
+
+
 def mint_fresh_grant(grant, ctx):
     """One tap from a dead link to a live one (D9).
 

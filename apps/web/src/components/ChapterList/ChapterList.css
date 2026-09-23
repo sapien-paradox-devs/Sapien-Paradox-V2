@@ -43,12 +43,32 @@
   transition: color var(--dur-quick) var(--ease-settle);
 }
 
-/* A mark, not a meter. */
-.ui-chapter-read {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--accent);
-  opacity: 0.55;
+/* Quiet progress (D70): a ring that fills, then a check. */
+.ui-chapter-ring {
+  flex-shrink: 0;
   align-self: center;
+}
+
+.ui-chapter-done {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: center;
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.ui-chapter .ui-btn { white-space: nowrap; }
+
+/* On a phone the check says it alone; the word stays for screen readers. */
+@media (max-width: 30rem) {
+  .ui-chapter-done-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
