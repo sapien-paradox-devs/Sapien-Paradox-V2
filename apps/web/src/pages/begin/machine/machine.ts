@@ -1,5 +1,5 @@
 /**
- * Landing — level 1. The public front door (D47).
+ * Begin — level 1. Where a book is bought (D47), on its own page (#160).
  *
  *   loading → browsing → submitting → redirecting
  *           ↘ failed   ↖ refused ↙
@@ -16,8 +16,8 @@ import type { Context, Event } from "./types";
 
 const initialContext: Context = { books: [], paymentUrl: null };
 
-export const landingConfig = {
-  id: "landing",
+export const beginConfig = {
+  id: "begin",
   initial: "loading",
   context: initialContext,
 
@@ -42,7 +42,7 @@ export const landingConfig = {
         // casting: mandate 4 forbids `as any`, and this states the invariant.
         input: ({ event }: { event: Event }) => {
           if (event.type !== "SUBMIT") {
-            throw new Error("landing: submitting entered without a SUBMIT event");
+            throw new Error("begin: submitting entered without a SUBMIT event");
           }
           return event.signup;
         },

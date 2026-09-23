@@ -21,6 +21,10 @@ describe("headerContents", () => {
     expect(headerContents("landing", false).signIn).toBe(true);
   });
 
+  it("offers sign in on /begin, like the landing page (#160)", () => {
+    expect(headerContents("begin", false).signIn).toBe(true);
+  });
+
   it("gives a signed-in reader the way back from the chamber", () => {
     expect(headerContents("reader", true).library).toBe(true);
   });

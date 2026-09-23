@@ -283,73 +283,20 @@
   color: var(--ink-soft);
 }
 
-/* begin — the form, at last */
+/* the closing call — the story ends by pointing at /begin (#160) */
 
-.landing-begin {
-  display: grid;
-  gap: var(--space-8);
-  align-items: start;
-}
-
-@media (min-width: 56rem) {
-  .landing-begin { grid-template-columns: 1fr 1fr; gap: var(--space-16); }
-}
-
-.landing-begin .landing-sub { margin-top: 0; }
-
-.landing-buy {
-  background: var(--paper-raised);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-lg);
-  padding: var(--space-8);
-  box-shadow: var(--shadow-card);
-}
-
-.landing-form {
+.landing-cta {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  align-items: flex-start;
+  gap: var(--space-2);
 }
 
-.landing-book {
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--rule-soft);
-  margin-bottom: var(--space-2);
+.landing-cta-title {
+  font-size: clamp(1.7rem, 4vw, 2.3rem);
 }
 
-.landing-book h3 { font-size: 1.35rem; }
-
-.landing-meta {
-  margin-top: var(--space-2);
-  font-size: 0.88rem;
-  color: var(--ink-faint);
-}
-
-.landing-hint {
-  font-size: 0.78rem;
-  color: var(--ink-faint);
-}
-
-.landing-fineprint {
-  font-size: 0.75rem;
-  line-height: 1.5;
-  color: var(--ink-faint);
-  text-align: center;
-}
-
-.landing-quiet {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  align-items: center;
-  color: var(--ink-soft);
-}
-
-.landing-signin {
-  margin-top: var(--space-6);
-  font-size: 0.88rem;
-  color: var(--ink-faint);
-}
+.landing-cta .landing-sub { margin-top: 0; margin-bottom: var(--space-6); }
 
 /* questions */
 
