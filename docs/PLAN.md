@@ -402,6 +402,7 @@ has no equivalent, and that asymmetry is the largest single source of the messin
 | **F4** | **Reads have no home.** `api/` queries the ORM because there is nowhere else to put a read. | 19 ORM calls across `api/` — checkout 12, reset 4, home 3 |
 | **F5** | **Two vocabularies.** Endpoints speak HTTP verbs; machines speak events; services speak function names. The same act has three names. | `POST /chapters/{id}/send` → `whatsapp.send_chapter` → no event at all |
 | **F6** | **No enforcement.** Every rule in both `CLAUDE.md` files is a convention a reviewer must remember. | **no linter in the repo** — no ruff, no eslint config, no mypy; CI runs `check`, `makemigrations --check`, `test` |
+| **F8** | **No audit of state changes.** Oscar records every status change as a row (§4.2). We record sends in `MessageLog` and nothing about grants. | `TemporalGrant.state` is overwritten in place; there is no history |
 | **F7** | **Documentation drift, again.** The failure mode V2 exists to prevent. | `STATUS.md` 3 weeks and 95 PRs stale · `ALL_DOCUMENTATION.md` + `UNIFIED_SPEC.md` still present, ~3,400 stale lines · `DESIGN.md` said `MessageLog >── User, TemporalGrant`, `apps/api/CLAUDE.md` said `>── User, Chapter` (fixed) |
 
 **F1 and F3 are the same finding seen from two ends.** The flow exists twice: once as a transition
@@ -438,6 +439,7 @@ apps/api/core/
 │   │   ├── actions.py             one effect each
 │   │   ├── service.py             the effects: create_reader, payments   ── THE SEAMS
 │   │   ├── selectors.py           the reads                              ── NEW (F4)
+│   │   ├── exceptions.py          this domain's own errors              ── NEW (Oscar §4.2)
 │   │   ├── api.py                 HTTP only: request → event → status
 │   │   ├── schemas.py             Ninja in/out
 │   │   └── tests/
@@ -458,6 +460,10 @@ apps/api/core/
 ├── admin.py                   screens only; every action calls a service
 └── management/commands/
 ```
+
+**This is django-oscar's layout** (§4.2), arrived at independently and then found in the wild:
+`apps/order/` holds `models.py`, `processing.py`, `exceptions.py`, `signals.py`, `utils.py` —
+domain folder, layer-named files inside. D49 rests on that precedent rather than on preference.
 
 **Rules, unchanged in substance, now visible in the tree:**
 
@@ -539,6 +545,11 @@ it, and two places then compute the same date — which is the duplication D36 e
 
 A costs N rows per order (N ≤ ~20). B costs a second implementation of the schedule. Take A.
 
+**And take Oscar's cascade dict with it** (§4.2). Oscar changes an order's status and cascades to its
+lines through a *second declarative map* rather than through code. The same split applies here: the
+tick owns **when**, the transition table owns **whether**, and a cascade map owns **what else** —
+three questions, three artefacts, none of them an `if`.
+
 ### 3.8 The target — frontend
 
 Smaller, because the frontend is in good shape. Three changes:
@@ -599,55 +610,141 @@ prose into something that fails.
 
 ## 4. What the research changed
 
-Four questions were open when this started. The web answered three.
+Six production Django codebases, read for how they hold state. **This section is evidence, not
+preference** — where §3 disagrees with it, §3 was revised.
 
-### 4.1 Is `transitions` still the right library? — **Yes, keep it (D37 stands)**
+### 4.1 What they actually do
 
-`python-statemachine` 3.2 has genuinely moved ahead: compound (nested) states as nested classes,
-parallel regions, history states, diagram generation on every instance, and a Django integration
-that auto-discovers `statemachines.py` per app with a `MachineMixin` binding state to a model
-field. That is closer to XState than `transitions` is, and the symmetry with the frontend is
-tempting.
+| Project | Where the transition map lives | Where effects live | Enforcement |
+|---|---|---|---|
+| **django-oscar** | `settings.OSCAR_ORDER_STATUS_PIPELINE` — a plain dict `{status: (allowed…)}`, plus a separate `cascade` dict | dedicated **`processing.py`** + `signals.py` | `set_status()` raises `InvalidOrderStatus`, writes an audit row |
+| **Salesman** | `get_transitions()` classmethod on the `TextChoices` status enum | services | `validate_transition()` raises `ValidationError` |
+| **Viewflow** | **`flows.py`** — a `Flow` class, tasks as class attributes, chained `.Next(this.x)` | methods on the Flow, or `tasks.py`; views in `views.py` | the engine |
+| **django-fsm-2** | scattered across `@transition(source=, target=, conditions=)` decorators | **inside** the transition method | the decorator |
+| **Mayan EDMS** | **in the database** — states and transitions are user-editable rows | `WorkflowAction` backends | engine + conditional code |
+| **pretix** | **nowhere — no map at all** | `services/orders.py` | imperative `_can_be_paid()`, `cancel_allowed()`, `_mark_paid_inner()` across model *and* services |
 
-**Rejected anyway, for now.** D37 chose `transitions` for `model=` binding to *any* plain object
-and for keeping Django out of the layer; `python-statemachine`'s Django integration works by
-pulling Django *in*, which is the opposite of what D37 protects. Our tables are flat — no machine
-here needs a compound state — so the headline feature buys nothing today.
+### 4.2 Six things this changes in §3
 
-**Revisit if** cadence needs nested states (e.g. `live` containing `unread`/`reminded`), which is
-plausible within two features. Record it as the trigger, in D49's revisit block.
+1. **`flows.py` keeps its name, and it is no longer ours.** It is Viewflow's convention for exactly
+   this file. (`statemachines.py`, python-statemachine's autodiscovered module, is the other real
+   one.) Using the ecosystem's word costs nothing and orients anyone who has seen Django workflow
+   code before.
 
-### 4.2 Where do reads go? — **`selectors.py`** (HackSoft)
+2. **§3.4's layout is Oscar's layout.** `apps/order/` holds `models.py`, `processing.py`,
+   `exceptions.py`, `signals.py`, `utils.py`, `reports.py` — a domain folder with layer-named files
+   inside. Proposed independently in §3.4; the largest Django commerce project already ships it.
+   **D49 is precedent, not taste.**
 
-The HackSoft styleguide splits `services.py` (writes) from `selectors.py` (reads) and forbids
-business logic in APIs, serializers, `save()`, managers, and signals. We already forbid it in APIs
-and have services; we never named the read side, which is exactly why 19 ORM calls are sitting in
-`core/api/`. Adopt the name and the rule; skip the rest of the styleguide, which assumes DRF.
+3. **Add `exceptions.py` per domain.** Oscar has one. We scatter `OnboardingRefused`,
+   `PaymentsUnavailable`, `CompanionUnavailable` and the two delivery errors across four service
+   modules.
 
-### 4.3 Product ideas worth stealing — three, and one warning
+4. **Cadence gets Oscar's cascade dict.** Oscar changes an order's status and cascades to its lines
+   through a *second declarative map*, not through code. That is the right shape for `UNLOCK` on a
+   grant cascading to a delivery attempt, and it is better than §3.7 sketched.
 
-- **Show the schedule, not just the next chapter** (drip platforms universally do this). Feeds
-  5.5.3 and is most of why §3.7 recommends option A.
-- **Quiet hours and a per-day ceiling.** Meta throttles marketing templates at roughly two per
-  user per day across *all* businesses, and the guidance is a ≥24h gap. With cadence sending
-  automatically, 4.5.2 stops being politeness and becomes a deliverability constraint.
-- **The companion category has converged on "ask, don't summarise"** — spoiler-free, context-bound,
-  Socratic. D13 and D14 already say this; the research confirms the product instinct rather than
-  changing it. The differentiator left is *pacing*: a companion that has read exactly as far as
-  you have. Nothing else on the market is built around a chapter-scoped window because nothing
-  else controls the cadence. **That is the moat, and it needs cadence to exist.**
-- **Warning:** every platform in this space treats drip as a marketing sequence. Ours is the
-  product. Do not import their re-engagement patterns (streaks, nudges, progress bars) — D14 and
-  `BUSINESS.md`'s "no timers, no progress bars, no nudges" forbid them, and they would be the
-  easiest thing to add by accident once reminders exist.
+5. **Add an audit row for state changes.** Oscar's `set_status()` calls
+   `_create_order_status_change()`; every transition is recorded. We have `MessageLog` for sends and
+   **no record of grant state changes at all** — so "I never got chapter 3" can be answered for the
+   message and not for the grant. Cheap now, impossible to backfill later.
 
-### 4.4 Still open after research
+6. **pretix is the cautionary tale, and it is where we already are.** The largest and most
+   battle-tested of the six has no state machine: the rules live as imperative checks spread between
+   the model and `services/orders.py`. That is what `checkout.py` + `_resolve_identity` look like
+   today. It is a real destination, not a failure — but pretix carries it with a full-time team and
+   an enormous test suite. **The choice is not good against bad; it is pretix's shape against
+   Oscar's, and Oscar's is the one a solo maintainer can read.**
 
-**6.2.4 — is there a server-side transcript?** Nobody else's answer transfers: the market splits
-on it, and ours depends on whether the owner should be able to read what the companion said. That
-is a product question for the human, not a research question. Listed in §6.
+### 4.3 The finding that argues against a locked decision
 
----
+**D37 chose the `transitions` library.** Of the six, only Viewflow and Mayan use an engine — and both
+are workflow *products*, where the flow is the feature being sold. The three that most resemble us
+(Oscar, Salesman, pretix) use **a plain dict and a validate function, with no library at all**.
+
+D37 justified `transitions` on `model=` binding and diagram generation. Oscar shows a dict reaches the
+same legibility, and `platform/machines/` is ~250 lines of glue a dict would not need.
+
+**Not a recommendation to remove it.** It is built, it is tested, and our guards carry more than
+Oscar's — injected dependencies, refusal codes, outcome-branching (D40). But this belongs in D49's
+revisit block, because "three of our closest peers do this with a dict" is the argument someone will
+make in six months, and they will be partly right.
+
+### 4.4 Also settled by the research
+
+- **Nobody auto-discovers flows.** Viewflow registers explicitly — `Site(viewsets=[FlowAppViewset(
+  PizzaFlow)])` — and an unregistered flow simply has no URLs. Our `flows.py` registry is explicit
+  too; the **drift test** (§3.5) is our own addition, and is the cheap way to get Viewflow's
+  "unregistered means invisible" property without adopting an engine.
+- **`python-statemachine` 3.2** has compound and parallel states, closer to XState. Still rejected:
+  its Django integration pulls Django *into* the machine layer, which is what D37 protects against,
+  and our tables are flat. Revisit if cadence needs a nested state.
+- **Reads belong in `selectors.py`** (HackSoft). Adopt the name and the rule; skip the rest, which
+  assumes DRF.
+
+### 4.5 Product ideas worth stealing — three, and one warning
+
+- **Show the schedule, not just the next chapter.** Feeds 5.5.3, and is most of why §3.7 recommends
+  computing every `unlock_at` at order time.
+- **Quiet hours and a per-day ceiling.** Meta throttles marketing templates at roughly two per user
+  per day across all businesses, with a ≥24h gap advised. Once cadence sends automatically, 4.5.2
+  stops being politeness and becomes deliverability.
+- **The companion category has converged on "ask, don't summarise."** D13 and D14 already say this;
+  the research confirms the instinct rather than changing it. The differentiator left is *pacing* —
+  a companion that has read exactly as far as you have. Nothing else is built that way because
+  nothing else controls the cadence. **That is the moat, and it needs cadence to exist.**
+- **Warning:** every platform in this space treats drip as a marketing sequence. Ours is the product.
+  Do not import their re-engagement patterns — streaks, nudges, progress bars — which `BUSINESS.md`
+  and D14 forbid and which would be the easiest thing to add by accident once reminders exist.
+
+### 4.6 Second wave — the big ones, and a reversal
+
+Four more, chosen for size rather than similarity.
+
+| Repo | Layout | What it shows |
+|---|---|---|
+| **Zulip** (~23k ★) | **layer-first**, domain-named files inside | `zerver/models/`, `zerver/lib/` ("most library code"), `zerver/actions/` ("most code doing writes to user-facing database tables"), `zerver/views/`. One hard policy: **"all code calling `send_event_on_commit` to trigger pushing data to clients must live here"** |
+| **Sentry** (~39k ★) | **layer-first** | `api/endpoints/`, `models/`, `tasks/`, `utils/` |
+| **Solidus** | layer-first **plus a dedicated machines directory** | `core/lib/spree/core/state_machines/` — `order.rb`, `payment.rb`, `shipment.rb`, `inventory_unit.rb`, `reimbursement.rb`, `return_authorization.rb`. Modules included into the model, swappable via `config.state_machines.order` |
+| **Airflow** | states in their own module | `TaskInstanceState(str, Enum)` in `airflow/utils/state.py` — 12 states in one place, separate from the scheduler that moves them, plus *derived* groupings (`IntermediateTIState`) instead of extra stored states |
+| **Wagtail** | states in the database | `Workflow`, `WorkflowState`, `Task`, `TaskState` as admin-configurable rows — the Mayan branch, for products where the flow *is* the feature. Not us |
+
+**§3.4 is reversed in part: drop the domain-first move (R5).**
+
+Zulip and Sentry are both far larger than this project and both are layer-first, with files inside each
+layer named by domain — `actions/users.py`, `lib/users.py`. **That is the structure this repo already
+has**, minus the consistency. Oscar is the only domain-first example in the sample.
+
+What makes Zulip's version work is not the layout, it is the **policy**: one stated rule about what may
+live in `actions/`, written in the contributor docs and enforced in review. Our problem was never the
+layout — F1–F5 are all *layer violations*, not misfiled folders. Moving files does not fix a violated
+rule; a test does.
+
+**So: keep the layer-first tree. Add the missing layers (`selectors.py`, `exceptions.py`), keep the
+dedicated machines directory (Solidus's precedent), add `flows.py` (Viewflow's), and spend the effort
+on enforcement (§3.10) instead of on a large-diff move that buys little.** R5 is demoted from the
+sequence; the structure stays where it is.
+
+### 4.7 The most important finding
+
+**Solidus issue #142**, open since 2015, milestone "Future":
+
+> *"The order state machine is heavily tied to the solidus_frontend checkout states... It would be nice
+> to remove that tie, and allow the order to be handled without those specific states, or maybe without
+> the state_machine gem at all."*
+
+A production commerce system conflated **checkout-flow state** with **order-entity state**, and has not
+been able to untangle it in ten years.
+
+**This validates the one judgement call in §3 that had no precedent behind it:** the acquisition
+machine's subject is a *transient purchase attempt*, not the `Order` row. Nothing about a purchase
+flow is written to the entity it produces. That reasoning belongs in D49, with this issue cited —
+it is the clearest available evidence for why, and the cost of the alternative is measured in years.
+
+### 4.6 Still open after research
+
+**6.2.4 — is there a server-side transcript?** The market splits on it, and ours depends on whether
+the owner should be able to read what the companion said. A product question, not a research one.
 
 ## 5. Self-review
 
@@ -723,7 +820,8 @@ lands directly.
 |---|---|---|
 | **R3** | Pull the 19 ORM calls out of `api/` into `selectors.py` | R2 named them |
 | **R4** | Wire `onboarding` and `delivery`; delete `auth` (§3.6) | R3 — this is what shrinks `checkout.py` |
-| **R5** | `git mv` into `domains/` + `platform/` (§3.4) | R3, R4 — pure move, no logic |
+| **R4b** | `GrantStateChange` audit row, written by `binding.save_state` (F8) | R4 |
+| ~~R5~~ | ~~`git mv` into `domains/`~~ — **dropped, §4.6.** Zulip and Sentry are larger and layer-first; the layout was never the problem | — |
 | **R6** | Frontend: `src/app/`, `labels/` split, six files everywhere (§3.8) | independent of R1–R5 |
 
 ### Surface: runs alongside the tracks above (§2.9, milestone **Surface**)

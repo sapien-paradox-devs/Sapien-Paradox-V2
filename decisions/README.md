@@ -72,9 +72,23 @@ back to. Without it these read as taste rather than as answers to specific, obse
 | D47 | Public signup; payments lead onboarding *(reverses D10, advances D28)* | [payments](08-payments.md) | locked |
 | D48 | Fulfil on the redirect as well as the webhook *(refines D47)* | [payments](08-payments.md) | locked |
 | D54 | Motion is native-first; no animation library, no WebGL | [surface](13-surface.md) | locked |
+| D59 | One Django app per domain *(reverses one-app in `apps/api/CLAUDE.md`)* | [structure](14-structure.md) | locked |
+| D60 | `flows.py` is the root map, and a test keeps it true | [structure](14-structure.md) | locked |
+| D61 | Layering enforced by test and lint, not by review | [structure](14-structure.md) | locked |
+| D62 | Retire the `auth` machine *(applies D36's revisit clause)* | [structure](14-structure.md) | locked |
+| D63 | Every state change leaves a row | [structure](14-structure.md) | locked |
+| D64 | `Order.state` is derived from its grants, never stored | [structure](14-structure.md) | locked |
+| D65 | Reset the migration files; keep the database | [structure](14-structure.md) | locked |
+| D66 | Split settings, split requirements, run pytest | [structure](14-structure.md) | locked |
+| D67 | The clean foundation lands before the first real reader *(amended by D72)* | [structure](14-structure.md) | locked |
+| D68 | Models move in one PR; everything else moves app by app | [structure](14-structure.md) | locked |
+| D69 | Fix the logic in `core/`, then move it | [structure](14-structure.md) | locked |
 | D70 | Reading progress, shown quietly *(reverses D11's "no progress bars"; amends D18: a ninth table)* | [reading](15-reading.md) | locked |
 | D71 | The chamber renders the PDF itself, with pdf.js *(reopens the #31 departure)* | [reading](15-reading.md) | locked |
 | D72 | Landing, chamber and progress proceed on the current structure *(amends structure-D67, `14-structure.md`)* | [reading](15-reading.md) | locked |
+
+**Claim the number in this index first, then write the file.** Three collisions happened in one day
+because a number locked on an unmerged branch is invisible here. The index on `main` is the lock.
 
 ## Still open
 
