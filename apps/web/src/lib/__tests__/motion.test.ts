@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { transition } from "../motion";
+import { parseDuration, transition } from "../motion";
 
 /** A stand-in for the browser API: runs the callback at once and resolves. */
 function stubViewTransitions() {
@@ -49,5 +49,18 @@ describe("transition", () => {
     transition(update, { kind: "page", skip: true });
     expect(start).not.toHaveBeenCalled();
     expect(update).toHaveBeenCalledOnce();
+  });
+});
+
+describe("parseDuration", () => {
+  it("reads the units a CSS duration token can carry", () => {
+    expect(parseDuration("650ms")).toBe(650);
+    expect(parseDuration(" 0.2s ")).toBe(200);
+  });
+
+  it("refuses anything else, so the caller falls back", () => {
+    expect(parseDuration("")).toBeNull();
+    expect(parseDuration("fast")).toBeNull();
+    expect(parseDuration("650")).toBeNull();
   });
 });

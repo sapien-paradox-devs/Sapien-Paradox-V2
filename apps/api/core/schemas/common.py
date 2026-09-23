@@ -17,6 +17,10 @@ class ChapterOut(Schema):
     bookTitle: str
     number: int
     title: str
+    # True only on the request that stamped `opened_at`: the chamber plays its
+    # threshold ceremony once per link, and the server is what knows (#116).
+    # Nothing client-side remembers a token (D22).
+    firstOpen: bool
 
 
 class ChatIn(Schema):

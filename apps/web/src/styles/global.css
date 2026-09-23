@@ -71,7 +71,7 @@
   --dur-quick: 160ms;   /* hover, press, colour */
   --dur-base: 280ms;    /* a thing appearing */
   --dur-settle: 520ms;  /* a page arriving */
-  --dur-ceremony: 900ms; /* one step of the chapter ceremony (#116) */
+  --dur-ceremony: 650ms; /* one beat of the chapter ceremony (#116) */
   --rise: 10px;         /* how far an arriving thing travels up */
 
   /* Paper grain — a fractal noise tile, drawn under everything on the body so
