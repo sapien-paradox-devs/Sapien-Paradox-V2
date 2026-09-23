@@ -8,6 +8,11 @@
  *
  * `sanctuary` means an expired or invalid link and nothing else. The end of a
  * chapter is `finished` — V1 used one word for both.
+ *
+ * `threshold` is the ceremony on the first open of a link (#116): four beats,
+ * each a state, so the sequence is data rather than a chain of timers
+ * (mandate 2, D54). The chamber renders underneath from the first beat, so the
+ * PDF loads while the ceremony plays.
  */
 
 import type { Context } from "./types";
@@ -27,13 +32,30 @@ export const readerConfig = {
           invoke: {
             src: "fetchGrant",
             input: ({ context }: { context: Context }) => ({ token: context.token }),
-            onDone: { target: "reading", actions: "assignChapter" },
+            onDone: [
+              { guard: "isFirstOpen", target: "threshold", actions: "assignChapter" },
+              { target: "reading", actions: "assignChapter" },
+            ],
             onError: [
               { guard: "isExpired", target: "sanctuary" },
               // No button solves this one, so it must not offer sanctuary's.
               { guard: "isForbidden", target: "denied" },
               { target: "error" },
             ],
+          },
+        },
+        threshold: {
+          initial: "gathering",
+          on: { SKIP: { target: "reading" } },
+          states: {
+            // the book's name and the chapter numeral
+            gathering: { after: { beat: { target: "titled" } } },
+            // the chapter's title
+            titled: { after: { beat: { target: "ruled" } } },
+            // a hairline draws under it
+            ruled: { after: { beat: { target: "lifting" } } },
+            // the whole card lifts away, revealing the chamber
+            lifting: { after: { beat: { target: "#reader.chamber.reading" } } },
           },
         },
         reading: { on: { FINISH: { target: "finished" } } },

@@ -72,9 +72,13 @@ def grant_detail(request, token: str):
 
     `opened_at` is stamped by the machine, and only on the FIRST open — it is an
     engagement signal, not analytics (D21). Re-opening within the seven days is
-    ordinary and must not restamp it.
+    ordinary and must not restamp it. `firstOpen` reports which of the two this
+    request was, so the chamber can play its ceremony exactly once (#116).
     """
     grant = request.auth          # GrantAuth returned the grant, or None → 401
+    # Read before OPEN, which stamps it. The chamber only fetches the PDF after
+    # this response, so the PDF request cannot stamp it first.
+    first_open = grant.opened_at is None
     _open_or_refuse(grant)
 
     chapter = grant.chapter
@@ -82,6 +86,7 @@ def grant_detail(request, token: str):
         bookTitle=chapter.book.title,
         number=chapter.order_index,
         title=chapter.title,
+        firstOpen=first_open,
     )
 
 

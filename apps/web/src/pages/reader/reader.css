@@ -41,3 +41,125 @@
 
 .sanctuary h1 { font-size: 1.9rem; }
 .sanctuary p { color: var(--ink-soft); max-width: 32ch; }
+
+/* ── Threshold — the first open of a link (#116) ───────────────────────
+   Four beats, each a machine state. Every piece arrives with the same rise
+   and settle; the card leaves faster than anything arrived (D54). */
+
+.threshold {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  padding: var(--space-8) var(--space-6);
+  background: var(--grain) var(--paper);
+  color: var(--ink);
+  text-align: center;
+  cursor: pointer;
+}
+
+.threshold:focus-visible { outline: none; }
+
+.threshold-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  max-width: 34rem;
+}
+
+.threshold-book,
+.threshold-numeral,
+.threshold-title,
+.threshold-hint {
+  display: block;
+  opacity: 0;
+}
+
+.threshold-book {
+  font-size: 0.75rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.threshold-numeral {
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 16vw, 6.5rem);
+  font-weight: 400;
+  line-height: 1;
+  /* Fraunces at its most characterful — soft and a little wonky — for the one
+     moment that is allowed to be decorative. */
+  font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 1;
+  color: var(--accent);
+}
+
+.threshold-numeral-label {
+  display: block;
+  margin-bottom: var(--space-3);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.threshold-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(1.7rem, 5.5vw, 2.6rem);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.threshold-rule {
+  display: block;
+  width: 4.5rem;
+  height: 1px;
+  margin-top: var(--space-2);
+  background: var(--accent);
+  transform: scaleX(0);
+}
+
+.threshold-hint {
+  margin-top: var(--space-8);
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+}
+
+.threshold-book.on,
+.threshold-title.on,
+.threshold-hint.on {
+  animation: threshold-rise var(--dur-ceremony) var(--ease-settle) both;
+}
+
+/* The numeral follows the book's name by a breath. */
+.threshold-numeral.on {
+  animation: threshold-rise var(--dur-ceremony) var(--ease-settle) 120ms both;
+}
+
+.threshold-rule.on {
+  animation: threshold-draw var(--dur-ceremony) var(--ease-settle) both;
+}
+
+.threshold.lifting {
+  animation: threshold-lift var(--dur-ceremony) var(--ease-exit) both;
+  pointer-events: none;
+}
+
+@keyframes threshold-rise {
+  from { opacity: 0; transform: translateY(var(--rise)); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes threshold-draw {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes threshold-lift {
+  to { opacity: 0; transform: translateY(calc(var(--rise) * -2)); }
+}
