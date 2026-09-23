@@ -11,6 +11,9 @@ file — and any of them may be revisited on evidence.
 
 ## D29 — The PDF endpoint is `GET /api/grants/{token}/pdf`
 
+**Superseded by D73** (2026-09-23): the PDF no longer leaves the server. Readers receive
+watermarked page images from `GET /api/grants/{token}/pages/{n}`.
+
 V1 served bytes from `/api/shards/stream/?token=`. D4 deleted the `Shard` table, so that name
 points at a concept that no longer exists.
 

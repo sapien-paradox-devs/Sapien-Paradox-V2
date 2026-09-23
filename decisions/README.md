@@ -51,7 +51,7 @@ back to. Without it these read as taste rather than as answers to specific, obse
 | D26 | `create_reader` — reuse/refuse, transaction boundary, the password | [seams](07-seams.md) | locked |
 | D27 | WhatsApp delivery — one mechanism, named wrappers *(refines D12)* | [seams](07-seams.md) | locked |
 | D28 | Razorpay is the payment provider | [payments](08-payments.md) | locked |
-| D29 | PDF endpoint is `GET /api/grants/{token}/pdf` | [api-layer](09-api-layer.md) | locked |
+| D29 | PDF endpoint is `GET /api/grants/{token}/pdf` | [api-layer](09-api-layer.md) | **superseded by D73** |
 | D30 | CSRF on session endpoints, exempt on grant ones | [api-layer](09-api-layer.md) | locked |
 | D31 | Rate limits counted from rows, no Redis | [api-layer](09-api-layer.md) | locked |
 | D32 | `GET /api/read/{id}` stays a GET, made idempotent | [api-layer](09-api-layer.md) | locked |
@@ -84,8 +84,9 @@ back to. Without it these read as taste rather than as answers to specific, obse
 | D68 | Models move in one PR; everything else moves app by app | [structure](14-structure.md) | locked |
 | D69 | Fix the logic in `core/`, then move it | [structure](14-structure.md) | locked |
 | D70 | Reading progress, shown quietly *(reverses D11's "no progress bars"; amends D18: a ninth table)* | [reading](15-reading.md) | locked |
-| D71 | The chamber renders the PDF itself, with pdf.js *(reopens the #31 departure)* | [reading](15-reading.md) | locked |
+| D71 | The chamber renders the PDF itself, with pdf.js *(reopens the #31 departure)* | [reading](15-reading.md) | **superseded by D73** |
 | D72 | Landing, chamber and progress proceed on the current structure *(amends structure-D67, `14-structure.md`)* | [reading](15-reading.md) | locked |
+| D73 | Pages are rendered on the server, watermarked; the PDF never reaches the browser *(supersedes D71, D29)* | [reading](15-reading.md) | locked |
 
 **Claim the number in this index first, then write the file.** Three collisions happened in one day
 because a number locked on an unmerged branch is invisible here. The index on `main` is the lock.
