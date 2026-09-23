@@ -6,7 +6,9 @@ from ..binding import touched
 def record_sent(log, ctx):
     log.attempts += 1
     log.provider_message_id = ctx.payload.outcome.provider_message_id
-    touched(log, "attempts", "provider_message_id")
+    log.sent_at = ctx.deps.now()
+    log.error = None
+    touched(log, "attempts", "provider_message_id", "sent_at", "error")
     ctx.produce(log)
 
 

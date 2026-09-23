@@ -21,6 +21,8 @@ protected than the database.
 
 import logging
 import time
+from dataclasses import dataclass
+from types import SimpleNamespace
 from datetime import timedelta
 
 from django.conf import settings
@@ -28,6 +30,8 @@ from django.utils import timezone
 
 from ..constants import ROUTES
 from ..content import templates
+from ..machines.binding import dispatch_model
+from ..machines.delivery import delivery_machine
 from ..models import MessageLog
 
 logger = logging.getLogger(__name__)
@@ -155,12 +159,49 @@ def _first_name(user) -> str:
 _BACKOFF_SECONDS = (0.5, 1.5)
 
 
+@dataclass(frozen=True)
+class Outcome:
+    """What one provider call produced. The machine reads this; it never makes it."""
+
+    accepted: bool
+    transient: bool = False
+    provider_message_id: str = ""
+    error: str = ""
+
+
+def _attempt(backend, to_phone, body, template_key, log, attempt) -> Outcome:
+    """One provider call. Returns what happened; decides nothing."""
+    try:
+        provider_id = backend(to_phone, body)
+    except PermanentDeliveryError as exc:
+        logger.warning(
+            "whatsapp permanent failure, not retrying",
+            extra={"template": template_key, "message_log": log.pk, "attempt": attempt},
+        )
+        return Outcome(accepted=False, transient=False, error=str(exc))
+    except TransientDeliveryError as exc:
+        logger.warning(
+            "whatsapp transient failure",
+            extra={"template": template_key, "message_log": log.pk, "attempt": attempt},
+        )
+        return Outcome(accepted=False, transient=True, error=str(exc))
+
+    return Outcome(accepted=True, provider_message_id=provider_id)
+
+
 def _deliver(template_key, user, to_phone, values, grant=None) -> MessageLog:
     """Render, send with bounded retry, and record the attempt.
 
-    The row is written `pending` **before** the first attempt (D21), so a crash mid-send
-    leaves evidence rather than nothing. There is no queue (D17): retry happens inside the
-    request, worst case about two seconds.
+    The row is written `pending` **before** the first attempt (D21), so a crash
+    mid-send leaves evidence rather than nothing. There is no queue (D17): retry
+    happens inside the request, worst case about two seconds.
+
+    **The retry policy is the transition table, not this loop** (D27, D59). This
+    function performs the call and sleeps between attempts; whether a failure is
+    worth another go is three rows in `machines/delivery`. D27 required that
+    policy to exist exactly once, because duplicated retry rules drift — one copy
+    gets the never-retry-a-4xx rule and the other does not, and you find out when
+    a bad number has been retried for a year.
     """
     template = templates.get(template_key)      # raises on an unknown key — a bug
     body = template.render(values)              # raises on a missing variable — a bug
@@ -171,35 +212,17 @@ def _deliver(template_key, user, to_phone, values, grant=None) -> MessageLog:
 
     backend = _backend()
     max_attempts = max(1, settings.WHATSAPP_MAX_ATTEMPTS)
-    last_error = ""
+    deps = SimpleNamespace(now=timezone.now, max_attempts=lambda: max_attempts)
 
     for attempt in range(1, max_attempts + 1):
-        log.attempts = attempt
-        try:
-            provider_id = backend(to_phone, body)
-        except PermanentDeliveryError as exc:
-            last_error = str(exc)
-            logger.warning(
-                "whatsapp permanent failure, not retrying",
-                extra={"template": template_key, "message_log": log.pk, "attempt": attempt},
-            )
-            break
-        except TransientDeliveryError as exc:
-            last_error = str(exc)
-            logger.warning(
-                "whatsapp transient failure",
-                extra={"template": template_key, "message_log": log.pk, "attempt": attempt},
-            )
-            if attempt < max_attempts:
-                time.sleep(_BACKOFF_SECONDS[min(attempt - 1, len(_BACKOFF_SECONDS) - 1)])
-                continue
-            break
-        else:
-            log.status = MessageLog.SENT
-            log.provider_message_id = provider_id
-            log.sent_at = timezone.now()
-            log.error = None
-            log.save(update_fields=["status", "attempts", "provider_message_id", "sent_at", "error"])
+        outcome = _attempt(backend, to_phone, body, template_key, log, attempt)
+
+        dispatch_model(
+            delivery_machine, log, "ATTEMPT", deps=deps,
+            state_attr="status", outcome=outcome,
+        )
+
+        if log.status == MessageLog.SENT:
             # The body is never logged — it holds a live token (D22).
             logger.info(
                 "whatsapp sent",
@@ -207,9 +230,12 @@ def _deliver(template_key, user, to_phone, values, grant=None) -> MessageLog:
             )
             return log
 
-    log.status = MessageLog.FAILED
-    log.error = last_error
-    log.save(update_fields=["status", "attempts", "error"])
+        if log.status == MessageLog.FAILED:
+            return log
+
+        # Still pending: the table says another attempt is allowed.
+        time.sleep(_BACKOFF_SECONDS[min(attempt - 1, len(_BACKOFF_SECONDS) - 1)])
+
     return log
 
 
