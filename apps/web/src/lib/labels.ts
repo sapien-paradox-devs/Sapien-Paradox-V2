@@ -106,8 +106,8 @@ export const labels = {
       ],
     },
 
-    beginTitle: "Begin",
-    beginLede: "Choose how quickly the chapters come. The first one is sent as soon as you have paid.",
+    beginTitle: "Ready to begin?",
+    beginLede: "Choose a pace, and your first chapter arrives on WhatsApp as soon as you have paid.",
 
     faq: {
       title: "Questions",
@@ -135,7 +135,13 @@ export const labels = {
       ],
     },
 
-    // The form (unchanged from before #149).
+    // The strip's pace switch.
+    pace: "How quickly",
+  },
+  // `/begin` — buying a book, on its own page (#160).
+  begin: {
+    title: "Begin a book",
+    lede: "Choose how quickly the chapters come. The first one is sent as soon as you have paid.",
     chapters: "chapters",
     name: "Your name",
     email: "Email",

@@ -28,5 +28,8 @@ export const isOpeningPath = ({ event }: { event: Event }) =>
 export const isResetPath = ({ event }: { event: Event }) =>
   path(event).startsWith("/reset/");
 
+/** `/begin` — buying a book, on its own page (#160). */
+export const isBeginPath = ({ event }: { event: Event }) => path(event) === "/begin";
+
 /** `/welcome` — where Razorpay returns the reader after paying (D47). */
 export const isWelcomePath = ({ event }: { event: Event }) => path(event) === "/welcome";

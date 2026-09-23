@@ -32,6 +32,7 @@ export const navigationConfig = {
       { guard: "isResetPath", target: ".page.reset" },
       { guard: "isOpeningPath", target: ".page.opening" },
       { guard: "isWelcomePath", target: ".page.welcome" },
+      { guard: "isBeginPath", target: ".page.begin" },
       { target: ".page.home" },
     ],
 
@@ -99,6 +100,7 @@ export const navigationConfig = {
         reader: {},
         reset: {},
         welcome: {},
+        begin: {},
       },
     },
   },
