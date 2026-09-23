@@ -73,3 +73,7 @@
     white-space: nowrap;
   }
 }
+
+@keyframes ui-row-in {
+  from { opacity: 0; transform: translateY(var(--rise)); }
+}

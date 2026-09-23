@@ -25,6 +25,8 @@
   color: var(--ink-soft);
 }
 
+.begin-skeleton-lede { margin-bottom: var(--space-6); }
+
 .begin-form {
   display: flex;
   flex-direction: column;
