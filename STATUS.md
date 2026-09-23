@@ -8,11 +8,18 @@
 >
 > **This is not a diary.** V1's equivalent accumulated a 24-entry narrative log nobody could use.
 >
-> **Resuming after a break?** `docs/HANDOFF-2026-08-30.md` is the narrative of the machine-layer
-> session — the PR stack and its merge order, the XState traps, and what was proven about Razorpay
-> and Twilio. Read it once; work from here afterwards.
+> **THE BODY OF THIS FILE IS STALE.** It was last true on 2026-08-30, at PR #14. The repository is
+> now at PR #109 and phases 0–5 are substantially built. Everything below §1 describes a project
+> that no longer exists and is being rewritten.
+>
+> **Read `docs/PLAN.md` instead.** It holds the current ground truth (§1), the full feature tree
+> with what is built and what is missing (§2), the restructuring diagnosis and target (§3), and
+> the sequence of work (§6).
+>
+> **Resuming after a break?** `docs/PLAN.md` first. `docs/HANDOFF-2026-08-30.md` is the narrative of
+> the machine-layer session and is history, not state.
 
-**Last updated:** 2026-08-30
+**Last updated:** 2026-09-23 — *header only; the body is being rewritten against `docs/PLAN.md`*
 
 ---
 

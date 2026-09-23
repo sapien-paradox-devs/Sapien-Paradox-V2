@@ -61,7 +61,7 @@ whatsapp.send_password_reset(reset_token) -> MessageLog
 User ──< Order >── Book ──< Chapter ──< TemporalGrant >── User
                                  │
                             (PDF file, text_content)
-MessageLog >── User, Chapter
+MessageLog >── User, TemporalGrant
 ```
 
 Departures from V1 (no `Shard` table, no view quota, `grant.user` required) and their rationale:
