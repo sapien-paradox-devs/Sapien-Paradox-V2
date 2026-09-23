@@ -40,7 +40,11 @@ services:
     # trade: this re-runs on every restart, including every wake from sleep. That is
     # safe — migrations are idempotent, and free tier is a single instance so two
     # cannot race. Move this back into preDeployCommand when the plan goes paid.
-    startCommand: python manage.py migrate --no-input && gunicorn config.wsgi:application --workers 2 --threads 4 --timeout 120
+    #
+    # `render_chapters` follows for the same reason (D73): a chapter with no rendered
+    # pages cannot be opened. It skips chapters already rendered, so after the first
+    # run it is one query per start. New uploads render from the admin save.
+    startCommand: python manage.py migrate --no-input && python manage.py render_chapters && gunicorn config.wsgi:application --workers 2 --threads 4 --timeout 120
 
     healthCheckPath: /api/health
 
