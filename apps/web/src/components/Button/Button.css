@@ -3,10 +3,10 @@
   font-weight: 500;
   letter-spacing: 0.01em;
   transition:
-    background 0.18s var(--ease-settle),
-    border-color 0.18s var(--ease-settle),
-    color 0.18s var(--ease-settle),
-    transform 0.18s var(--ease-settle);
+    background var(--dur-quick) var(--ease-settle),
+    border-color var(--dur-quick) var(--ease-settle),
+    color var(--dur-quick) var(--ease-settle),
+    transform var(--dur-quick) var(--ease-settle);
 }
 
 .ui-btn:disabled { opacity: 0.55; cursor: default; }

@@ -11,6 +11,8 @@
  * and a test reads index.html to keep the key in step.
  */
 
+import { transition } from "./motion";
+
 export type ThemePreference = "system" | "light" | "dark";
 export type Theme = "light" | "dark";
 
@@ -74,19 +76,11 @@ export function applyTheme(theme: Theme): void {
   const root = document.documentElement;
   if (root.dataset.theme === theme) return;
 
-  const paint = () => {
+  // A crossfade where the browser offers one (D54).
+  transition(() => {
     root.dataset.theme = theme;
     document
       .querySelector('meta[name="theme-color"]')
       ?.setAttribute("content", THEME_COLOR[theme]);
-  };
-
-  // A crossfade where the browser offers one; an instant swap otherwise, and
-  // always an instant swap for anyone who has asked for less motion.
-  const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? true;
-  if (!reduced && typeof document.startViewTransition === "function") {
-    document.startViewTransition(paint);
-  } else {
-    paint();
-  }
+  }, { kind: "theme" });
 }
