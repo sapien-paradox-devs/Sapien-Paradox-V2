@@ -59,22 +59,30 @@ class ChapterInline(admin.TabularInline):
 
     model = Chapter
     extra = 0
-    fields = ("order_index", "title", "file", "page_count")
+    fields = ("order_index", "title", "file", "video", "page_count")
     readonly_fields = ("page_count",)
     ordering = ("order_index",)
 
 
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
-    list_display = ("title", "slug", "chapter_count", "is_published", "created_at")
+    list_display = ("title", "author", "chapter_count", "has_cover", "has_sample", "is_published", "created_at")
     list_filter = ("is_published",)
-    search_fields = ("title", "slug")
+    search_fields = ("title", "slug", "author")
     prepopulated_fields = {"slug": ("title",)}
     inlines = [ChapterInline]
 
     @admin.display(description="chapters")
     def chapter_count(self, obj):
         return obj.chapters.count()
+
+    @admin.display(boolean=True, description="cover")
+    def has_cover(self, obj):
+        return bool(obj.cover)
+
+    @admin.display(boolean=True, description="sample video")
+    def has_sample(self, obj):
+        return bool(obj.sample_video)
 
     def save_formset(self, request, form, formset, change):
         """Chapters uploaded on the book's own screen are prepared the same way."""
@@ -107,7 +115,7 @@ def _prepare(request, model_admin, chapter) -> None:
 
 @admin.register(Chapter)
 class ChapterAdmin(admin.ModelAdmin):
-    list_display = ("book", "order_index", "title", "page_count", "has_text", "has_pages")
+    list_display = ("book", "order_index", "title", "page_count", "has_text", "has_pages", "has_video")
     list_filter = ("book",)
     search_fields = ("title", "book__title")
     ordering = ("book", "order_index")
@@ -120,6 +128,10 @@ class ChapterAdmin(admin.ModelAdmin):
     @admin.display(boolean=True, description="pages rendered")
     def has_pages(self, obj):
         return bool(obj.page_layout)
+
+    @admin.display(boolean=True, description="video")
+    def has_video(self, obj):
+        return bool(obj.video)
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)

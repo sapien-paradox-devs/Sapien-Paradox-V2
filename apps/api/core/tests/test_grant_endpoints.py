@@ -36,7 +36,7 @@ class GrantEndpointTests(TestCase):
         self.assertEqual(response.json(), {
             "bookTitle": "The Sapien Paradox", "number": 1, "title": "The Long Descent",
             "firstOpen": True,
-            "furthest": 0.0, "completed": False,
+            "furthest": 0.0, "completed": False, "hasVideo": False,
         })
 
     def test_there_is_no_pdf_endpoint(self):

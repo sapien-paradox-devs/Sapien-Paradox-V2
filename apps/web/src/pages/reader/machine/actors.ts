@@ -8,6 +8,12 @@ export const fetchGrant = fromPromise<ChapterMeta, { token: string }>(({ input }
   mappedFetcher.get<ChapterMeta>(`/api/grants/${input.token}`),
 );
 
+/** A short-lived signed URL for the chapter's video (D77). Never stored or logged. */
+export const fetchVideo = fromPromise<string, { token: string }>(async ({ input }) => {
+  const { url } = await mappedFetcher.get<{ url: string }>(`/api/grants/${input.token}/video`);
+  return url;
+});
+
 /** One tap from a dead link to a live one (D9). Mints a new grant. */
 export const reissueGrant = fromPromise<void, { token: string }>(({ input }) =>
   mappedFetcher.post<void>(`/api/grants/${input.token}/reissue`),

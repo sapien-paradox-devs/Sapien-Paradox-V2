@@ -18,12 +18,15 @@ export const readerMachine = setup({
     assignFlushed: assign(actions.flushed),
     assignCompleted: assign(actions.completedNow),
     sendOnExit: actions.sendOnExit,
+    assignVideoUrl: assign(actions.videoUrlFrom),
+    clearVideo: assign(actions.clearVideo),
   },
   actors: {
     fetchGrant: actors.fetchGrant,
     reissueGrant: actors.reissueGrant,
     completeChapter: actors.completeChapter,
     saveProgress: actors.saveProgress,
+    fetchVideo: actors.fetchVideo,
   },
   // One beat of the threshold ceremony, read from the `--dur-ceremony` CSS
   // token so reduced motion shortens it in the one place it is defined.
@@ -42,6 +45,7 @@ export const readerMachine = setup({
     isExpired: guards.isExpired,
     isForbidden: guards.isForbidden,
     isRateLimited: guards.isRateLimited,
+    hasVideo: guards.hasVideo,
   },
 }).createMachine({
   ...readerConfig,
@@ -52,6 +56,7 @@ export const readerMachine = setup({
     sent: 0,
     lastSentAt: 0,
     completed: false,
+    videoUrl: null,
   }),
 });
 

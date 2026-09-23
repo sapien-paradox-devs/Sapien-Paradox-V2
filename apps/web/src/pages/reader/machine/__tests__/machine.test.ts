@@ -13,6 +13,7 @@ const CHAPTER: ChapterMeta = {
   firstOpen: false,
   furthest: 0,
   completed: false,
+  hasVideo: true,
 };
 
 function start(
@@ -26,6 +27,8 @@ function start(
     save?: "ok" | 500;
     saved?: number[];
     flushed?: number[];
+    video?: "ok" | 404;
+    hasVideo?: boolean;
   } = {},
 ) {
   const machine = readerMachine.provide({
@@ -51,7 +54,12 @@ function start(
           firstOpen: options.firstOpen ?? false,
           completed: options.completed ?? false,
           furthest: options.furthest ?? 0,
+          hasVideo: options.hasVideo ?? true,
         };
+      }),
+      fetchVideo: fromPromise<string, { token: string }>(async () => {
+        if (options.video === 404) throw new ApiError(404, null);
+        return "https://signed.example/ch1.mp4";
       }),
       completeChapter: fromPromise<void, { token: string }>(async () => {
         if (options.complete === 500) throw new ApiError(500, null);
@@ -334,5 +342,58 @@ describe("nextSendDelay", () => {
   it("waits for the settle, and never sends more often than every five seconds", () => {
     expect(nextSendDelay(100_000, 0)).toBe(1500);
     expect(nextSendDelay(10_000, 9_000)).toBe(4000);
+  });
+});
+
+describe("the chapter's video (D76)", () => {
+  it("waits until the reader asks for it", async () => {
+    const actor = start();
+    await settle();
+
+    expect(actor.getSnapshot().matches({ video: "idle" })).toBe(true);
+    expect(actor.getSnapshot().context.videoUrl).toBeNull();
+  });
+
+  it("fetches a signed URL and plays, without leaving the pages", async () => {
+    const actor = start();
+    await settle();
+
+    actor.send({ type: "WATCH" });
+    await settle();
+
+    const snapshot = actor.getSnapshot();
+    expect(snapshot.matches({ video: "playing", chamber: "reading" })).toBe(true);
+    expect(snapshot.context.videoUrl).toBe("https://signed.example/ch1.mp4");
+  });
+
+  it("forgets the URL when closed, because it expires (D77)", async () => {
+    const actor = start();
+    await settle();
+    actor.send({ type: "WATCH" });
+    await settle();
+
+    actor.send({ type: "CLOSE_VIDEO" });
+
+    expect(actor.getSnapshot().matches({ video: "idle" })).toBe(true);
+    expect(actor.getSnapshot().context.videoUrl).toBeNull();
+  });
+
+  it("ignores WATCH for a chapter with no video", async () => {
+    const actor = start({ hasVideo: false });
+    await settle();
+
+    actor.send({ type: "WATCH" });
+
+    expect(actor.getSnapshot().matches({ video: "idle" })).toBe(true);
+  });
+
+  it("shows its own error and can retry, leaving the pages alone", async () => {
+    const actor = start({ video: 404 });
+    await settle();
+
+    actor.send({ type: "WATCH" });
+    await settle();
+
+    expect(actor.getSnapshot().matches({ video: "failed", chamber: "reading" })).toBe(true);
   });
 });

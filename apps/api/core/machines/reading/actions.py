@@ -47,6 +47,17 @@ def mint_fresh_grant(grant, ctx):
     ctx.produce(fresh)
 
 
+def sign_video(grant, ctx):
+    """A short-lived URL for the chapter's video (D77). Produced, never stored:
+    the URL is a credential while it lives, and a row would keep it (D22)."""
+    ctx.produce(ctx.deps.video_url(grant.chapter))
+
+
+def refuse_no_video(grant, ctx):
+    """Owned and live, but this chapter has no video. Not a denial."""
+    ctx.refuse("no_video")
+
+
 def refuse_expired(grant, ctx):
     """Sanctuary — the link has rested, and one tap fixes it."""
     ctx.refuse("expired")

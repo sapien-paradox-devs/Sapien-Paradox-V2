@@ -253,6 +253,14 @@ export const labels = {
       skip: "Open the chapter",
     },
     finished: "That is the end of this chapter.",
+    // The chapter's companion video (D76).
+    video: {
+      watch: "Watch the video for this chapter",
+      loading: "Opening the video…",
+      close: "Close the video",
+      error: "The video did not load. Your link is fine.",
+      retry: "Try again",
+    },
     denied: "This chapter is not on your shelf.",
     error: "We could not open this chapter.",
     retry: "Try again",

@@ -2,10 +2,11 @@
  * The chamber — level 1. The only page reachable without a session, and the one
  * the whole product exists to deliver.
  *
- * Three parallel regions (D42): `chamber` holds what is on screen, `reissue`
+ * Four parallel regions (D42): `chamber` holds what is on screen, `reissue`
  * holds a re-issue request in flight, so asking for a fresh link does not blank
- * the sanctuary screen, and `progress` saves how far the reader has got (D70)
- * without the chamber ever waiting on it.
+ * the sanctuary screen, `progress` saves how far the reader has got (D70)
+ * without the chamber ever waiting on it, and `video` holds the chapter's video
+ * (D76), so opening it never interrupts the pages.
  *
  * `sanctuary` means an expired or invalid link and nothing else. The end of a
  * chapter is `finished` — V1 used one word for both.
@@ -25,6 +26,7 @@ const initialContext: Context = {
   sent: 0,
   lastSentAt: 0,
   completed: false,
+  videoUrl: null,
 };
 
 export const readerConfig = {
@@ -147,6 +149,29 @@ export const readerConfig = {
           on: {
             PROGRESS: { guard: "isFurther", actions: "assignLatest" },
           },
+        },
+      },
+    },
+
+    // Only on the reader's request, never on its own: nothing moves while the
+    // reader is reading. The URL is fetched each time the player opens, because
+    // it expires (D77).
+    video: {
+      initial: "idle",
+      states: {
+        idle: { on: { WATCH: { guard: "hasVideo", target: "fetching" } } },
+        fetching: {
+          invoke: {
+            src: "fetchVideo",
+            input: ({ context }: { context: Context }) => ({ token: context.token }),
+            onDone: { target: "playing", actions: "assignVideoUrl" },
+            onError: { target: "failed" },
+          },
+          on: { CLOSE_VIDEO: { target: "idle" } },
+        },
+        playing: { on: { CLOSE_VIDEO: { target: "idle", actions: "clearVideo" } } },
+        failed: {
+          on: { WATCH: { target: "fetching" }, CLOSE_VIDEO: { target: "idle" } },
         },
       },
     },

@@ -27,6 +27,10 @@ export const isForbidden = ({ event }: { event: AnyEventObject }) =>
 export const isRateLimited = ({ event }: { event: AnyEventObject }) =>
   status(event) === 429;
 
+/** Only a chapter that has a video can be watched (D76). */
+export const hasVideo = ({ context }: { context: Context }) =>
+  context.chapter?.hasVideo === true;
+
 /** The server says this request was the link's first open (#116). */
 export const isFirstOpen = ({ event }: { event: AnyEventObject }) =>
   "output" in event &&

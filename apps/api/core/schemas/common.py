@@ -25,6 +25,9 @@ class ChapterOut(Schema):
     # and whether they already marked the chapter complete (D70).
     furthest: float
     completed: bool
+    # Whether the chapter has a companion video (D76). The URL itself comes
+    # from its own request, only when the reader asks to watch.
+    hasVideo: bool
 
 
 class ChatIn(Schema):
@@ -70,3 +73,10 @@ class ProgressIn(Schema):
     """How far through the chapter the reader has got, 0–1 (D70)."""
 
     furthest: float
+
+
+class VideoOut(Schema):
+    """A short-lived signed URL (D77). Never logged, never stored: while it lives
+    it is a credential (D22)."""
+
+    url: str

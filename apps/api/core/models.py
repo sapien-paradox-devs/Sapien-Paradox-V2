@@ -21,6 +21,8 @@ from datetime import timedelta
 import shortuuid
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.core.exceptions import ValidationError
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.utils import timezone
 
@@ -58,6 +60,32 @@ def chapter_upload_path(instance, filename):
     a mangled storage suffix.
     """
     return f"chapters/{instance.book.slug}/{instance.order_index}-{uuid.uuid4()}.pdf"
+
+
+def chapter_video_upload_path(instance, filename):
+    """`videos/<book-slug>/<index>-<uuid>.mp4`. Same reasoning as the PDF's path."""
+    return f"videos/{instance.book.slug}/{instance.order_index}-{uuid.uuid4()}.mp4"
+
+
+def book_cover_upload_path(instance, filename):
+    """`covers/<book-slug>-<uuid>.<ext>`. The extension is kept: it is the image's type."""
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else "jpg"
+    return f"covers/{instance.slug}-{uuid.uuid4()}.{ext}"
+
+
+def book_sample_upload_path(instance, filename):
+    """`samples/<book-slug>-<uuid>.mp4`."""
+    return f"samples/{instance.slug}-{uuid.uuid4()}.mp4"
+
+
+def validate_video_size(file):
+    """Videos are MP4 only and capped (D76). The cap is env-driven."""
+    limit = settings.VIDEO_MAX_MB * 1024 * 1024
+    if file.size > limit:
+        raise ValidationError(f"Videos are capped at {settings.VIDEO_MAX_MB} MB.")
+
+
+VIDEO_VALIDATORS = [FileExtensionValidator(["mp4"]), validate_video_size]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -139,14 +167,29 @@ class User(AbstractBaseUser, PermissionsMixin):
 # ─────────────────────────────────────────────────────────────────────────────
 
 class Book(models.Model):
-    """D19.
+    """D19, amended by D76.
 
-    Nothing here that no screen renders yet — no author, description, or cover. Fields
-    nobody displays are how V1 acquired its unspecced view quota.
+    D19 kept out anything no screen rendered. The library (D79) renders author,
+    description and cover, so they are here now. `sample_video` is public: it sells the
+    book, and is served from a short-lived signed URL, never a public path (D77).
     """
 
     title = models.CharField(max_length=300)
     slug = models.SlugField(unique=True)
+    author = models.CharField(max_length=200, blank=True, default="")
+    description = models.TextField(blank=True, default="")
+    cover = models.ImageField(
+        upload_to=book_cover_upload_path,
+        blank=True,
+        validators=[FileExtensionValidator(["jpg", "jpeg", "png", "webp"])],
+        help_text="Proxied through the API, never linked directly (mandate 3).",
+    )
+    sample_video = models.FileField(
+        upload_to=book_sample_upload_path,
+        blank=True,
+        validators=VIDEO_VALIDATORS,
+        help_text="Optional public sample, MP4 (D76). Anyone may watch it; no login.",
+    )
     price_cents = models.PositiveIntegerField(
         default=0,
         help_text="Payments are sequenced later (D1), but the price belongs to the book.",
@@ -186,6 +229,15 @@ class Chapter(models.Model):
     order_index = models.PositiveIntegerField(help_text="1-based.")
     title = models.CharField(max_length=300)
     file = models.FileField(upload_to=chapter_upload_path)
+    video = models.FileField(
+        upload_to=chapter_video_upload_path,
+        blank=True,
+        validators=VIDEO_VALIDATORS,
+        help_text=(
+            "Optional companion video, MP4 (D76). Gated with the chapter: it plays only "
+            "for a live, owned grant."
+        ),
+    )
 
     text_content = models.TextField(
         null=True,
