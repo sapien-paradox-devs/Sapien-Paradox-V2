@@ -337,18 +337,17 @@ top of it.
 ```
 S SURFACE
 ├── S1 Basics every visitor expects
-│   ├── S1.1 Site header: back to the library from every page       ○  #118
-│   ├── S1.2 Link preview card, favicon, app manifest               ○  #119
-│   ├── S1.3 Dark mode: walnut and candlelight, follows the system  ○  #120  ← needs #118
+│   ├── S1.1 Site header: back to the library from every page       ◐  #118 → PR #122
+│   ├── S1.2 Link preview card, favicon, app manifest               ◐  #119 → PR #123
+│   ├── S1.3 Dark mode: walnut and candlelight, follows the system  ◐  #120 → PR #124
 │   ├── S1.4 Legal pages + footer (Razorpay KYC checks for them)    ○  #121  HITL: owner copy
 │   └── S1.5 A 404 page that is not the landing page                ○
 ├── S2 The chamber actually renders
-│   ├── S2.1 Verify on Android + iPhone + inside WhatsApp           ○  #117  HITL: real phones
-│   └── S2.2 Render pages ourselves with pdf.js                     ○  only if #117 fails;
-│                                                                       reopens #31 (STATUS q13)
+│   ├── S2.1 Verify on Android + iPhone + inside WhatsApp           ✅  #117 closed: renders
+│   └── S2.2 Render pages ourselves with pdf.js                     —  not needed (#117)
 ├── S3 Motion
-│   ├── S3.1 Foundation: tokens, View Transitions, grain, Fraunces axes, reduced-motion  ○  #115
-│   ├── S3.2 Opening ceremony, first open of each link (server decides)                 ○  #116
+│   ├── S3.1 Foundation: tokens, View Transitions, grain, Fraunces axes, reduced-motion  ◐  #115 → PR #125 (D54)
+│   ├── S3.2 Opening ceremony, first open of each link (server decides)                 ◐  #116 → PR #126
 │   ├── S3.3 Home as a path; locked rows with seal + date                               ○  #114 (spec in comment)
 │   ├── S3.4 Landing: cover tilt, scroll-linked reveals, cadence demo on a phone        ○
 │   ├── S3.5 Reader: auto-fading controls, pages fade in, flourish at the end           ◐  5.2.4
@@ -374,9 +373,11 @@ S SURFACE
 - Copy in `labels.ts`.
 - Reduced motion keeps fades and drops movement.
 
-**#117 is the hinge.** If phones cannot show a chapter, S2.2 jumps ahead of all of S3: nothing
-can be animated or styled inside the browser's own PDF viewer, and a reader who cannot read will
-not notice the polish.
+**#117 settled it:** chapters render on the phones tested, so S2.2 is not needed.
+
+**PRs #122 → #123 → #124 → #125 → #126 are one stack. Merge in that order.** Vercel previews
+fail on all of them for an account reason, not a code one: the commit author has no access to
+the Vercel project.
 
 ---
 
