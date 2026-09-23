@@ -1,6 +1,6 @@
 # Stewardship — how the owner runs it
 
-D75–D80, D82
+D75–D80, D82–D86
 
 Locked 2026-09-24 in one grilling session. The owner asked for: a good admin UI with full CRUD on
 readers; books uploaded as a folder of PDFs, not chapter by chapter; video uploads; and a library
@@ -61,6 +61,8 @@ new front on top of them.
 ## D76 — Video: one optional video per chapter, one public sample per book
 
 **Locked** 2026-09-24 · owner's call · amends D19
+
+> **Amended by D83:** a book also gets one owners-only video.
 
 ### Decision
 
@@ -142,6 +144,10 @@ people start sharing it (→ Stream's signed tokens and watermarking).
 ## D78 — A book is uploaded as a folder: filename convention, then a preview
 
 **Locked** 2026-09-24 · owner's call
+
+> **Amended by D84–D86:** the flow is a draft workspace (D84), files go straight to R2 (D85),
+> and the strict naming is replaced by auto-matching fixed by drag (D86). The goals stand:
+> nothing reaches a reader until publish, and every mistake is visible before it matters.
 
 ### Decision
 
@@ -316,3 +322,157 @@ are rewritten for this.
 
 The admin surface grows past what the reader app's shell holds comfortably (dozens of screens, many
 roles). Then it becomes its own app, keeping the same `/api/admin/*`.
+
+---
+
+The four decisions below were locked together on 2026-09-24, in a second grilling session on the
+owner's request: *create a book, then upload its PDFs one by one or as a whole folder, then add a
+video for one chapter or for the whole book, all with a very good upload UI*, in the in-app admin
+(D82).
+
+## D83 — A book gets an owners-only video; one PDF is still one chapter
+
+**Locked** 2026-09-24 · owner's call · amends D76
+
+### Decision
+
+- **One PDF is one chapter**, as today. Nothing about reading, pages (D73), progress (D70), the
+  companion (D13) or delivery changes.
+- **`Book.video`**: optional, **for owners only**, for example an introduction or overview of the
+  whole book. It is a third kind of video beside the two in D76:
+
+| Video | Who can watch | Served |
+|---|---|---|
+| `Chapter.video` | a live grant for that chapter | signed URL behind `WATCH` (D77) |
+| `Book.video` | anyone who owns the book (`access.can_read`) | signed URL, session-authenticated |
+| `Book.sample_video` | anyone | signed URL, public (D76) |
+
+- Where a reader watches the book video is part of the library (#168, D79): the book's own page on
+  the Home shelf. It is not delivered by WhatsApp.
+
+### Rejected
+
+- **A chapter holds several PDFs**, with a video for the group or one PDF. Every per-chapter
+  system (the reader, page rendering, progress, the companion's text, delivery) would have to stitch
+  several files together, for a structure no book has needed yet.
+- **Per-chapter videos only, "complete" meaning a bulk upload.** The owner wants a video for the
+  whole book as well. Bulk video upload is kept anyway, in D86.
+
+### Revisit if
+
+A book arrives whose chapters really are several documents each.
+
+---
+
+## D84 — Creating a book opens a draft workspace, not a wizard
+
+**Locked** 2026-09-24 · owner's call · amends D78's flow
+
+### Decision
+
+1. **Create:** a short form (title, author, description, price, cover) creates the book
+   **unpublished** and opens its workspace. The book exists from this moment.
+2. **The workspace** is one screen per book with four sections, each showing its own state:
+   - **Details:** the form above, editable.
+   - **Chapters:** *drop a folder* **or** *add a PDF*, both feeding **one list**. Each row shows its
+     progress through **uploading → rendering pages → ready**, or **failed** with a retry. Titles
+     are editable in place, and rows reorder by drag.
+   - **Videos:** a *Book video* slot (D83), a *Sample* slot (D76), and a slot per chapter.
+   - **Publish:** a checklist (at least one chapter, every chapter *ready*, a cover). Publish stays
+     disabled until the checklist is clear, and it is a separate, deliberate action (D19).
+3. **Every upload saves the moment it lands.** Leave mid-upload and come back: what finished is
+   there, and what didn't shows as failed with a retry. Editing a published book uses the same
+   screen.
+
+### Constraints this creates
+
+- **Chapters reorder and delete only while the book is unpublished.** Once readers own it, grants
+  and progress point at chapters, and cadence schedules by position. On a published book the order
+  is fixed and a chapter with grants cannot be deleted. A chapter's PDF or video can still be
+  replaced, which re-renders its pages.
+- The workspace is a page machine (D15). Each upload is work in flight beside the page, so uploads
+  are a **parallel region**, one entry per file (D42), never `useState`.
+
+### Rejected
+
+- **A step-by-step wizard.** Guided for the first book, but editing later needs a second screen
+  anyway, and a wizard holding hundreds of megabytes until its last step loses them all on a
+  refresh.
+- **One long form with a Save button.** Upload status competes with form fields, and it gets
+  unwieldy past about ten chapters.
+
+---
+
+## D85 — Uploads go straight to R2 on signed per-file URLs
+
+**Locked** 2026-09-24 · settles the "how large files reach R2" leaf left open in D78
+
+### Decision
+
+For every file, PDF or video:
+
+1. **Ask:** `POST /api/admin/uploads` (StaffAuth, D82) with the file's name, size, type and its
+   destination (a chapter's PDF or video, or the book's cover, video or sample). The API checks type
+   and size (MP4 only for video, `VIDEO_MAX_MB`, D76) and returns a short-lived **signed upload
+   URL** for a fresh storage key.
+2. **Send:** the browser sends the bytes **directly to R2**, with a live progress bar. Files over
+   ~50 MB use **multipart upload** in chunks, so a dropped connection retries one chunk, not the
+   whole file.
+3. **Confirm:** `POST /api/admin/uploads/{id}/complete`. The API checks the object exists and has
+   the size it was promised, attaches it to its destination, and for a PDF runs extraction and D73
+   page rendering, **one chapter per request**.
+
+- **Without R2 configured** (a fresh clone, tests), step 2 uploads to the API instead. Same three
+  steps, same screens (mandate 6).
+- **One-time setup:** a CORS rule on the bucket allowing `PUT` from the app's origin. It goes in
+  `docs/RUNNING.md` beside the rest of the R2 setup.
+- A signed *upload* URL is not a read URL and exposes nothing (mandate 3). It is still never
+  logged (D22).
+
+### Why
+
+Django never holds a 500 MB body, so Render's request size and time limits stop mattering. The
+progress bar is real because the browser is the one sending, and rendering stays one chapter per
+request, so a 20-chapter folder is 20 small jobs.
+
+### Rejected
+
+- **Everything through the API.** One path, but a large video keeps a worker busy for minutes on the
+  free tier, risks the request timeout, and cannot resume.
+- **PDFs through the API, videos direct.** Right for each type, but two upload paths to build and
+  keep working.
+
+### Revisit if
+
+R2 is replaced by a host without presigned uploads, or videos move to Cloudflare Stream (D77's
+revisit clause), which has its own direct-upload API.
+
+---
+
+## D86 — Dropped files auto-match to chapters, fixed by drag
+
+**Locked** 2026-09-24 · owner's call · amends D78's strict naming convention
+
+### Decision
+
+- **A dropped folder of PDFs** becomes chapter rows in this order: the number in the filename if
+  there is one (`ch1_…`, `Chapter 2 - …`, `10 Return`), otherwise natural name order
+  (`Chapter 2` before `Chapter 10`). The title is cleaned from the filename: number, separators and
+  extension removed, underscores turned into spaces. Every title is editable and every row
+  draggable. Non-PDF files in the folder are listed and skipped, never silently lost.
+- **A dropped batch of videos** matches chapters by number, then by name. A video that matches
+  nothing, or matches ambiguously, waits in a **tray**, and is dragged onto a chapter or onto the
+  *Book video* slot. `sample.mp4` goes to the Sample slot.
+- **Each row still has its own *Add PDF* / *Add video***, which is the one-by-one path.
+- A match only proposes. Nothing uploads until the admin confirms the list, so a wrong guess costs
+  one drag.
+
+### Rejected
+
+- **Strict naming (D78 as written).** Predictable, but every real folder has to be renamed first.
+- **Manual assignment only.** Never guesses wrong, but dragging 40 files for a 20-chapter book is
+  exactly the tedium this feature exists to remove.
+
+### Revisit if
+
+Guesses are wrong often enough that fixing them takes longer than naming files would.
