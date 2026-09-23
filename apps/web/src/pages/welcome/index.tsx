@@ -57,7 +57,6 @@ export function WelcomePage() {
     return (
       <main className="shell">
         <div className="welcome">
-          <p className="welcome-mark">{labels.app.name}</p>
           <Spinner label={labels.welcome.confirming} />
           <p className="welcome-body">{labels.welcome.confirming}</p>
         </div>
@@ -72,7 +71,6 @@ export function WelcomePage() {
     return (
       <main className="shell">
         <div className="welcome">
-          <p className="welcome-mark">{labels.app.name}</p>
           <h1>{delivered ? labels.welcome.headline : labels.welcome.sentButUndelivered}</h1>
           <p className="welcome-body">
             {delivered ? labels.welcome.body : labels.welcome.sandboxNote}
@@ -89,7 +87,6 @@ export function WelcomePage() {
     return (
       <main className="shell">
         <div className="welcome">
-          <p className="welcome-mark">{labels.app.name}</p>
           <h1>{labels.welcome.ownedTitle}</h1>
           <p className="welcome-body">{labels.welcome.alreadyOwned}</p>
           {resend}
@@ -103,7 +100,6 @@ export function WelcomePage() {
     return (
       <main className="shell">
         <div className="welcome">
-          <p className="welcome-mark">{labels.app.name}</p>
           <h1>{labels.welcome.pendingTitle}</h1>
           <p className="welcome-body">{labels.welcome.pendingBody}</p>
           {resend}
@@ -118,7 +114,6 @@ export function WelcomePage() {
     return (
       <main className="shell">
         <div className="welcome">
-          <p className="welcome-mark">{labels.app.name}</p>
           <h1>{labels.welcome.refusedTitle}</h1>
           <p className="welcome-body">
             {owned ? labels.welcome.alreadyOwned : labels.welcome.refusedBody}
@@ -132,7 +127,6 @@ export function WelcomePage() {
   return (
     <main className="shell">
       <div className="welcome">
-        <p className="welcome-mark">{labels.app.name}</p>
         <h1>{labels.welcome.failedTitle}</h1>
         <p className="welcome-body">{labels.welcome.failedBody}</p>
         {resend}

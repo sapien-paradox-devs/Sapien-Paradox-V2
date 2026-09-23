@@ -34,7 +34,6 @@ export function ResetPage() {
     return (
       <main className="shell">
         <div className="reset">
-          <p className="reset-mark">{labels.app.name}</p>
           <h1>{labels.reset.doneTitle}</h1>
           <p className="reset-lead">{labels.reset.doneBody}</p>
           <Button type="button" onClick={() => navigate("/login")}>
@@ -48,7 +47,6 @@ export function ResetPage() {
   return (
     <main className="shell">
       <div className="reset">
-        <p className="reset-mark">{labels.app.name}</p>
         <h1>{labels.reset.title}</h1>
         <p className="reset-lead">{labels.reset.lead}</p>
 

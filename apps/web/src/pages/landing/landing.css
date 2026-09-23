@@ -16,13 +16,6 @@
   }
 }
 
-.landing-eyebrow {
-  font-size: 0.75rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  margin-bottom: var(--space-4);
-}
 
 .landing-lede h1 {
   font-size: clamp(2.1rem, 5vw, 3.1rem);

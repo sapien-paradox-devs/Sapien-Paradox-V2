@@ -37,7 +37,6 @@ export function LoginPage() {
     return (
       <main className="shell">
         <div className="login">
-          <p className="login-mark">{labels.app.name}</p>
           <h1>{labels.login.linkTitle}</h1>
 
           {state.matches("linkSent") ? (
@@ -94,7 +93,6 @@ export function LoginPage() {
   return (
     <main className="shell">
       <div className="login">
-        <p className="login-mark">{labels.app.name}</p>
         <h1>{labels.login.title}</h1>
 
         <form

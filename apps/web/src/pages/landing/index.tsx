@@ -50,7 +50,6 @@ export function LandingPage() {
   return (
     <main className="landing">
       <section className="landing-lede">
-        <p className="landing-eyebrow">{labels.app.name}</p>
         <h1>{labels.landing.headline}</h1>
         <p className="landing-sub">{labels.landing.subhead}</p>
 

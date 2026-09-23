@@ -49,6 +49,10 @@
   --shadow-card: 0 1px 2px rgba(31, 27, 22, 0.04), 0 8px 24px -12px rgba(31, 27, 22, 0.12);
   --shadow-lift: 0 2px 4px rgba(31, 27, 22, 0.06), 0 16px 40px -16px rgba(31, 27, 22, 0.18);
 
+  /* The site header's height. `.shell` subtracts it so a centred page does
+     not scroll by exactly this much. */
+  --header-height: 3.5rem;
+
   /* Variable Velocity (mandate 5) — fast start, slow settle. */
   --ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -103,7 +107,8 @@ input, select {
 .shell {
   display: grid;
   place-items: center;
-  min-height: 100vh;
+  min-height: calc(100vh - var(--header-height));
+  min-height: calc(100dvh - var(--header-height));
   padding: var(--space-8) var(--space-4);
 }
 
@@ -165,9 +170,10 @@ input, select {
 .btn-quiet:disabled { opacity: 0.5; cursor: default; }
 
 /*
- * A button that reads as a link. Navigation goes through `navigate()` rather
- * than an <a href> (D15 — one path through pushUrl), so the element has to be a
- * button while sitting inside a sentence.
+ * A button that reads as a link, for in-sentence actions. Navigation still
+ * goes through `navigate()` (D15 — one path through pushUrl); where a real
+ * <a href> matters — middle-click, long-press — see `NavLink` in SiteHeader,
+ * which intercepts a plain click into `navigate()`.
  */
 .linklike {
   padding: 0;

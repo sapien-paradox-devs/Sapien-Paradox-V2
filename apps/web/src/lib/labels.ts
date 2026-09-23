@@ -9,6 +9,12 @@ export const labels = {
   app: {
     name: "Sapien Paradox",
   },
+  nav: {
+    label: "Site",
+    library: "Your library",
+    signIn: "Sign in",
+    signOut: "Sign out",
+  },
   health: {
     booting: "Opening the room…",
   },
@@ -91,7 +97,6 @@ export const labels = {
     retry: "Try again",
     chapter: "Chapter",
     read: "Read",
-    logout: "Sign out",
     send: "Send to WhatsApp",
     sending: "Sending…",
     sent: "Sent — check WhatsApp.",

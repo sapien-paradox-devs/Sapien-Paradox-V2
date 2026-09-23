@@ -9,6 +9,8 @@
 import { useMachine } from "@xstate/react";
 import { useEffect, useMemo } from "react";
 
+import { SiteHeader } from "../components/SiteHeader";
+import type { HeaderPage } from "../components/SiteHeader/contents";
 import { HomePage } from "./home";
 import { LandingPage } from "./landing";
 import { LoginPage } from "./login";
@@ -40,6 +42,7 @@ export function Navigator() {
   // sync.ts delivers the first ROUTE on mount (D15).
   //
   let page = null;
+  let headerPage: HeaderPage = "unknown";
 
   // `/` is two pages. An authenticated reader gets their library; a visitor
   // gets the page that sells them a book (D47). While the session region is
@@ -49,17 +52,38 @@ export function Navigator() {
   const sessionChecking = state.matches({ session: "checking" });
   const signedIn = state.matches({ session: "authenticated" });
 
-  if (state.matches({ page: "login" })) page = <LoginPage />;
-  else if (state.matches({ page: "welcome" })) page = <WelcomePage />;
-  else if (state.matches({ page: "home" })) {
-    if (!sessionChecking) page = signedIn ? <HomePage /> : <LandingPage />;
+  if (state.matches({ page: "login" })) {
+    page = <LoginPage />;
+    headerPage = "login";
+  } else if (state.matches({ page: "welcome" })) {
+    page = <WelcomePage />;
+    headerPage = "welcome";
+  } else if (state.matches({ page: "home" })) {
+    if (!sessionChecking) {
+      page = signedIn ? <HomePage /> : <LandingPage />;
+      headerPage = signedIn ? "library" : "landing";
+    }
+  } else if (state.matches({ page: "opening" })) {
+    page = <OpeningPage />;
+    headerPage = "opening";
+  } else if (state.matches({ page: "reader" })) {
+    page = <ReaderPage />;
+    headerPage = "reader";
+  } else if (state.matches({ page: "reset" })) {
+    page = <ResetPage />;
+    headerPage = "reset";
   }
-  else if (state.matches({ page: "opening" })) page = <OpeningPage />;
-  else if (state.matches({ page: "reader" })) page = <ReaderPage />;
-  else if (state.matches({ page: "reset" })) page = <ResetPage />;
 
   return (
     <NavigationContext.Provider value={navigation}>
+      {/* Layout, not logic: which items it shows is a pure function of the
+          page and the session, both already decided above. */}
+      <SiteHeader
+        page={headerPage}
+        userName={signedIn ? (state.context.user?.fullName ?? null) : null}
+        navigate={navigation.navigate}
+        onLogout={navigation.logout}
+      />
       {page}
     </NavigationContext.Provider>
   );
