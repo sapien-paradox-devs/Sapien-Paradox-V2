@@ -87,6 +87,7 @@ back to. Without it these read as taste rather than as answers to specific, obse
 | D71 | The chamber renders the PDF itself, with pdf.js *(reopens the #31 departure)* | [reading](15-reading.md) | **superseded by D73** |
 | D72 | Landing, chamber and progress proceed on the current structure *(amends structure-D67, `14-structure.md`)* | [reading](15-reading.md) | locked |
 | D73 | Pages are rendered on the server, watermarked; the PDF never reaches the browser *(supersedes D71, D29)* | [reading](15-reading.md) | locked |
+| D74 | Visual identity: Ink & Sage — palette and type *(amends D54's Fraunces note)* | [identity](16-identity.md) | locked |
 
 **Claim the number in this index first, then write the file.** Three collisions happened in one day
 because a number locked on an unmerged branch is invisible here. The index on `main` is the lock.
