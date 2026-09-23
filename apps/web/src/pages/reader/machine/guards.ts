@@ -23,3 +23,11 @@ export const isForbidden = ({ event }: { event: AnyEventObject }) =>
 /** Already sent. An outcome, not a failure (D45). */
 export const isRateLimited = ({ event }: { event: AnyEventObject }) =>
   status(event) === 429;
+
+/** The server says this request was the link's first open (#116). */
+export const isFirstOpen = ({ event }: { event: AnyEventObject }) =>
+  "output" in event &&
+  typeof event.output === "object" &&
+  event.output !== null &&
+  "firstOpen" in event.output &&
+  event.output.firstOpen === true;

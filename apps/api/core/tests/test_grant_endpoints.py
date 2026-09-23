@@ -35,6 +35,7 @@ class GrantEndpointTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {
             "bookTitle": "The Sapien Paradox", "number": 1, "title": "The Long Descent",
+            "firstOpen": True,
         })
 
     def test_the_pdf_streams(self):
@@ -53,6 +54,24 @@ class GrantEndpointTests(TestCase):
         self.client.get(f"/api/grants/{self.grant.token}")
         self.grant.refresh_from_db()
         self.assertEqual(self.grant.opened_at, first)   # D21: the FIRST open
+
+    def test_first_open_is_reported_once_for_the_ceremony(self):
+        """#116: the chamber's ceremony plays on the first open of a link only."""
+        first = self.client.get(f"/api/grants/{self.grant.token}")
+        again = self.client.get(f"/api/grants/{self.grant.token}")
+
+        self.assertTrue(first.json()["firstOpen"])
+        self.assertFalse(again.json()["firstOpen"])
+
+    def test_a_refused_open_does_not_spend_the_first_open(self):
+        """An expired link lands in sanctuary; its ceremony is not used up."""
+        self.grant.expires_at = timezone.now() - timedelta(seconds=1)
+        self.grant.save(update_fields=["expires_at"])
+
+        self.client.get(f"/api/grants/{self.grant.token}")
+
+        self.grant.refresh_from_db()
+        self.assertIsNone(self.grant.opened_at)
 
     def test_reopening_within_seven_days_still_works(self):
         self.client.get(f"/api/grants/{self.grant.token}")

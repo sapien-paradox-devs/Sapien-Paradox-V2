@@ -10,11 +10,14 @@ import { PdfChamber } from "../../components/PdfChamber";
 import { labels } from "../../lib/labels";
 import { readerMachine } from "./machine";
 import { Sanctuary } from "./Sanctuary";
+import { Threshold, type ThresholdBeat } from "./Threshold";
 import "./reader.css";
 
 type ReissueState = "idle" | "sending" | "sent" | "limited" | "failed";
 
 const REISSUE_STATES: ReissueState[] = ["idle", "sending", "sent", "limited", "failed"];
+
+const BEATS: ThresholdBeat[] = ["gathering", "titled", "ruled", "lifting"];
 
 export function ReaderPage() {
   const token = window.location.pathname.split("/r/")[1] ?? "";
@@ -47,8 +50,15 @@ export function ReaderPage() {
   }
 
   const chapter = state.context.chapter;
+  const beat = thresholdBeatOf(state.value);
 
   return (
+    <>
+    {/* The chamber renders underneath from the first beat, so the pages load
+        while the ceremony plays (#116). */}
+    {beat && chapter && (
+      <Threshold chapter={chapter} beat={beat} onSkip={() => send({ type: "SKIP" })} />
+    )}
     <main className="reader">
       {chapter && (
         <header>
@@ -69,7 +79,17 @@ export function ReaderPage() {
         </button>
       )}
     </main>
+    </>
   );
+}
+
+/** Which beat of the threshold is showing, or null outside it. No cast. */
+function thresholdBeatOf(value: unknown): ThresholdBeat | null {
+  if (typeof value !== "object" || value === null || !("chamber" in value)) return null;
+  const { chamber } = value;
+  if (typeof chamber !== "object" || chamber === null || !("threshold" in chamber)) return null;
+  const { threshold } = chamber;
+  return BEATS.find((candidate) => candidate === threshold) ?? null;
 }
 
 /** Reads the parallel region's state without a cast. */

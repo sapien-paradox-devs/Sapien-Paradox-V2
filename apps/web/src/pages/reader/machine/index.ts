@@ -2,6 +2,7 @@
 
 import { assign, setup } from "xstate";
 
+import { ceremonyBeat } from "../../../lib/motion";
 import * as actions from "./actions";
 import * as actors from "./actors";
 import * as guards from "./guards";
@@ -12,7 +13,11 @@ export const readerMachine = setup({
   types: {} as { context: Context; events: Event; input: { token: string } },
   actions: { assignChapter: assign(actions.chapterFrom) },
   actors: { fetchGrant: actors.fetchGrant, reissueGrant: actors.reissueGrant },
+  // One beat of the threshold ceremony, read from the `--dur-ceremony` CSS
+  // token so reduced motion shortens it in the one place it is defined.
+  delays: { beat: ceremonyBeat },
   guards: {
+    isFirstOpen: guards.isFirstOpen,
     isExpired: guards.isExpired,
     isForbidden: guards.isForbidden,
     isRateLimited: guards.isRateLimited,

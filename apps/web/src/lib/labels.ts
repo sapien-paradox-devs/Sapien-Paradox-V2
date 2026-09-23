@@ -15,6 +15,11 @@ export const labels = {
     signIn: "Sign in",
     signOut: "Sign out",
   },
+  theme: {
+    system: "Theme: follows your device. Tap for light.",
+    light: "Theme: light. Tap for dark.",
+    dark: "Theme: dark. Tap to follow your device.",
+  },
   health: {
     booting: "Opening the room…",
   },
@@ -113,6 +118,11 @@ export const labels = {
   reader: {
     loading: "Opening the chapter…",
     finish: "Finish chapter",
+    threshold: {
+      chapter: "Chapter",
+      begin: "Tap anywhere to begin",
+      skip: "Open the chapter",
+    },
     finished: "That is the end of this chapter.",
     denied: "This chapter is not on your shelf.",
     error: "We could not open this chapter.",

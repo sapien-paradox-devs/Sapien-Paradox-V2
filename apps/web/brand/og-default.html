@@ -1,0 +1,80 @@
+<!doctype html>
+<!-- The default share card, 1200x630. Exported to public/og-default.png by
+     export.sh. Edit here, re-export, commit both. -->
+<html><head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=Inter:wght@500&display=block" rel="stylesheet">
+<style>
+  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
+  body {
+    background: #faf7f2;
+    color: #1f1b16;
+    display: grid;
+    grid-template-columns: 520px 1fr;
+    align-items: center;
+    position: relative;
+  }
+  /* paper grain */
+  body::before {
+    content: ""; position: absolute; inset: 0; opacity: .5; pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .37  0 0 0 0 .3  0 0 0 0 .22  0 0 0 .09 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+  /* a hairline frame, like a printed title page */
+  body::after {
+    content: ""; position: absolute; inset: 28px; border: 1px solid #e4ddd1; pointer-events: none;
+  }
+  .book { padding-left: 64px; }
+  .words { padding-right: 88px; }
+  .eyebrow {
+    font: 500 15px/1 Inter, sans-serif; letter-spacing: .22em; text-transform: uppercase;
+    color: #8f8679; margin: 0 0 28px;
+  }
+  h1 {
+    font: 500 70px/1.02 Fraunces, Georgia, serif; letter-spacing: -.02em; margin: 0;
+    font-variation-settings: "opsz" 144;
+  }
+  .rule { width: 72px; height: 2px; background: #9c4f24; margin: 34px 0 26px; }
+  .sub {
+    font: italic 400 27px/1.35 Fraunces, Georgia, serif; color: #5d554a; margin: 0; max-width: 18em;
+  }
+</style></head>
+<body>
+  <div class="book">
+    <svg width="420" height="360" viewBox="0 0 420 360" xmlns="http://www.w3.org/2000/svg">
+      <!-- page stack -->
+      <path d="M22 70 L22 312 C90 298 160 304 210 330 C260 304 330 298 398 312 L398 70" fill="none" stroke="#e4ddd1" stroke-width="2"/>
+      <path d="M16 76 L16 320 C88 305 160 312 210 338 C260 312 332 305 404 320 L404 76" fill="none" stroke="#e4ddd1" stroke-width="2"/>
+      <!-- pages -->
+      <path d="M206 44 C156 18 90 10 28 20 L28 300 C92 290 156 296 206 324 Z" fill="#fffdfa" stroke="#d8cfbf" stroke-width="2"/>
+      <path d="M214 44 C264 18 330 10 392 20 L392 300 C328 290 264 296 214 324 Z" fill="#fffdfa" stroke="#d8cfbf" stroke-width="2"/>
+      <!-- spine shadow -->
+      <path d="M206 44 L206 324 M214 44 L214 324" stroke="#e4ddd1" stroke-width="3"/>
+      <!-- lines of text, left page -->
+      <g stroke="#cfc5b4" stroke-width="3" stroke-linecap="round" fill="none">
+        <path d="M58 82 C100 76 150 80 184 92"/>
+        <path d="M58 112 C100 106 150 110 184 122"/>
+        <path d="M58 142 C100 136 150 140 184 152"/>
+        <path d="M58 172 C100 166 150 170 184 182"/>
+        <path d="M58 202 C100 196 150 200 184 212"/>
+        <path d="M58 232 C100 226 140 229 160 236"/>
+      </g>
+      <!-- right page: a chapter opening -->
+      <text x="303" y="112" text-anchor="middle" font-family="Fraunces, Georgia, serif" font-size="44" font-weight="500" fill="#1f1b16">III</text>
+      <path d="M283 132 L323 132" stroke="#9c4f24" stroke-width="2"/>
+      <g stroke="#cfc5b4" stroke-width="3" stroke-linecap="round" fill="none">
+        <path d="M240 172 C270 164 320 160 364 164"/>
+        <path d="M240 202 C270 194 320 190 364 194"/>
+        <path d="M240 232 C270 224 320 220 364 224"/>
+        <path d="M240 262 C262 256 290 253 310 254"/>
+      </g>
+      <!-- the ribbon -->
+      <path d="M332 14 L352 11 L352 350 L342 338 L332 352 Z" fill="#9c4f24"/>
+    </svg>
+  </div>
+  <div class="words">
+    <p class="eyebrow">Sapien Paradox</p>
+    <h1>A book, one chapter at a time.</h1>
+    <div class="rule"></div>
+    <p class="sub">Arrives on WhatsApp as it unlocks. Read slowly, then talk it through.</p>
+  </div>
+</body></html>

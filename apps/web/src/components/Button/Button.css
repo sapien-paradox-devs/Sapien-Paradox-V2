@@ -3,10 +3,10 @@
   font-weight: 500;
   letter-spacing: 0.01em;
   transition:
-    background 0.18s var(--ease-settle),
-    border-color 0.18s var(--ease-settle),
-    color 0.18s var(--ease-settle),
-    transform 0.18s var(--ease-settle);
+    background var(--dur-quick) var(--ease-settle),
+    border-color var(--dur-quick) var(--ease-settle),
+    color var(--dur-quick) var(--ease-settle),
+    transform var(--dur-quick) var(--ease-settle);
 }
 
 .ui-btn:disabled { opacity: 0.55; cursor: default; }
@@ -15,7 +15,7 @@
 .ui-btn-solid {
   padding: 0.7rem 1.2rem;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 .ui-btn-solid:hover:not(:disabled) { background: var(--accent-hover); }
 

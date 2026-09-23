@@ -235,6 +235,15 @@ commit doesn't rebuild the SPA. Without it every backend push triggers a fronten
 of the reading room — the product's core moment, failing on a hosting default. Vercel checks the
 filesystem before applying rewrites, so real assets in `dist/` still serve normally.
 
+**The share card needs an absolute URL.** `index.html`'s `og:image` is filled at build time
+(`appUrl` in `vite.config.ts`): `VITE_APP_URL` if set, else Vercel's built-in
+`VERCEL_PROJECT_PRODUCTION_URL`, else relative. **Set `VITE_APP_URL=https://app.<domain>` once
+the domain exists**, or previews keep pointing at the `*.vercel.app` address. WhatsApp caches a
+preview per URL: when testing a new card, paste the link with a throwaway `?v=2`.
+
+The icons and the card are exported from `apps/web/brand/` by `sh apps/web/brand/export.sh`
+(headless Chrome + `sips`, macOS). Edit the source there, re-export, and commit both.
+
 ---
 
 ## Troubleshooting
