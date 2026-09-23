@@ -10,6 +10,7 @@ import { Companion } from "../../components/Companion";
 import { PdfChamber } from "../../components/PdfChamber";
 import { labels } from "../../lib/labels";
 import { readerMachine } from "./machine";
+import { ReaderSkeleton } from "./ReaderSkeleton";
 import { Sanctuary } from "./Sanctuary";
 import { Threshold, type ThresholdBeat } from "./Threshold";
 import "./reader.css";
@@ -75,7 +76,7 @@ export function ReaderPage() {
   }
 
   if (state.matches({ chamber: "loading" })) {
-    return <main>{labels.reader.loading}</main>;
+    return <ReaderSkeleton />;
   }
 
   const chapter = state.context.chapter;

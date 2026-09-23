@@ -266,3 +266,15 @@
 
   @keyframes sections-in { from { transform: translateY(calc(var(--rise) * 3)); opacity: 0; } }
 }
+
+/* A page whose image has not arrived yet shimmers in its own box (#161). */
+.pdf-page.is-loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.035), transparent);
+  animation: ui-shimmer 1.6s var(--ease-settle) infinite;
+}
+
+.pdf-page-skeleton { box-shadow: var(--shadow-card); }

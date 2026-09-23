@@ -12,6 +12,7 @@ import { useEffect, useMemo } from "react";
 import { SiteHeader } from "../components/SiteHeader";
 import type { HeaderPage } from "../components/SiteHeader/contents";
 import { ThemeToggle } from "../components/ThemeToggle";
+import { BootSkeleton } from "./BootSkeleton";
 import { HomePage } from "./home";
 import { LandingPage } from "./landing";
 import { LoginPage } from "./login";
@@ -64,7 +65,10 @@ export function Navigator() {
     page = <WelcomePage />;
     headerPage = "welcome";
   } else if (state.matches({ page: "home" })) {
-    if (!sessionChecking) {
+    // Neither page until the session says which (D44), but never a blank
+    // screen while it decides (#161).
+    if (sessionChecking) page = <BootSkeleton />;
+    else {
       page = signedIn ? <HomePage /> : <LandingPage />;
       headerPage = signedIn ? "library" : "landing";
     }
