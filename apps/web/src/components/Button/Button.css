@@ -15,7 +15,7 @@
 .ui-btn-solid {
   padding: 0.7rem 1.2rem;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 .ui-btn-solid:hover:not(:disabled) { background: var(--accent-hover); }
 

@@ -11,6 +11,7 @@ import { useEffect, useMemo } from "react";
 
 import { SiteHeader } from "../components/SiteHeader";
 import type { HeaderPage } from "../components/SiteHeader/contents";
+import { ThemeToggle } from "../components/ThemeToggle";
 import { HomePage } from "./home";
 import { LandingPage } from "./landing";
 import { LoginPage } from "./login";
@@ -83,6 +84,7 @@ export function Navigator() {
         userName={signedIn ? (state.context.user?.fullName ?? null) : null}
         navigate={navigation.navigate}
         onLogout={navigation.logout}
+        trailing={<ThemeToggle />}
       />
       {page}
     </NavigationContext.Provider>
