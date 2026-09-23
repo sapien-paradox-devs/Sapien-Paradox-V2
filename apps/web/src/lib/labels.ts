@@ -24,26 +24,129 @@ export const labels = {
     booting: "Opening the room…",
   },
   landing: {
-    headline: "A book, one chapter at a time.",
+    // The hero — the idea before the product (#149).
+    eyebrow: "A slower way to read",
+    headline: "Read a book one chapter at a time, and think between them.",
     subhead:
-      "Chapters arrive on WhatsApp as they unlock. You read them here, and talk them " +
-      "through with a companion that has read the same pages.",
-    how: [
-      "Choose a book and how quickly you want it.",
-      "Each chapter arrives on WhatsApp when it unlocks.",
-      "Tap the link and read — no app, no password.",
-    ],
+      "A chapter arrives on WhatsApp when it is time. You read it here, with nothing else on " +
+      "the page, and talk it through with a companion that asks you questions. Then you wait " +
+      "for the next one. The waiting is part of it.",
+    begin: "Begin a book",
+    howLink: "How it works",
+    illustration: "An open book with a ribbon marking the page.",
+
+    idea: {
+      title: "The idea",
+      items: [
+        {
+          title: "One chapter, then a pause",
+          body:
+            "Most books are read too fast to be remembered. Here each chapter arrives on its own, " +
+            "and the days between are for thinking about it, not for catching up.",
+        },
+        {
+          title: "It comes to you",
+          body:
+            "No app to install and no library to remember to open. When a chapter unlocks, a " +
+            "link arrives on WhatsApp. Tap it and you are reading.",
+        },
+        {
+          title: "A companion that asks",
+          body:
+            "Every chapter has a companion that has read the same pages. It does not summarise " +
+            "or quiz you. It asks what you noticed, and follows where you go.",
+        },
+      ],
+    },
+
+    how: {
+      title: "How it works",
+      steps: [
+        {
+          title: "Choose a book and a pace",
+          body: "One chapter a week, every three days, or every day.",
+        },
+        {
+          title: "A chapter arrives",
+          body: "On WhatsApp, as a link that opens straight into it. The link stays open for seven days.",
+        },
+        {
+          title: "Read it here",
+          body: "A quiet page and nothing else. A thin line shows how far you are.",
+        },
+        {
+          title: "Talk it through",
+          body: "Open the companion when you want to, never before. It begins with a question.",
+        },
+      ],
+      stripTitle: "When your chapters would arrive",
+      chapter: "Chapter",
+      today: "Today",
+    },
+
+    sample: {
+      title: "What a conversation feels like",
+      lede: "An example, after a chapter about how clocks changed the way people felt time.",
+      companion: "Companion",
+      reader: "You",
+      exchange: [
+        {
+          from: "companion",
+          text:
+            "The chapter argues that people did not feel slow before clocks, only after. Did " +
+            "that match anything in your own week?",
+        },
+        { from: "reader", text: "Maybe. I only notice I am late when I look at my phone." },
+        {
+          from: "companion",
+          text:
+            "So the measuring comes first, and the feeling follows it. What would you have to " +
+            "stop measuring to find out?",
+        },
+      ],
+    },
+
+    beginTitle: "Begin",
+    beginLede: "Choose how quickly the chapters come. The first one is sent as soon as you have paid.",
+
+    faq: {
+      title: "Questions",
+      items: [
+        {
+          q: "Do I need to install anything?",
+          a: "No. Chapters arrive as WhatsApp links and open in your browser, on any phone or computer.",
+        },
+        {
+          q: "What if I open a link late?",
+          a: "Links stay open for seven days. After that the page offers to send you a fresh one, in one tap.",
+        },
+        {
+          q: "Can I read faster?",
+          a: "Choose \u201cquickly\u201d for a chapter a day. The pace is the point, so there is no way to unlock the whole book at once.",
+        },
+        {
+          q: "Can I go back to a chapter?",
+          a: "Yes. Sign in and every chapter you have received is in your library.",
+        },
+        {
+          q: "How do I pay?",
+          a: "Once, for the whole book, through Razorpay. We never see your card.",
+        },
+      ],
+    },
+
+    // The form (unchanged from before #149).
     chapters: "chapters",
     name: "Your name",
     email: "Email",
     phone: "WhatsApp number",
     phoneHint: "Chapters are delivered here, so it must be the number you use.",
     pace: "How quickly",
-    buy: "Begin reading —",
-    sending: "Opening checkout…",
-    refused: "That did not go through. Nothing was charged — try again.",
+    buy: "Begin reading \u2014",
+    sending: "Opening checkout\u2026",
+    refused: "That did not go through. Nothing was charged \u2014 try again.",
     fineprint: "You will be taken to Razorpay to pay. We never see your card.",
-    loading: "Opening…",
+    loading: "Opening\u2026",
     error: "We could not load what is available.",
     retry: "Try again",
     nothingForSale: "Nothing is on sale just yet.",
@@ -89,6 +192,12 @@ export const labels = {
     resentFailed: "That still could not be delivered. Your purchase is safe; contact us and we will sort it out.",
 
     login: "Go to sign in",
+  },
+  /** The pace names alone, for the landing page's pace switch. */
+  paceShort: {
+    slow: "Slowly",
+    medium: "Steadily",
+    fast: "Quickly",
   },
   pace: {
     slow: "Slowly — a chapter a week",
