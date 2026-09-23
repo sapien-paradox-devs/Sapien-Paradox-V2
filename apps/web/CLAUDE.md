@@ -1,6 +1,7 @@
 # CLAUDE.md — apps/web
 
-React + Vite + TypeScript, XState v5, Framer Motion, vanilla CSS. Serves `app.<domain>`.
+React + Vite + TypeScript, XState v5, vanilla CSS. Motion is browser-native: CSS + View
+Transitions, started from `lib/motion.ts` (D54). No animation library. Serves `app.<domain>`.
 
 Root context: `../../CLAUDE.md`. Design and decisions: `../../DESIGN.md`.
 
@@ -25,7 +26,8 @@ Full surface map: `DESIGN.md` D7.
 3. **No `as any`.** V1's first frontend PR was blocked for `as any` casts across eight files and
    for weakening `locale()`'s return type to `any`. The API is typed on the backend; keep it typed
    here.
-4. **Variable Velocity.** Animations start fast, settle slow.
+4. **Variable Velocity.** Animations start fast, settle slow. Use the `--dur-*` tokens and
+   `--ease-settle`; animate only `transform` and `opacity`; nothing moves while reading (D54).
 
 ## XState conventions
 

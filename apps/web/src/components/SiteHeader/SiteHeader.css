@@ -53,7 +53,7 @@
   color: var(--ink-soft);
   text-decoration: none;
   white-space: nowrap;
-  transition: color 0.18s var(--ease-settle);
+  transition: color var(--dur-quick) var(--ease-settle);
 }
 
 .ui-header-link:hover { color: var(--accent); }
