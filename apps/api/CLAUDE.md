@@ -25,6 +25,45 @@ Services must be callable from the API, Django admin, management commands, and l
 webhooks and schedulers. If a service needs `request`, it's in the wrong layer — that's what makes
 the Stripe webhook a drop-in later (D10).
 
+## Adding behaviour — follow the machine, every time
+
+**The question before any new endpoint or action: which machine owns this subject?**
+
+| Subject | Machine | Events today |
+|---|---|---|
+| a `TemporalGrant` | `core/machines/reading/` | `UNLOCK` · `OPEN` · `RECORD_PROGRESS` · `COMPLETE` · `REISSUE` |
+| a purchase attempt | `core/machines/acquisition/` | see its table |
+| a `MessageLog` | `core/machines/delivery/` | see its table |
+
+If the subject has a machine, the behaviour is **rows in its table**, even when no state changes:
+
+1. **Add the rows.** One success row with its guards, and one refusal row per refusal code,
+   mirroring how `OPEN` refuses (`is_past_expiry` → `expired`, then the catch-all `not_owner`). An
+   action that changes nothing on the grant is still a row: `dest: None`.
+2. **Effects go in an action** that calls a service through `ctx.deps`
+   (`ctx.deps.record_progress(...)`), never an import. Wire the callable once, in the endpoint
+   module's `_deps()`.
+3. **The endpoint dispatches and maps**: `_dispatch_or_refuse(grant, "EVENT", **payload)` in
+   `core/api/grants.py`. The payload arrives in actions as `ctx.payload`.
+4. **Reads go through `core/selectors.py`**, not the ORM in `api/` (D61).
+5. **Tests:** one test per new row in `tests/test_<machine>_machine.py`, with no database (stub
+   subject, stub `deps`), plus an endpoint test for the status codes.
+
+**Never do this:**
+
+- **Call a service from an endpoint to perform a flow step.** The flow then lives in two places:
+  a table nobody calls, and an `if` in a view (PLAN F1/F3). This is the failure D36 exists for.
+- **Dispatch one event to borrow its checks for another** (e.g. `OPEN` as an access check before
+  a progress write). It runs the wrong row's actions and hides the real action from the table.
+
+**Not machine work:** something with no subject in a flow. Rendering a chapter's pages at upload
+(`services/pages.py`) or extracting its text is a service called from admin, `seed_dev` or a
+command.
+
+**Known exception, do not copy:** `POST /api/grants/{token}/reissue` (`core/api/read.py`) calls
+`grants.reissue` directly, although the reading machine has `REISSUE` rows. It predates this rule
+and moves in the rebuild (D69).
+
 ## The three seams
 
 **Unchanged by D36.** Machines decide *when* a seam is called; nothing bypasses one.

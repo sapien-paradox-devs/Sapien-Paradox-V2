@@ -78,7 +78,16 @@ Signatures, failure behaviour, and transaction boundaries: **D25–D27** in
 
 1. **Zero hardcoded strings** — UI text via `labels.ts`; message templates and the companion
    prompt in their own config files, editable without touching logic.
-2. **Machine-first logic** — complex UI state is an XState machine with the 5-file split.
+2. **Machine-first logic, on both sides.** The flow lives in machines; nothing else decides.
+   - **Backend:** any action on a subject that has a machine (a grant, a purchase attempt, a
+     message) is an **event dispatched to that machine**. Guards decide, actions call services
+     through `ctx.deps`, and the endpoint only maps the result to a status. An endpoint never calls
+     a service to perform a flow step, and never dispatches one event to borrow its checks for
+     another. Checklist: `apps/api/CLAUDE.md`, *Adding behaviour*.
+   - **Frontend:** anything that calls the API, waits, retries, or has more than two states is an
+     XState machine with the 5-file split; work that runs alongside a page is a **parallel region
+     of that page's machine** (D42). Hooks only measure the DOM or subscribe to browser events and
+     hand the result to a machine as an event. Checklist: `apps/web/CLAUDE.md`, *Hooks or a machine*.
 3. **Temporal security** — never expose a storage URL; always proxy bytes through the API.
 4. **Type-safe API** — Ninja schemas on every request/response body; no untyped dicts at the
    boundary, no `as any` on the frontend.

@@ -23,11 +23,35 @@ Full surface map: `DESIGN.md` D7.
    `"Welcome back,"`.
 2. **Machine-first logic.** Complex UI state is an XState machine with the 5-file split:
    `machine.ts`, `actions.ts`, `guards.ts`, `actors.ts`, `index.ts`. Not scattered `useState`.
+   See *Hooks or a machine* below for where the line is.
 3. **No `as any`.** V1's first frontend PR was blocked for `as any` casts across eight files and
    for weakening `locale()`'s return type to `any`. The API is typed on the backend; keep it typed
    here.
 4. **Variable Velocity.** Animations start fast, settle slow. Use the `--dur-*` tokens and
    `--ease-settle`; animate only `transform` and `opacity`; nothing moves while reading (D54).
+
+## Hooks or a machine — decide before writing either
+
+**It is a machine** if it does any of these: calls the API · waits on a timer to *decide*
+something · retries · has more than two states · has to survive the component re-rendering.
+
+- **Work that runs alongside a page is a parallel region of that page's machine** (D42), not a
+  second machine and not a hook. Examples: `reader`'s `reissue` and `progress` regions, `home`'s
+  `send` region.
+- **Work owned by one component with its own lifecycle** gets a component machine
+  (`components/<C>/machine/`), like `PdfChamber` and `Companion` (D15).
+- **Timings are named delays** in `setup({ delays })`, never `setTimeout` chains (the threshold's
+  `beat`, the progress region's `sendDelay`).
+
+**It may be a hook** only if it measures the DOM or subscribes to a browser event and hands the
+result on, to a machine as an event or to CSS as a class: `useReadingPosition` (scroll → a
+number), `useIdle` (two states, no API, drives a fade). A hook that starts fetching, retrying or
+throttling requests has become a machine; move it.
+
+**Browser events reach a machine as events.** The page wires the listener (`pagehide` →
+`send({ type: "FLUSH" })`); the machine decides whether anything happens. To send on unmount,
+use a `useLayoutEffect` cleanup: `useMachine` stops the actor in a passive effect cleanup, which
+runs after it.
 
 ## XState conventions
 
