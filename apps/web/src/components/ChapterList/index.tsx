@@ -1,8 +1,10 @@
 /**
  * The chapters of one book.
  *
- * The read mark is a quiet dot, not a progress bar (D11). This product is about
- * depth over velocity, and a completion meter turns reading into a task list.
+ * Progress is shown quietly (D70, reversing D11's "no progress bars"): a small
+ * ring per chapter, and a check with "Completed" once the reader has marked it
+ * so. No percentages on the rows, no badges, nothing that turns reading into a
+ * task list.
  */
 
 import { Button } from "../Button";
@@ -14,6 +16,8 @@ export type ChapterRowData = {
   number: number;
   title: string;
   read: boolean;
+  progress: number;
+  completed: boolean;
 };
 
 export function ChapterList({
@@ -34,9 +38,7 @@ export function ChapterList({
           <button className="ui-chapter-open" onClick={() => onOpen(chapter.id)}>
             <span className="ui-chapter-n">{chapter.number}</span>
             <span className="ui-chapter-title">{chapter.title}</span>
-            {chapter.read && (
-              <span className="ui-chapter-read" title={labels.home.read} aria-label={labels.home.read} />
-            )}
+            <ChapterState chapter={chapter} />
           </button>
 
           <Button
@@ -49,5 +51,51 @@ export function ChapterList({
         </li>
       ))}
     </ul>
+  );
+}
+
+/** Nothing until opened; then a ring that fills; then a check (D70). */
+function ChapterState({ chapter }: { chapter: ChapterRowData }) {
+  if (chapter.completed) {
+    return (
+      <span className="ui-chapter-done">
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+          <circle cx="8" cy="8" r="7" fill="var(--accent)" />
+          <path d="M4.8 8.2l2.2 2.1 4.2-4.4" fill="none" stroke="var(--on-accent)" strokeWidth="1.6"
+            strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span className="ui-chapter-done-label">{labels.home.completed}</span>
+      </span>
+    );
+  }
+
+  if (!chapter.read && chapter.progress === 0) return null;
+
+  const percent = Math.round(chapter.progress * 100);
+  const circumference = 2 * Math.PI * 6;
+
+  return (
+    <svg
+      className="ui-chapter-ring"
+      viewBox="0 0 16 16"
+      width="16"
+      height="16"
+      role="img"
+      aria-label={`${percent}${labels.home.percentRead}`}
+    >
+      <circle cx="8" cy="8" r="6" fill="none" stroke="var(--rule)" strokeWidth="2" />
+      <circle
+        cx="8"
+        cy="8"
+        r="6"
+        fill="none"
+        stroke="var(--accent)"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={circumference * (1 - chapter.progress)}
+        transform="rotate(-90 8 8)"
+      />
+    </svg>
   );
 }

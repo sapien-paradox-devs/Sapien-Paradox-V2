@@ -12,7 +12,6 @@ their own issues — this file registers models and nothing more.
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
-from core.services import extraction, pages
 from core.models import (
     Book,
     Chapter,
@@ -20,9 +19,11 @@ from core.models import (
     MessageLog,
     Order,
     PasswordResetToken,
+    ReadingProgress,
     TemporalGrant,
     User,
 )
+from core.services import extraction, pages
 
 
 @admin.register(User)
@@ -216,3 +217,16 @@ class PasswordResetTokenAdmin(admin.ModelAdmin):
     @admin.display(boolean=True, description="usable")
     def usable(self, obj):
         return obj.is_usable
+
+
+@admin.register(ReadingProgress)
+class ReadingProgressAdmin(admin.ModelAdmin):
+    """D70. Read-only: progress is the reader's own record, written by the chamber."""
+
+    list_display = ("user", "chapter", "furthest", "completed_at", "updated_at")
+    list_filter = ("chapter__book",)
+    search_fields = ("user__email", "user__full_name", "chapter__title")
+    readonly_fields = ("user", "chapter", "furthest", "completed_at", "updated_at")
+
+    def has_add_permission(self, request):
+        return False

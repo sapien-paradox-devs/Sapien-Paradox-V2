@@ -21,6 +21,10 @@ class ChapterOut(Schema):
     # threshold ceremony once per link, and the server is what knows (#116).
     # Nothing client-side remembers a token (D22).
     firstOpen: bool
+    # Where the reader got to last time, so the progress line picks up there,
+    # and whether they already marked the chapter complete (D70).
+    furthest: float
+    completed: bool
 
 
 class ChatIn(Schema):
@@ -60,3 +64,9 @@ class PageLayoutOut(Schema):
 
     pages: list[PageSizeOut]
     sections: list[SectionOut]
+
+
+class ProgressIn(Schema):
+    """How far through the chapter the reader has got, 0–1 (D70)."""
+
+    furthest: float

@@ -2,6 +2,13 @@
 
     scheduled ──UNLOCK──> live ──OPEN──> opened
 
+    live | opened ──RECORD_PROGRESS / COMPLETE──> (same state)
+
+Progress and completion (D70) change no grant state: they are internal
+transitions whose effect lands in `ReadingProgress`, through `ctx.deps`. They
+are rows here so the question "may this token do this?" is answered in one
+place, by the same guards as `OPEN`, and never re-asked in an endpoint.
+
 Read top to bottom: the first row whose guards all pass is the one that fires.
 
 **Expiry is derived, not stored.** A grant is expired when `expires_at` has
@@ -59,6 +66,49 @@ TRANSITIONS = [
     # so it must stay distinguishable from expiry (D25).
     {
         "trigger": "OPEN",
+        "source": [LIVE, OPENED],
+        "dest": None,
+        "after": [actions.refuse_not_owner],
+    },
+    # Reading progress (D70). The reader's place, keyed on reader + chapter by
+    # the service, so a re-issued link keeps it. Same guards as OPEN.
+    {
+        "trigger": "RECORD_PROGRESS",
+        "source": [LIVE, OPENED],
+        "dest": None,
+        "conditions": [guards.is_live, guards.owns_book],
+        "after": [actions.record_progress],
+    },
+    {
+        "trigger": "RECORD_PROGRESS",
+        "source": [LIVE, OPENED],
+        "dest": None,
+        "conditions": [guards.is_past_expiry],
+        "after": [actions.refuse_expired],
+    },
+    {
+        "trigger": "RECORD_PROGRESS",
+        "source": [LIVE, OPENED],
+        "dest": None,
+        "after": [actions.refuse_not_owner],
+    },
+    # The reader marks the chapter complete — the only way to 100% (D70).
+    {
+        "trigger": "COMPLETE",
+        "source": [LIVE, OPENED],
+        "dest": None,
+        "conditions": [guards.is_live, guards.owns_book],
+        "after": [actions.complete_chapter],
+    },
+    {
+        "trigger": "COMPLETE",
+        "source": [LIVE, OPENED],
+        "dest": None,
+        "conditions": [guards.is_past_expiry],
+        "after": [actions.refuse_expired],
+    },
+    {
+        "trigger": "COMPLETE",
         "source": [LIVE, OPENED],
         "dest": None,
         "after": [actions.refuse_not_owner],
