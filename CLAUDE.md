@@ -89,6 +89,7 @@ Signatures, failure behaviour, and transaction boundaries: **D25–D27** in
      of that page's machine** (D42). Hooks only measure the DOM or subscribe to browser events and
      hand the result to a machine as an event. Checklist: `apps/web/CLAUDE.md`, *Hooks or a machine*.
 3. **Temporal security** — never expose a storage URL; always proxy bytes through the API.
+   *One exception: video plays from a short-lived signed R2 URL, minted behind the grant check (D77).*
 4. **Type-safe API** — Ninja schemas on every request/response body; no untyped dicts at the
    boundary, no `as any` on the frontend.
 5. **Variable Velocity** — animations start fast, settle slow.
