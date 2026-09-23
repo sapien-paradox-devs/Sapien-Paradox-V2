@@ -138,7 +138,8 @@ siblings.
 | `GET /api/read/{chapter_id}` | session | mint-or-reuse → `{ token }` |
 | `POST /api/chapters/{id}/send` | session | send to my WhatsApp (D11), rate-limited |
 | `GET /api/grants/{token}` | **grant** | validate, chapter meta, stamp `opened_at` |
-| `GET /api/grants/{token}/pdf` | **grant** | proxied bytes, chunked (D29) |
+| `GET /api/grants/{token}/pages` | **grant** | page sizes + sections, no storage paths (D73) |
+| `GET /api/grants/{token}/pages/{n}` | **grant** | one watermarked page image, `no-store` (D73) |
 | `POST /api/grants/{token}/reissue` | **grant** | one-tap fresh link (D9), rate-limited |
 | `POST /api/chat` | **grant** | companion, capped and logged (D7) |
 
