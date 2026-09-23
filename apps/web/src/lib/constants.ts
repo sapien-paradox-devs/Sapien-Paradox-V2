@@ -37,4 +37,15 @@ function assertPaceInSync(): readonly Pace[] {
 
 export const PACE = assertPaceInSync();
 
+/**
+ * Days between chapters for each pace — **display only**, for the landing
+ * page's "when your chapters would arrive" strip (#149).
+ *
+ * The backend owns the real schedule (`CADENCE_INTERVAL_DAYS`, #112), and it is
+ * env-overridable so a test deployment can shrink it. These are the defaults
+ * the pace labels already promise ("a chapter a week", …). When #112 lands and
+ * both sides read the value, it moves to `shared/constants.json` (D20).
+ */
+export const PACE_INTERVAL_DAYS: Record<Pace, number> = { slow: 7, medium: 3, fast: 1 };
+
 export const ROUTES = shared.routes;
