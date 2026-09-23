@@ -56,8 +56,9 @@ function BookIllustration() {
         <path d="M240 262 C262 256 290 253 310 254" />
       </g>
       <text x="303" y="112" textAnchor="middle" className="landing-book-numeral">I</text>
-      <path d="M283 132 L323 132" stroke="var(--accent)" strokeWidth="2" />
-      <path className="landing-book-ribbon" d="M332 14 L352 11 L352 350 L342 338 L332 352 Z" fill="var(--accent)" />
+      <path d="M283 132 L323 132" stroke="var(--saffron)" strokeWidth="2" />
+      {/* Coral numeral and ribbon, saffron rule: the icon and share card match (D81). */}
+      <path className="landing-book-ribbon" d="M332 14 L352 11 L352 350 L342 338 L332 352 Z" fill="var(--coral)" />
     </svg>
   );
 }

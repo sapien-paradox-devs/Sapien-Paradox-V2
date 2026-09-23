@@ -75,7 +75,7 @@
   font-family: var(--font-display);
   font-size: 44px;
   font-weight: 500;
-  fill: var(--ink);
+  fill: var(--coral-text);
 }
 
 @keyframes landing-arrive {
@@ -221,8 +221,8 @@
   flex-direction: column;
   gap: var(--space-1);
   padding: var(--space-3) var(--space-4);
-  border-left: 2px solid var(--accent);
-  background: var(--accent-wash);
+  border-left: 2px solid var(--teal);   /* arrivals are teal (D81) */
+  background: var(--teal-wash);
   border-radius: 0 var(--radius) var(--radius) 0;
 }
 
@@ -261,7 +261,7 @@
   border-left: 2px solid var(--rule);
 }
 
-.landing-turn-companion { border-left-color: var(--accent); }
+.landing-turn-companion { border-left-color: var(--teal); }
 
 .landing-turn-who {
   display: block;
@@ -361,3 +361,12 @@
   .landing-hero-actions,
   .landing-book-art { animation: none; }
 }
+
+/* The numbered ideas and steps take the supporting colours in turn (D81), so
+   the page is not one colour from top to bottom. Text shades: these are text. */
+.landing-idea:nth-child(3n + 1) .landing-idea-n,
+.landing-step:nth-child(3n + 1) .landing-step-n { color: var(--coral-text); }
+.landing-idea:nth-child(3n + 2) .landing-idea-n,
+.landing-step:nth-child(3n + 2) .landing-step-n { color: var(--saffron-text); }
+.landing-idea:nth-child(3n) .landing-idea-n,
+.landing-step:nth-child(3n) .landing-step-n { color: var(--teal-text); }
