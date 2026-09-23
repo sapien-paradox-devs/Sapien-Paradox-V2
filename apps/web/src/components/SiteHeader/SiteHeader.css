@@ -1,0 +1,65 @@
+/* Quiet by design: a wordmark and at most two words on the right. It sits on
+   the paper rather than above it — no bar colour, one hairline. */
+
+.ui-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.ui-header-inner {
+  max-width: 62rem;
+  height: var(--header-height);
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.ui-header-mark {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ui-header-end {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.ui-header-name {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-header-link {
+  padding: 0;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.18s var(--ease-settle);
+}
+
+.ui-header-link:hover { color: var(--accent); }
+
+@media (max-width: 30rem) {
+  .ui-header-inner { padding: 0 var(--space-4); }
+  /* The name is the first thing to go on a narrow phone; sign out stays. */
+  .ui-header-name { display: none; }
+}

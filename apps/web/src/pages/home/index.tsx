@@ -1,12 +1,12 @@
 /**
- * Home — the account block and the chapters this reader has earned.
+ * Home — the chapters this reader has earned. Who they are, and the way out,
+ * live in the site header.
  *
  * No progress bars, no timers. A quiet read mark is the only status (D11).
  */
 
 import { useMachine } from "@xstate/react";
 
-import { AccountBlock } from "../../components/AccountBlock";
 import { ChapterList } from "../../components/ChapterList";
 import { ErrorNotice } from "../../components/ErrorNotice";
 import { Spinner } from "../../components/Spinner";
@@ -17,7 +17,7 @@ import "./home.css";
 
 export function HomePage() {
   const [state, send] = useMachine(homeMachine);
-  const { navigate, user, logout } = useNavigation();
+  const { navigate } = useNavigation();
 
   const sendingId = state.matches({ send: "sending" })
     ? state.context.sendingChapterId
@@ -25,8 +25,6 @@ export function HomePage() {
 
   return (
     <main className="home">
-      {user && <AccountBlock name={user.fullName} onLogout={logout} />}
-
       <h1>{labels.home.greeting}</h1>
 
       {state.matches({ list: "loading" }) && <Spinner label={labels.health.booting} />}

@@ -174,7 +174,7 @@ named after a domain object (`token`, `grant`, `chapterId`), that is the symptom
 a page.
 
 **A component earns a `machine/` only if it owns async work or a lifecycle independent of its
-page.** `PdfChamber` and `Companion` qualify. `ChapterList`, `AccountBlock`, `Button`,
+page.** `PdfChamber` and `Companion` qualify. `ChapterList`, `SiteHeader`, `Button`,
 `TextField`, `Spinner`, `ErrorNotice` do not — they render props.
 
 **Page machines are independent, never invoked as children of the root machine.** Invoke a child
@@ -198,7 +198,7 @@ src/
 │
 ├── components/
 │   ├── Button/ · TextField/ · Spinner/ · ErrorNotice/
-│   ├── AccountBlock/
+│   ├── SiteHeader/                 index.tsx · contents.ts (what shows, per page × session) · SiteHeader.css
 │   ├── ChapterList/                index.tsx · ChapterRow.tsx · ChapterList.css
 │   ├── PdfChamber/                 + machine/
 │   └── Companion/                  + machine/
