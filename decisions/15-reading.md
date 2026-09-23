@@ -150,7 +150,7 @@ do, and anyone with developer tools can save the PDF from the network tab. So th
   owner). **`GET /api/grants/{token}/pdf` is removed**: while it exists, anyone holding a link
   holds the file. *Supersedes D29.*
 - **Every page is watermarked as it is served** with the reader's name and masked phone
-  (`Ada Demo · +91 •••••3210`), very faint and diagonal, burned into the image. A shared
+  (`Ada Demo · +91 ******3210`: asterisks, because the watermark font has no bullet glyph), very faint and diagonal, burned into the image. A shared
   screenshot then carries its source. Rendering is per request (tens of milliseconds a page), so
   nothing per-reader is stored.
 - **In the browser:** pages are images loaded through `fetch` into blob URLs; there is no text
