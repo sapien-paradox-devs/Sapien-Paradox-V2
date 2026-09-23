@@ -16,6 +16,7 @@ export const navigationMachine = setup({
     clearUser: assign(actions.noUser),
     pushUrl: actions.pushUrl,
     goToHome: actions.goToHome,
+    goAfterLogin: actions.goAfterLogin,
     goToLogin: actions.goToLogin,
   },
   actors: {
@@ -29,6 +30,8 @@ export const navigationMachine = setup({
     isOpeningPath: guards.isOpeningPath,
     isWelcomePath: guards.isWelcomePath,
     isBeginPath: guards.isBeginPath,
+    isAdminLoginPath: guards.isAdminLoginPath,
+    isAdminPath: guards.isAdminPath,
   },
 }).createMachine(navigationConfig);
 

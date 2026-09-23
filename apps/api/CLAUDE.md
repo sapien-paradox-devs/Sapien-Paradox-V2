@@ -187,10 +187,19 @@ siblings.
 | `GET /api/books/{slug}/cover` | none | proxied cover image, published books only (D76) |
 | `GET /api/books/{slug}/sample` | none | signed URL for the public sample video (D76, D77) |
 | `POST /api/chat` | **grant** | companion, capped and logged (D7) |
+| `GET /api/admin/readers` | **staff** | list, `?search=&status=` (D82) |
+| `GET /api/admin/readers/{id}` | **staff** | one reader and their books |
+| `POST /api/admin/readers` | **staff** | add a reader with a book, through the acquisition machine (D26) |
+| `PATCH /api/admin/readers/{id}` | **staff** | name, email, phone; 409 `{code, field}` on a clash |
+| `POST /api/admin/readers/{id}/deactivate` · `/reactivate` · `/erase` | **staff** | D80; each leaves an `AccountChange` row |
 
-**Two Ninja auth classes**, mirroring the frontend's two dimensions: `SessionAuth` (Django session)
-and `GrantAuth` (resolves the token from the path, checks expiry). **Each endpoint declares exactly
-one. No endpoint accepts both.**
+**Three Ninja auth classes**: `SessionAuth` (Django session), `StaffAuth` (a session whose user is
+staff, for `/api/admin/*`, D82) and `GrantAuth` (resolves the token from the path). **Each endpoint
+declares exactly one. No endpoint accepts both a session and a grant.**
+
+**CSRF: only `StaffAuth` enforces it today.** Ninja checks CSRF only for its own cookie auth
+classes, so the plain `SessionAuth` does not, despite D30. `StaffAuth` calls `check_csrf` itself.
+Turning it on for `SessionAuth` is its own issue.
 
 ## API-layer rules — all locked
 

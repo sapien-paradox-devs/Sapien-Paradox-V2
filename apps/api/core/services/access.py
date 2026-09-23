@@ -24,4 +24,10 @@ def can_read(user, chapter) -> bool:
     if user is None or not user.is_authenticated:
         return False
 
+    # A deactivated or erased reader (D80). Checked here, in the one access
+    # question, so every link they already hold stops working on its next
+    # request, whether it arrived by session or by grant token.
+    if not user.is_active:
+        return False
+
     return Order.objects.filter(user=user, book_id=chapter.book_id).exists()

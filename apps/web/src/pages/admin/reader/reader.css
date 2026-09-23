@@ -1,0 +1,72 @@
+/* Admin · One reader (D82). */
+.admin-reader { display: flex; flex-direction: column; gap: var(--space-4); }
+
+.admin-back { align-self: flex-start; font-size: 0.88rem; }
+
+.admin-notice {
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--teal);
+  background: var(--teal-wash);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: 0.92rem;
+}
+
+.admin-reader-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--space-4);
+}
+
+.admin-card {
+  padding: var(--space-6);
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--radius-lg);
+  background: var(--paper-raised);
+  box-shadow: var(--shadow-card);
+}
+
+.admin-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--space-4);
+}
+
+.admin-card-head h2 { font-size: 1.15rem; }
+
+.admin-dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.admin-dl dt { color: var(--ink-faint); }
+.admin-dl dd { margin: 0; overflow-wrap: anywhere; }
+
+.admin-books { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.admin-books li { display: flex; flex-direction: column; }
+.admin-book-title { font-family: var(--font-read); font-size: 1.02rem; }
+
+.admin-muted { color: var(--ink-soft); font-size: 0.88rem; }
+.admin-saved { margin-top: var(--space-3); color: var(--good); font-size: 0.88rem; }
+
+.admin-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); padding-top: var(--space-2); }
+
+.admin-confirm {
+  padding: var(--space-4) var(--space-6);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  background: var(--paper-raised);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 36rem;
+}
+
+.admin-confirm-danger { border-color: var(--danger); }
+
+.ui-btn.admin-danger { background: var(--danger); }
+.ui-btn.admin-danger:hover:not(:disabled) { background: var(--danger); filter: brightness(0.92); }
+.admin-danger-text { color: var(--danger); }

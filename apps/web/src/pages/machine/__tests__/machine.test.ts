@@ -9,6 +9,7 @@ const READER: User = {
   fullName: "Ada",
   email: "ada@example.com",
   phone: "+919876543210",
+  isStaff: false,
 };
 
 /** Stubs the two actors so no test touches the network. */
@@ -68,6 +69,20 @@ describe("the page region", () => {
 
   it("sends / to home", () => {
     expect(route(start(), "/").matches({ page: "home" })).toBe(true);
+  });
+
+  it("sends /admin/login to its own page, not the admin (D82)", () => {
+    expect(route(start(), "/admin/login").matches({ page: "adminLogin" })).toBe(true);
+  });
+
+  it("sends /admin and everything under it to the admin (D82)", () => {
+    for (const path of ["/admin", "/admin/readers", "/admin/readers/7"]) {
+      expect(route(start(), path).matches({ page: "admin" })).toBe(true);
+    }
+  });
+
+  it("does not mistake a path that merely starts with 'admin' for the admin", () => {
+    expect(route(start(), "/administration").matches({ page: "home" })).toBe(true);
   });
 
   it("falls unrecognised paths through to home rather than a 404", () => {

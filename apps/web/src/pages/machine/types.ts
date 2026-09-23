@@ -3,6 +3,8 @@ export type User = {
   fullName: string;
   email: string;
   phone: string;
+  /** Decides only whether `/admin` is shown (D82). The API checks it again. */
+  isStaff: boolean;
 };
 
 /**
@@ -16,5 +18,7 @@ export type Context = {
 export type Event =
   | { type: "ROUTE"; path: string } // from sync.ts — the ONLY thing that changes page
   | { type: "NAVIGATE"; to: string } // any page asking to move; pushes URL only
-  | { type: "AUTHENTICATED"; user: User } // login page, after a successful call
+  // login page, after a successful call. `next` is where to land; home when absent
+  // (the admin login sends `/admin`, D82).
+  | { type: "AUTHENTICATED"; user: User; next?: string }
   | { type: "LOGOUT" };

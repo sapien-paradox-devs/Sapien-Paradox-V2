@@ -326,6 +326,97 @@ export const labels = {
     linkBack: "Back to sign in",
     linkErrorGeneric: "We could not send that. Try again in a moment.",
   },
+  // The in-app admin (D82).
+  admin: {
+    login: {
+      title: "Admin sign in",
+      lead: "For the people who run Sapien Paradox.",
+      notStaff: "This account is not an admin. Readers sign in on the main sign-in page.",
+      toReaderLogin: "Go to the reader sign-in",
+    },
+    nav: {
+      label: "Admin",
+      readers: "Readers",
+      books: "Books",
+      library: "Back to the library",
+    },
+    checking: "Checking your account\u2026",
+    readers: {
+      title: "Readers",
+      add: "Add a reader",
+      search: "Search by name, email or phone",
+      status: { all: "Everyone", active: "Active", inactive: "Removed" },
+      columns: { name: "Name", contact: "Contact", books: "Books", joined: "Joined" },
+      empty: "No readers match that.",
+      loadError: "We could not load the readers.",
+      retry: "Try again",
+      badge: { staff: "Admin", removed: "Removed", erased: "Erased" },
+    },
+    form: {
+      newTitle: "Add a reader",
+      newLead:
+        "A reader always starts with a book. They get chapter 1 on WhatsApp, and a link to set their password.",
+      fullName: "Full name",
+      email: "Email",
+      phone: "WhatsApp number",
+      phoneHint: "With the country code, e.g. +91 98765 43210",
+      book: "Book",
+      bookLoading: "Loading books\u2026",
+      pace: "Pace",
+      submit: "Add reader",
+      saving: "Adding\u2026",
+      cancel: "Cancel",
+      added: "Reader added.",
+      notDelivered:
+        "Reader added, but chapter 1 did not reach their WhatsApp. Check the number, then resend from their page.",
+      error: "That did not save. Try again in a moment.",
+    },
+    reader: {
+      back: "All readers",
+      loadError: "We could not load this reader.",
+      details: "Details",
+      edit: "Edit",
+      save: "Save changes",
+      saving: "Saving\u2026",
+      cancel: "Cancel",
+      saved: "Saved.",
+      books: "Books",
+      noBooks: "No books yet.",
+      since: "since",
+      status: "Status",
+      active: "Active: can sign in and read.",
+      inactive: "Removed: cannot sign in, and their links do not open.",
+      erased: "Personal data erased. Their orders are kept, anonymised.",
+      deactivate: "Remove reader",
+      deactivateConfirm:
+        "Remove this reader? They will not be able to sign in, and their links stop working. You can restore them later.",
+      reactivate: "Restore reader",
+      erase: "Erase personal data",
+      eraseConfirm:
+        "Erase this reader\u2019s name, email and phone for good? This cannot be undone. Their orders stay, anonymised, for accounting.",
+      eraseConfirmAgain: "Yes, erase for good",
+      confirm: "Yes, remove",
+      keep: "Keep",
+      working: "Working\u2026",
+      actionError: "That did not go through. Try again.",
+      self: "You cannot remove or erase your own account.",
+    },
+    // Refusals from the API, keyed by their code (D38).
+    refusals: {
+      already_owns_book: "This reader already has that book.",
+      unknown_book: "That book is not on sale.",
+      book_has_no_chapters: "That book has no chapters yet.",
+      identity_belongs_to_two_readers:
+        "That email and that phone number belong to two different readers.",
+      partial_identity_match:
+        "That email or phone number is already on another reader\u2019s account, with different details.",
+      email_taken: "Another reader already uses that email.",
+      phone_taken: "Another reader already uses that number.",
+      erased: "This reader\u2019s data was erased. It cannot be changed.",
+      refused: "That was refused.",
+      failed: "That did not save. Try again in a moment.",
+    },
+  },
 } as const;
 
 export type Labels = typeof labels;

@@ -5,11 +5,11 @@ purchase resolves to* has to go through it. Tests about what `create_reader`
 still guarantees — atomicity, delivery, the reset token — call the seam directly
 and pass the reader in.
 
-Deliberately reuses `checkout._deps`, so these tests exercise the same wiring the
+Deliberately reuses `checkout.acquisition_deps`, so these tests exercise the same wiring the
 endpoint does rather than a parallel set of fakes.
 """
 
-from core.api.checkout import _deps
+from core.api.checkout import acquisition_deps as _deps
 from core.machines import dispatch
 from core.machines.acquisition import PurchaseAttempt, acquisition_machine
 

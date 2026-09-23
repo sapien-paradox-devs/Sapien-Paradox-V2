@@ -13,6 +13,8 @@
  *    backend bug: the request succeeds, the cookie is dropped, the next call is anonymous.
  * 3. **One error shape carrying `status`**, so a guard stays a single line:
  *    `export const isRateLimited = ({ event }) => event.error.status === 429;`
+ * 4. **The CSRF header** on every unsafe request (D30), read from Django's
+ *    `csrftoken` cookie, which `/api/auth/me` and login make sure exists.
  */
 
 import { API_BASE } from "./env";
@@ -20,13 +22,38 @@ import { API_BASE } from "./env";
 export class ApiError extends Error {
   status: number;
   detail: string | null;
+  /**
+   * A refusal the API attached to a field (`{ code, field }`, the admin's 409s),
+   * so a form can show the message where the person is looking.
+   */
+  code: string | null;
+  field: string | null;
 
-  constructor(status: number, detail: string | null) {
-    super(detail ?? `Request failed with ${status}`);
+  constructor(status: number, detail: string | null, code: string | null = null,
+    field: string | null = null) {
+    super(detail ?? code ?? `Request failed with ${status}`);
     this.name = "ApiError";
     this.status = status;
     this.detail = detail;
+    this.code = code;
+    this.field = field;
   }
+}
+
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+/** Django's CSRF cookie, or null. Readable because it is not HttpOnly (D30). */
+function csrfToken(): string | null {
+  const match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function headersFor(method: string, hasBody: boolean): Record<string, string> {
+  const headers: Record<string, string> = {};
+  if (hasBody) headers["Content-Type"] = "application/json";
+  const token = SAFE_METHODS.has(method) ? null : csrfToken();
+  if (token) headers["X-CSRFToken"] = token;
+  return headers;
 }
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -35,12 +62,12 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     // Without this the browser neither sends nor stores the session cookie
     // cross-origin, and every signed-in request silently reads as anonymous.
     credentials: "include",
-    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+    headers: headersFor(method, body !== undefined),
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 
   if (!response.ok) {
-    throw new ApiError(response.status, await readDetail(response));
+    throw await errorFrom(response);
   }
 
   // 204, and any other body-less success.
@@ -49,14 +76,34 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   return (await response.json()) as T;
 }
 
-/** The API answers failures with `{ detail }` (D38's refusal code). */
+/** The API answers failures with `{ detail }` (D38's refusal code), or with
+ * `{ code, field }` for a refusal that belongs to a form field. */
 async function readDetail(response: Response): Promise<string | null> {
+  return (await readBody(response)).detail;
+}
+
+async function readBody(
+  response: Response,
+): Promise<{ detail: string | null; code: string | null; field: string | null }> {
   try {
-    const body = await response.json();
-    return typeof body?.detail === "string" ? body.detail : null;
+    const body: unknown = await response.json();
+    const pick = (key: string) =>
+      typeof body === "object" && body !== null && key in body
+        ? stringOrNull(Reflect.get(body, key))
+        : null;
+    return { detail: pick("detail"), code: pick("code"), field: pick("field") };
   } catch {
-    return null;
+    return { detail: null, code: null, field: null };
   }
+}
+
+function stringOrNull(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
+}
+
+async function errorFrom(response: Response): Promise<ApiError> {
+  const { detail, code, field } = await readBody(response);
+  return new ApiError(response.status, detail, code, field);
 }
 
 /** Binary bodies — a chapter's page images (D73). Same credentials, same errors. */
@@ -78,7 +125,7 @@ function send(path: string, body: unknown): void {
     method: "POST",
     credentials: "include",
     keepalive: true,
-    headers: { "Content-Type": "application/json" },
+    headers: headersFor("POST", true),
     body: JSON.stringify(body),
   }).catch(() => {});
 }
@@ -86,6 +133,7 @@ function send(path: string, body: unknown): void {
 export const mappedFetcher = {
   get: <T>(path: string) => request<T>("GET", path),
   post: <T>(path: string, body?: unknown) => request<T>("POST", path, body),
+  patch: <T>(path: string, body?: unknown) => request<T>("PATCH", path, body),
   blob,
   send,
 };

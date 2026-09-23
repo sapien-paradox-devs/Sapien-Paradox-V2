@@ -21,6 +21,8 @@ import { ReaderPage } from "./reader";
 import { ResetPage } from "./reset";
 import { WelcomePage } from "./welcome";
 import { BeginPage } from "./begin";
+import { AdminPage } from "./admin";
+import { AdminLoginPage } from "./admin-login";
 import { navigationMachine } from "./machine";
 import { startRouteSync } from "./machine/sync";
 import { NavigationContext, type Navigation } from "./useNavigation";
@@ -35,7 +37,7 @@ export function Navigator() {
       user: state.context.user,
       sessionSettled: !state.matches({ session: "checking" }),
       navigate: (to: string) => send({ type: "NAVIGATE", to }),
-      authenticated: (user) => send({ type: "AUTHENTICATED", user }),
+      authenticated: (user, next) => send({ type: "AUTHENTICATED", user, next }),
       logout: () => send({ type: "LOGOUT" }),
     }),
     [state, send],
@@ -81,6 +83,12 @@ export function Navigator() {
   } else if (state.matches({ page: "reset" })) {
     page = <ResetPage />;
     headerPage = "reset";
+  } else if (state.matches({ page: "adminLogin" })) {
+    page = <AdminLoginPage />;
+    headerPage = "adminLogin";
+  } else if (state.matches({ page: "admin" })) {
+    page = <AdminPage />;
+    headerPage = "admin";
   }
 
   return (

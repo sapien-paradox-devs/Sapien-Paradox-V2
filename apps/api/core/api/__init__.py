@@ -7,6 +7,7 @@ wrong layer.
 
 from ninja import NinjaAPI
 
+from .admin import router as admin_router
 from .auth import router as auth_router
 from .books import router as books_router
 from .chat import router as chat_router
@@ -32,4 +33,5 @@ api.add_router("", home_router, tags=["home"])
 api.add_router("", read_router, tags=["read"])
 api.add_router("", checkout_router, tags=["checkout"])
 api.add_router("", books_router, tags=["books"])
+api.add_router("", admin_router, tags=["admin"])
 api.add_router("", chat_router, tags=["companion"])

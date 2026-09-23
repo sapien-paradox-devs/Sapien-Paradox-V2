@@ -11,16 +11,18 @@ class LoginIn(Schema):
 class UserOut(Schema):
     """What the SPA holds as its reader.
 
-    Exactly the four fields `pages/machine/types.ts` declares. Nothing about
-    entitlements or grants: if this grew a domain object the frontend would
-    start making access decisions, and `access.can_read` is the only thing
-    allowed to (D25).
+    The fields `pages/machine/types.ts` declares. Nothing about entitlements or
+    grants: if this grew a domain object the frontend would start making access
+    decisions, and `access.can_read` is the only thing allowed to (D25).
+    `isStaff` only decides whether `/admin` is shown (D82); every admin
+    endpoint checks it again on the server.
     """
 
     id: str
     fullName: str
     email: str
     phone: str
+    isStaff: bool
 
 
 class ResetRequestIn(Schema):

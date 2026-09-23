@@ -535,3 +535,46 @@ class PasswordResetToken(models.Model):
     @property
     def is_usable(self):
         return self.used_at is None and timezone.now() < self.expires_at
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Stewardship
+# ─────────────────────────────────────────────────────────────────────────────
+
+class AccountChange(models.Model):
+    """One row per thing an admin did to a reader's account (D80, in the spirit of D63).
+
+    Deactivating and erasing are the two actions that cannot be read back from the
+    account afterwards: an erased reader's old details are gone by design. This row is
+    how "who did this, and when" survives. It never stores the old details themselves,
+    or erasing would not erase.
+    """
+
+    CREATED = "created"
+    UPDATED = "updated"
+    DEACTIVATED = "deactivated"
+    REACTIVATED = "reactivated"
+    ERASED = "erased"
+    ACTION_CHOICES = [
+        (CREATED, "created"),
+        (UPDATED, "updated"),
+        (DEACTIVATED, "deactivated"),
+        (REACTIVATED, "reactivated"),
+        (ERASED, "erased"),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="account_changes"
+    )
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+", help_text="The staff member. Null when a command did it.",
+    )
+    at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-at"]
+
+    def __str__(self):
+        return f"{self.action} · user {self.user_id}"

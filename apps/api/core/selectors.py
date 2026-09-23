@@ -30,3 +30,45 @@ def progress_by_chapter(user) -> dict[int, Progress]:
 
 def _progress(row: ReadingProgress) -> Progress:
     return Progress(furthest=1.0 if row.completed_at else row.furthest, completed=row.completed_at is not None)
+
+
+# ── the in-app admin (D82) ────────────────────────────────────────────────────
+
+
+def readers(search: str = "", status: str = "all"):
+    """Readers for the admin list: newest first, with how many books each owns.
+
+    `search` matches name, email or phone. `status` is `all`, `active` or
+    `inactive`. Staff accounts are included: an owner who is also a reader should
+    be findable too.
+    """
+    from django.db.models import Count, Q
+
+    from .models import User
+
+    rows = User.objects.annotate(book_count=Count("orders")).order_by("-date_joined")
+    search = (search or "").strip()
+    if search:
+        rows = rows.filter(
+            Q(full_name__icontains=search) | Q(email__icontains=search) | Q(phone__icontains=search)
+        )
+    if status == "active":
+        rows = rows.filter(is_active=True)
+    elif status == "inactive":
+        rows = rows.filter(is_active=False)
+    return rows
+
+
+def reader(reader_id):
+    """One reader, with the same `book_count` the list carries. None if unknown."""
+    return readers().filter(pk=reader_id).first()
+
+
+def orders_of(user):
+    return user.orders.select_related("book").order_by("created_at")
+
+
+def is_erased(user) -> bool:
+    from .models import AccountChange
+
+    return user.account_changes.filter(action=AccountChange.ERASED).exists()

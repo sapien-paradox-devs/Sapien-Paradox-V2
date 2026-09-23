@@ -87,7 +87,7 @@ def checkout(request, payload: CheckoutIn):
     return CheckoutOut(paymentUrl=link["short_url"])
 
 
-def _deps():
+def acquisition_deps():
     """What the acquisition machine's guards and actions are handed (D37).
 
     Plain callables. The machine imports no Django, which is why its tests run
@@ -134,7 +134,7 @@ def _fulfil(entity) -> tuple[str, str, bool]:
     the refusal code into the shape the two callers already speak (D38).
     """
     attempt = _attempt_from(entity)
-    result = dispatch(acquisition_machine, attempt, "PAID", deps=_deps())
+    result = dispatch(acquisition_machine, attempt, "PAID", deps=acquisition_deps())
 
     if result.ok:
         delivered = bool(
@@ -222,7 +222,7 @@ def resend(request, payload: ConfirmIn):
     # reader who paid twice, or was created by concierge onboarding, still owns
     # the book and is still entitled to the links.
     if order is None:
-        deps, attempt = _deps(), _attempt_from(link)
+        deps, attempt = acquisition_deps(), _attempt_from(link)
         # Email first, then phone — the same identity the machine resolves, so
         # resend and fulfil can never disagree about who this is.
         user = deps.find_by_email(attempt.email) or deps.find_by_phone(attempt.phone)
