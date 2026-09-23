@@ -1,7 +1,268 @@
-/* Structure only — level 3 detail is deferred by decision. */
+/* The chamber (D70, D73). Apple-clean, not fancy: the page is the only thing
+   with weight; the bar above it is a whisper that fades while you read. */
 
-.pdf-chamber {
+.chamber {
+  --chamber-bar-height: 3.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+/* ── the bar ─────────────────────────────────────────────────────────── */
+
+.chamber-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin: 0 calc(var(--space-6) * -1);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: opacity var(--dur-settle) var(--ease-settle);
+}
+
+.chamber-bar.faded { opacity: 0; }
+.chamber-bar.faded:focus-within { opacity: 1; }
+
+.chamber-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  height: var(--chamber-bar-height);
+  padding: 0 var(--space-6);
+}
+
+.chamber-bar-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.chamber-bar-book {
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.chamber-bar-chapter {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chamber-bar-sections {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper-raised);
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  transition: color var(--dur-quick) var(--ease-settle), border-color var(--dur-quick) var(--ease-settle);
+}
+
+.chamber-bar-sections:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-faint); }
+.chamber-bar-sections:disabled { opacity: 0.5; cursor: default; }
+
+/* The progress line: a hairline that fills. Transform only (D54). */
+.chamber-progress {
+  height: 2px;
+  background: var(--rule-soft);
+}
+
+.chamber-progress span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform-origin: left center;
+  transition: transform var(--dur-base) var(--ease-settle);
+}
+
+@media (max-width: 30rem) {
+  .chamber-bar { margin: 0 calc(var(--space-4) * -1); }
+  .chamber-bar-inner { padding: 0 var(--space-4); }
+  .chamber-bar-book { display: none; }
+}
+
+/* ── the pages ───────────────────────────────────────────────────────── */
+
+.pdf-pages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
   width: 100%;
-  min-height: 70vh;
+  max-width: 50rem;
+  margin: 0 auto;
+}
+
+.pdf-page {
+  position: relative;
+  width: 100%;
+  background: #fff;
+  border-radius: 3px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  scroll-margin-top: calc(var(--chamber-bar-height) + var(--space-4));
+}
+
+.pdf-page img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: pdf-page-in var(--dur-base) var(--ease-settle) both;
+}
+
+@keyframes pdf-page-in { from { opacity: 0; } }
+
+/* Pages cannot be selected, long-pressed into a save sheet, or dragged (D73). */
+.pdf-pages {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.pdf-page img { pointer-events: none; }
+
+/* Dark mode dims the page; it never inverts it, which wrecks images. */
+:root[data-theme="dark"] .pdf-page { background: #d9d4cc; }
+:root[data-theme="dark"] .pdf-page img { filter: brightness(0.82) contrast(0.95); }
+
+/* Printing shows a line, not the chapter (D73). */
+.chamber-print-note { display: none; }
+
+@media print {
+  .chamber > :not(.chamber-print-note),
+  .threshold,
+  .reader-opening,
+  .ui-header { display: none !important; }
+
+  .chamber-print-note {
+    display: block;
+    padding: 4rem 0;
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+  }
+}
+
+.chamber-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-16) 0;
+  color: var(--ink-faint);
+}
+
+/* ── the sections drawer ─────────────────────────────────────────────── */
+
+.chamber-sections {
+  margin: 0 0 0 auto;
+  width: min(22rem, 100vw);
+  max-width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  padding: 0;
   border: 0;
+  border-left: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: var(--shadow-lift);
+}
+
+.chamber-sections::backdrop {
+  background: rgba(20, 17, 14, 0.28);
+}
+
+.chamber-sections[open] { animation: sections-in var(--dur-base) var(--ease-settle); }
+.chamber-sections[open]::backdrop { animation: sections-fade var(--dur-base) var(--ease-settle); }
+
+@keyframes sections-in { from { transform: translateX(var(--rise)); opacity: 0; } }
+@keyframes sections-fade { from { opacity: 0; } }
+
+.chamber-sections-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.chamber-sections header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-6) var(--space-6) var(--space-4);
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.chamber-sections h2 {
+  font-size: 0.75rem;
+  font-family: var(--font-body);
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.chamber-sections-close {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.chamber-sections ol {
+  list-style: none;
+  margin: 0;
+  padding: var(--space-2) 0;
+  overflow-y: auto;
+}
+
+.chamber-sections li button {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-3) var(--space-6) var(--space-3) var(--space-4);
+  text-align: left;
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  color: var(--ink-soft);
+  border-left: 2px solid transparent;
+  transition: background var(--dur-quick) var(--ease-settle), color var(--dur-quick) var(--ease-settle);
+}
+
+.chamber-sections li button:hover { background: var(--paper-sunk); color: var(--ink); }
+
+.chamber-sections li button[aria-current] {
+  color: var(--ink);
+  border-left-color: var(--accent);
+  background: var(--accent-wash);
+}
+
+.chamber-sections-page {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+}
+
+/* On a phone the drawer rises from the bottom instead. */
+@media (max-width: 40rem) {
+  .chamber-sections {
+    margin: auto 0 0;
+    width: 100vw;
+    height: auto;
+    max-height: 75dvh;
+    border-left: 0;
+    border-top: 1px solid var(--rule);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  @keyframes sections-in { from { transform: translateY(calc(var(--rise) * 3)); opacity: 0; } }
 }

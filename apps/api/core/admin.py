@@ -12,6 +12,7 @@ their own issues — this file registers models and nothing more.
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
+from core.services import extraction, pages
 from core.models import (
     Book,
     Chapter,
@@ -74,18 +75,55 @@ class BookAdmin(admin.ModelAdmin):
     def chapter_count(self, obj):
         return obj.chapters.count()
 
+    def save_formset(self, request, form, formset, change):
+        """Chapters uploaded on the book's own screen are prepared the same way."""
+        super().save_formset(request, form, formset, change)
+        if formset.model is not Chapter:
+            return
+        for inline_form in formset.forms:
+            chapter = inline_form.instance
+            if not chapter.pk or inline_form in formset.deleted_forms:
+                continue
+            if "file" in inline_form.changed_data or not chapter.page_layout:
+                _prepare(request, self, chapter)
+
+
+def _prepare(request, model_admin, chapter) -> None:
+    """Extract a chapter's text and render its pages, after its file changes.
+
+    Explicit, never a signal (D19). Until D73 the admin did not extract at all,
+    so a chapter uploaded here left the companion with nothing to read.
+    """
+    extraction.extract_and_save(chapter)
+    if not pages.render_and_save(chapter):
+        model_admin.message_user(
+            request,
+            f"The pages of \u201c{chapter.title}\u201d could not be rendered, so readers cannot "
+            "open it yet. Check the file is a valid PDF and upload it again.",
+            level=messages.WARNING,
+        )
+
 
 @admin.register(Chapter)
 class ChapterAdmin(admin.ModelAdmin):
-    list_display = ("book", "order_index", "title", "page_count", "has_text")
+    list_display = ("book", "order_index", "title", "page_count", "has_text", "has_pages")
     list_filter = ("book",)
     search_fields = ("title", "book__title")
     ordering = ("book", "order_index")
-    readonly_fields = ("page_count", "text_content")
+    readonly_fields = ("page_count", "text_content", "page_layout")
 
     @admin.display(boolean=True, description="text extracted")
     def has_text(self, obj):
         return bool(obj.text_content)
+
+    @admin.display(boolean=True, description="pages rendered")
+    def has_pages(self, obj):
+        return bool(obj.page_layout)
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if not change or "file" in form.changed_data or not obj.page_layout:
+            _prepare(request, self, obj)
 
 
 @admin.register(Order)

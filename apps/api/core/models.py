@@ -177,6 +177,9 @@ class Chapter(models.Model):
 
     `page_count` is free: the PDF is already being parsed for `text_content`, and the
     reader needs it for page controls without re-parsing on every open.
+
+    `page_layout` is filled alongside, by `services/pages.py`: the PDF itself never reaches
+    a browser, only watermarked images of its pages (D73).
     """
 
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="chapters")
@@ -190,6 +193,15 @@ class Chapter(models.Model):
         help_text="Extracted at upload. The companion's entire context (D13).",
     )
     page_count = models.PositiveIntegerField(null=True, blank=True)
+    page_layout = models.JSONField(
+        null=True,
+        blank=True,
+        help_text=(
+            "Filled at upload by services/pages.py (D73): each page's size and rendered "
+            "image, and the PDF's sections. Null until rendered; the reader cannot open "
+            "a chapter without it."
+        ),
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 

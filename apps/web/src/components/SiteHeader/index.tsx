@@ -25,7 +25,8 @@ export function SiteHeader({ page, userName, navigate, onLogout, trailing }: Pro
   if (contents.hidden) return null;
 
   return (
-    <header className="ui-header">
+    // In the reader the chamber's own bar is the one that stays pinned (#150).
+    <header className={`ui-header${page === "reader" ? " ui-header-flat" : ""}`}>
       <nav className="ui-header-inner" aria-label={labels.nav.label}>
         <NavLink to="/" navigate={navigate} className="ui-header-mark">
           {labels.app.name}

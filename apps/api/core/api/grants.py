@@ -9,8 +9,7 @@ opened. Enforcing it would break the main path entirely, because an arriving
 reader has no CSRF cookie to present.
 """
 
-from django.core.exceptions import SuspiciousOperation
-from django.http import StreamingHttpResponse
+from django.http import HttpResponse
 from django.utils import timezone
 from ninja import Router
 from ninja.errors import HttpError
@@ -18,14 +17,10 @@ from ninja.errors import HttpError
 from ..auth import grant_auth
 from ..machines.binding import dispatch_model
 from ..machines.reading import reading_machine
-from ..schemas.common import ChapterOut
-from ..services import access, grants, whatsapp
+from ..schemas.common import ChapterOut, PageLayoutOut
+from ..services import access, grants, pages, whatsapp
 
 router = Router()
-
-# Read the file in chunks. Pulling a 10 MB PDF into memory per concurrent reader
-# is how a small instance falls over, and free tier is a small instance.
-CHUNK_SIZE = 8192
 
 
 def _deps():
@@ -90,29 +85,42 @@ def grant_detail(request, token: str):
     )
 
 
-@router.get("/grants/{token}/pdf", auth=grant_auth, url_name="grant_pdf")
-def grant_pdf(request, token: str):
-    """Stream the chapter's bytes.
+@router.get("/grants/{token}/pages", response=PageLayoutOut, auth=grant_auth, url_name="grant_pages")
+def grant_pages(request, token: str):
+    """The chapter's shape: each page's size and its sections (D73).
 
-    **Nothing here generates a storage URL.** The bucket is private and stays
-    private; the API is the only thing that ever reads it (D19, D23). That is
-    what keeps grant tokens, the seven-day expiry, and revocation meaningful —
-    a public URL would bypass all three at the infrastructure layer while this
-    code still looked correct.
+    **There is no PDF endpoint.** The file never leaves the server; the chamber
+    is built from this layout and one image per page. 404 when the chapter has
+    not been rendered — the chamber shows its own error for that (D43).
     """
     grant = request.auth
     _open_or_refuse(grant)
 
-    try:
-        handle = grant.chapter.file.open("rb")
-    except (FileNotFoundError, ValueError, SuspiciousOperation) as exc:
-        raise HttpError(404, "chapter file missing") from exc
+    layout = pages.layout_for(grant.chapter)
+    if layout is None:
+        raise HttpError(404, "pages not ready")
+    return layout
 
-    response = StreamingHttpResponse(
-        iter(lambda: handle.read(CHUNK_SIZE), b""),
-        content_type="application/pdf",
-    )
-    response["Content-Disposition"] = 'inline; filename="chapter.pdf"'
-    # A chapter is a credential-gated document; no shared cache may keep it.
+
+@router.get("/grants/{token}/pages/{number}", auth=grant_auth, url_name="grant_page")
+def grant_page(request, token: str, number: int):
+    """One page, as an image, watermarked for this reader (D73). `number` is 1-based.
+
+    **Nothing here generates a storage URL.** The bucket is private and stays
+    private; the API is the only thing that ever reads it (D19, D23). The image is
+    burned with the reader's name and masked phone on every request, so a copy
+    carries where it came from.
+    """
+    grant = request.auth
+    _open_or_refuse(grant)
+
+    image = pages.watermarked_page(grant.chapter, number - 1, pages.mark_for(grant.user))
+    if image is None:
+        raise HttpError(404, "no such page")
+
+    response = HttpResponse(image, content_type="image/webp")
+    response["Content-Disposition"] = "inline"
+    # A chapter is a credential-gated document; no cache may keep a copy.
     response["Cache-Control"] = "private, no-store"
+    response["X-Content-Type-Options"] = "nosniff"
     return response

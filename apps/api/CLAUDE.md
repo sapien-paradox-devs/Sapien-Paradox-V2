@@ -108,9 +108,10 @@ Departures from V1 (no `Shard` table, no view quota, `grant.user` required) and 
 
 ## Mandates
 
-1. **Temporal security** — never expose a storage URL. PDFs are always proxied through
-   `GET /api/grants/{token}/pdf` (D29). This is also what keeps object storage swappable: nothing
-   outside this app knows where files live.
+1. **Temporal security** — never expose a storage URL, and never send the PDF. A reader receives
+   watermarked page images through `GET /api/grants/{token}/pages/{n}` (D73, superseding D29).
+   This is also what keeps object storage swappable: nothing outside this app knows where files
+   live.
 2. **Type-safe API** — Ninja schemas on every request and response body. No untyped dicts crossing
    the boundary.
 3. **Env-driven externals** — Twilio, Anthropic, Stripe, storage and `DATABASE_URL` all read from
@@ -176,7 +177,8 @@ siblings.
 | `GET /api/read/{chapter_id}` | session | mint-or-reuse → `{ token }` |
 | `POST /api/chapters/{id}/send` | session | send to my WhatsApp (D11), rate-limited |
 | `GET /api/grants/{token}` | **grant** | validate, chapter meta, stamp `opened_at` |
-| `GET /api/grants/{token}/pdf` | **grant** | proxied bytes, chunked (D29) |
+| `GET /api/grants/{token}/pages` | **grant** | page sizes + sections, no storage paths (D73) |
+| `GET /api/grants/{token}/pages/{n}` | **grant** | one watermarked page image, `no-store` (D73) |
 | `POST /api/grants/{token}/reissue` | **grant** | one-tap fresh link (D9), rate-limited |
 | `POST /api/chat` | **grant** | companion, capped and logged (D7) |
 
@@ -188,8 +190,9 @@ one. No endpoint accepts both.**
 
 See **D29–D33** in `../../decisions/09-api-layer.md`.
 
-- **PDF bytes are `GET /api/grants/{token}/pdf`** (D29). The token sits in the path, not the query
-  string, so it stays out of referrer headers and access logs — it is a credential (D22).
+- **Chapter pages are `GET /api/grants/{token}/pages` (layout) and `/pages/{n}` (a watermarked
+  image)** (D73). There is no PDF endpoint; D29's `/pdf` is gone. The token sits in the path, not
+  the query string, so it stays out of referrer headers and access logs — it is a credential (D22).
 - **CSRF is enforced on session endpoints and exempt on grant-authenticated ones** (D30). CSRF
   defends *ambient* authority; a grant token is not ambient, and enforcing it would break the
   cookie-less WhatsApp visitor entirely.

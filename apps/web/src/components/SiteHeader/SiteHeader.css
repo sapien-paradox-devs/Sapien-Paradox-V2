@@ -9,6 +9,8 @@
   border-bottom: 1px solid var(--rule-soft);
 }
 
+.ui-header-flat { position: static; }
+
 .ui-header-inner {
   max-width: 62rem;
   height: var(--header-height);

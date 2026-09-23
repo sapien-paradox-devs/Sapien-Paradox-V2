@@ -19,6 +19,47 @@
   margin-bottom: var(--space-4);
 }
 
+.reader-opening {
+  max-width: 50rem;
+  width: 100%;
+  margin: 0 auto;
+  padding-top: var(--space-4);
+}
+
+.reader-opening .reader-book { margin-bottom: var(--space-2); }
+
+/* The end of the chapter: an ornament, then the reader's own declaration that
+   they are done (D70), then — only if they want it — the companion (D14). */
+.reader-end {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  max-width: 34rem;
+  margin: var(--space-8) auto 0;
+  text-align: center;
+}
+
+.reader-fleuron {
+  width: 60px;
+  height: 16px;
+  color: var(--accent);
+  margin-bottom: var(--space-2);
+}
+
+.reader-end-hint,
+.reader-end-done {
+  color: var(--ink-soft);
+  max-width: 36ch;
+}
+
+.reader-end-done {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.2rem;
+  color: var(--ink);
+}
+
 .reader-actions {
   display: flex;
   gap: var(--space-3);

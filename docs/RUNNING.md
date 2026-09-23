@@ -210,6 +210,20 @@ Free instances also do not support `preDeployCommand`, which is why migrations r
 > while the application code still looks correct** (D19). Nothing in this codebase generates a
 > storage URL — the API only ever streams bytes.
 
+### Chapter pages — after deploying D73
+
+Readers never receive a PDF. Each page is rendered to a WebP image at upload and served
+watermarked (D73). Chapters uploaded **before** D73 have no page images, and the reader cannot
+open them until they do. Once, after the deploy:
+
+```bash
+.venv/bin/python manage.py render_chapters          # renders chapters with no pages yet
+.venv/bin/python manage.py render_chapters --force  # re-renders everything
+```
+
+New uploads render from the admin save (the chapter screen and the book screen's chapter
+inline), and `seed_dev` renders its own chapters.
+
 ### Web — Vercel (D34)
 
 `apps/web/vercel.json` carries the framework, build, output, and the SPA rewrite. **Three settings

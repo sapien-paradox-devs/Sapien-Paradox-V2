@@ -20,6 +20,11 @@ python-dotenv>=1.0
 shortuuid>=1.0
 pypdf>=5.0
 
+# D73 — pages are rendered to images on the server so the PDF never reaches a
+# browser. pdfium ships as a prebuilt wheel: no system libraries to install.
+pypdfium2>=5.0
+Pillow>=11.0
+
 # External systems (D16). Each has a console/no-op fallback when unconfigured.
 twilio>=9.0
 anthropic>=0.40

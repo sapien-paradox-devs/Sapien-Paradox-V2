@@ -15,14 +15,14 @@ import type { Context } from "./types";
 export const pdfConfig = {
   id: "pdf",
   initial: "loading",
-  context: { token: "", objectUrl: null } as Context,
+  context: { token: "", layout: null } as Context,
 
   states: {
     loading: {
       invoke: {
-        src: "loadPdf",
+        src: "loadLayout",
         input: ({ context }: { context: Context }) => ({ token: context.token }),
-        onDone: { target: "rendered", actions: "assignUrl" },
+        onDone: { target: "rendered", actions: "assignLayout" },
         onError: { target: "error" },
       },
     },
