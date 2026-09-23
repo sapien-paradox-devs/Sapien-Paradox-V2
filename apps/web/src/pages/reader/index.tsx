@@ -9,6 +9,7 @@ import { useCallback, useEffect, useLayoutEffect } from "react";
 import { Companion } from "../../components/Companion";
 import { PdfChamber } from "../../components/PdfChamber";
 import { labels } from "../../lib/labels";
+import { ChapterVideo, type VideoState } from "./ChapterVideo";
 import { readerMachine } from "./machine";
 import { ReaderSkeleton } from "./ReaderSkeleton";
 import { Sanctuary } from "./Sanctuary";
@@ -18,6 +19,8 @@ import "./reader.css";
 type ReissueState = "idle" | "sending" | "sent" | "limited" | "failed";
 
 const REISSUE_STATES: ReissueState[] = ["idle", "sending", "sent", "limited", "failed"];
+
+const VIDEO_STATES: VideoState[] = ["idle", "fetching", "playing", "failed"];
 
 const BEATS: ThresholdBeat[] = ["gathering", "titled", "ruled", "lifting"];
 
@@ -56,7 +59,7 @@ export function ReaderPage() {
   if (state.matches({ chamber: "sanctuary" })) {
     return (
       <Sanctuary
-        reissue={reissueStateOf(state.value)}
+        reissue={regionStateOf(state.value, "reissue", REISSUE_STATES, "idle")}
         onReissue={() => send({ type: "REISSUE" })}
       />
     );
@@ -94,6 +97,14 @@ export function ReaderPage() {
         <header className="reader-opening">
           <p className="reader-book">{chapter.bookTitle}</p>
           <h1>{chapter.title}</h1>
+          {chapter.hasVideo && (
+            <ChapterVideo
+              state={regionStateOf(state.value, "video", VIDEO_STATES, "idle")}
+              url={state.context.videoUrl}
+              onWatch={() => send({ type: "WATCH" })}
+              onClose={() => send({ type: "CLOSE_VIDEO" })}
+            />
+          )}
         </header>
       )}
 
@@ -156,12 +167,17 @@ function thresholdBeatOf(value: unknown): ThresholdBeat | null {
   return BEATS.find((candidate) => candidate === threshold) ?? null;
 }
 
-/** Reads the parallel region's state without a cast. */
-function reissueStateOf(value: unknown): ReissueState {
-  if (typeof value === "object" && value !== null && "reissue" in value) {
-    const { reissue } = value;
-    const found = REISSUE_STATES.find((candidate) => candidate === reissue);
+/** Reads a parallel region's state without a cast. */
+function regionStateOf<T extends string>(
+  value: unknown,
+  region: string,
+  known: T[],
+  fallback: T,
+): T {
+  if (typeof value === "object" && value !== null && region in value) {
+    const current: unknown = Reflect.get(value, region);
+    const found = known.find((candidate) => candidate === current);
     if (found) return found;
   }
-  return "idle";
+  return fallback;
 }

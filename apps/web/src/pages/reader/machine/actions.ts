@@ -62,6 +62,19 @@ export function nextSendDelay(now: number, lastSentAt: number): number {
   return Math.max(SETTLE_MS, MIN_INTERVAL_MS - (now - lastSentAt));
 }
 
+export function videoUrlFrom({
+  event,
+}: {
+  event: AnyEventObject;
+}): Pick<Context, "videoUrl"> {
+  const output = "output" in event ? event.output : null;
+  return { videoUrl: typeof output === "string" ? output : null };
+}
+
+export function clearVideo(): Pick<Context, "videoUrl"> {
+  return { videoUrl: null };
+}
+
 function isChapter(value: unknown): value is ChapterMeta {
   return typeof value === "object" && value !== null && "title" in value;
 }

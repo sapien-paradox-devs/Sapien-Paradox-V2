@@ -31,7 +31,7 @@ the Stripe webhook a drop-in later (D10).
 
 | Subject | Machine | Events today |
 |---|---|---|
-| a `TemporalGrant` | `core/machines/reading/` | `UNLOCK` · `OPEN` · `RECORD_PROGRESS` · `COMPLETE` · `REISSUE` |
+| a `TemporalGrant` | `core/machines/reading/` | `UNLOCK` · `OPEN` · `RECORD_PROGRESS` · `COMPLETE` · `REISSUE` · `WATCH` |
 | a purchase attempt | `core/machines/acquisition/` | see its table |
 | a `MessageLog` | `core/machines/delivery/` | see its table |
 
@@ -111,7 +111,8 @@ Departures from V1 (no `Shard` table, no view quota, `grant.user` required) and 
 1. **Temporal security** — never expose a storage URL, and never send the PDF. A reader receives
    watermarked page images through `GET /api/grants/{token}/pages/{n}` (D73, superseding D29).
    This is also what keeps object storage swappable: nothing outside this app knows where files
-   live.
+   live. **One exception, video (D77):** a chapter or sample video plays from a short-lived signed
+   R2 URL minted in `services/media.py`, the only module that makes one. Covers are proxied.
 2. **Type-safe API** — Ninja schemas on every request and response body. No untyped dicts crossing
    the boundary.
 3. **Env-driven externals** — Twilio, Anthropic, Stripe, storage and `DATABASE_URL` all read from
@@ -181,7 +182,10 @@ siblings.
 | `GET /api/grants/{token}/pages/{n}` | **grant** | one watermarked page image, `no-store` (D73) |
 | `POST /api/grants/{token}/progress` | **grant** | `RECORD_PROGRESS` on the reading machine (D70) |
 | `POST /api/grants/{token}/complete` | **grant** | `COMPLETE` on the reading machine (D70) |
+| `GET /api/grants/{token}/video` | **grant** | `WATCH` → signed video URL, 404 if none (D76, D77) |
 | `POST /api/grants/{token}/reissue` | **grant** | one-tap fresh link (D9), rate-limited |
+| `GET /api/books/{slug}/cover` | none | proxied cover image, published books only (D76) |
+| `GET /api/books/{slug}/sample` | none | signed URL for the public sample video (D76, D77) |
 | `POST /api/chat` | **grant** | companion, capped and logged (D7) |
 
 **Two Ninja auth classes**, mirroring the frontend's two dimensions: `SessionAuth` (Django session)

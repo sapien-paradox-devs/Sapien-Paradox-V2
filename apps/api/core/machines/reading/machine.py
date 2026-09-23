@@ -4,6 +4,9 @@
 
     live | opened ──RECORD_PROGRESS / COMPLETE──> (same state)
 
+`WATCH` (a chapter's video, D76) is the same kind of row: gated like `OPEN`,
+changing nothing, producing a short-lived URL.
+
 Progress and completion (D70) change no grant state: they are internal
 transitions whose effect lands in `ReadingProgress`, through `ctx.deps`. They
 are rows here so the question "may this token do this?" is answered in one
@@ -109,6 +112,37 @@ TRANSITIONS = [
     },
     {
         "trigger": "COMPLETE",
+        "source": [LIVE, OPENED],
+        "dest": None,
+        "after": [actions.refuse_not_owner],
+    },
+    # The chapter's video (D76). Gated exactly like the pages: a live token that
+    # still owns the book. Changes nothing on the grant, so every row is internal.
+    {
+        "trigger": "WATCH",
+        "source": [LIVE, OPENED],
+        "dest": None,
+        "conditions": [guards.is_live, guards.owns_book, guards.has_video],
+        "after": [actions.sign_video],
+    },
+    {
+        "trigger": "WATCH",
+        "source": [LIVE, OPENED],
+        "dest": None,
+        "conditions": [guards.is_past_expiry],
+        "after": [actions.refuse_expired],
+    },
+    # Checked after ownership, so a stranger learns nothing about which chapters
+    # have videos: they get `not_owner` below.
+    {
+        "trigger": "WATCH",
+        "source": [LIVE, OPENED],
+        "dest": None,
+        "conditions": [guards.owns_book],
+        "after": [actions.refuse_no_video],
+    },
+    {
+        "trigger": "WATCH",
         "source": [LIVE, OPENED],
         "dest": None,
         "after": [actions.refuse_not_owner],

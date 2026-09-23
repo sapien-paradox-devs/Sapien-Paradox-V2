@@ -17,9 +17,9 @@ from ninja.errors import HttpError
 from ..auth import grant_auth
 from ..machines.binding import dispatch_model
 from ..machines.reading import reading_machine
-from ..schemas.common import ChapterOut, PageLayoutOut, ProgressIn
+from ..schemas.common import ChapterOut, PageLayoutOut, ProgressIn, VideoOut
 from .. import selectors
-from ..services import access, grants, pages, progress, whatsapp
+from ..services import access, grants, media, pages, progress, whatsapp
 
 router = Router()
 
@@ -37,6 +37,7 @@ def _deps():
         mint_grant=grants.mint_or_reuse,
         record_progress=progress.record,
         complete_chapter=progress.complete,
+        video_url=media.chapter_video_url,
     )
 
 
@@ -66,6 +67,8 @@ def _dispatch_or_refuse(grant, event: str, **payload):
         raise HttpError(410, "expired")
     if result.refusal == "not_owner":
         raise HttpError(403, "not_owner")
+    if result.refusal == "no_video":
+        raise HttpError(404, "no_video")
     raise HttpError(403, result.refusal or "refused")
 
 
@@ -93,6 +96,7 @@ def grant_detail(request, token: str):
         firstOpen=first_open,
         furthest=place.furthest,
         completed=place.completed,
+        hasVideo=bool(chapter.video),
     )
 
 
@@ -153,3 +157,15 @@ def grant_complete(request, token: str):
     """The reader marks the chapter complete — the only way to 100% (D70)."""
     _dispatch_or_refuse(request.auth, "COMPLETE")
     return 204, None
+
+
+@router.get("/grants/{token}/video", response=VideoOut, auth=grant_auth, url_name="grant_video")
+def grant_video(request, token: str):
+    """The chapter's companion video, as a short-lived signed URL (D76, D77).
+
+    The one place a storage URL reaches a client, and only behind the same gate
+    as the pages: `WATCH` on the reading machine checks the token is live and
+    the book still owned. 404 when the chapter has no video.
+    """
+    result = _dispatch_or_refuse(request.auth, "WATCH")
+    return VideoOut(url=result.data)

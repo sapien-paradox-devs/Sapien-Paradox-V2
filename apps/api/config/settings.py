@@ -268,6 +268,14 @@ APP_BASE_URL = os.getenv("APP_BASE_URL", "http://localhost:5173").rstrip("/")
 GRANT_TTL_DAYS = int(os.getenv("GRANT_TTL_DAYS", "7"))                  # D8
 RESET_TOKEN_TTL_MINUTES = int(os.getenv("RESET_TOKEN_TTL_MINUTES", "60"))  # D21
 
+# Video (D76, D77). A signed URL must outlive the whole video, because the player keeps
+# making Range requests against it; two hours covers any chapter video.
+VIDEO_URL_TTL_SECONDS = int(os.getenv("VIDEO_URL_TTL_SECONDS", "7200"))
+VIDEO_MAX_MB = int(os.getenv("VIDEO_MAX_MB", "500"))
+# Where this API is reached from a browser. Only used when storage is local (no R2), to
+# turn a `/media/...` path into a URL the SPA, on another origin, can play.
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
+
 # Rate limits, all derived from table rows — there is no Redis (D17).
 REISSUE_COOLDOWN_MINUTES = int(os.getenv("REISSUE_COOLDOWN_MINUTES", "60"))     # D9
 CHAPTER_SEND_COOLDOWN_MINUTES = int(os.getenv("CHAPTER_SEND_COOLDOWN_MINUTES", "60"))  # D11

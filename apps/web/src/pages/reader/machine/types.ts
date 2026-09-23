@@ -7,6 +7,8 @@ export type ChapterMeta = {
   /** Where the reader got to last time, 0–1, and whether they marked it complete (D70). */
   furthest: number;
   completed: boolean;
+  /** The chapter has a companion video (D76). Its URL is fetched only on WATCH. */
+  hasVideo: boolean;
 };
 
 export type Context = {
@@ -19,6 +21,8 @@ export type Context = {
   sent: number;
   lastSentAt: number;
   completed: boolean;
+  /** A short-lived signed URL (D77). Held only while the player is open. */
+  videoUrl: string | null;
 };
 
 export type Event =
@@ -30,4 +34,7 @@ export type Event =
   /** The chamber reports the furthest point the reader has reached, 0–1. */
   | { type: "PROGRESS"; fraction: number }
   /** The page is closing or being left: send what the server does not have yet. */
-  | { type: "FLUSH" };
+  | { type: "FLUSH" }
+  /** Open the chapter's video. */
+  | { type: "WATCH" }
+  | { type: "CLOSE_VIDEO" };

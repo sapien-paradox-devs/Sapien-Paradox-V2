@@ -26,3 +26,8 @@ def owns_book(grant, ctx):
     on every request, so a refund takes effect on the next one.
     """
     return ctx.deps.can_read(grant.user, grant.chapter)
+
+
+def has_video(grant, ctx):
+    """Does this chapter come with a video (D76)?"""
+    return bool(grant.chapter.video)
