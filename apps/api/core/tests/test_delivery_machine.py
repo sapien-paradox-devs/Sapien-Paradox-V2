@@ -13,13 +13,14 @@ from core.machines.delivery import FAILED, PENDING, SENT, delivery_machine
 
 
 class Log:
-    """Stands in for a MessageLog."""
+    """Stands in for a MessageLog. No database — the machine imports no Django."""
 
     def __init__(self, status=PENDING, attempts=0):
         self.status = status
         self.attempts = attempts
         self.provider_message_id = None
         self.error = None
+        self.sent_at = None
 
 
 def outcome(accepted=False, transient=False, error=None, provider_message_id=None):
@@ -31,9 +32,14 @@ def outcome(accepted=False, transient=False, error=None, provider_message_id=Non
     )
 
 
-def attempt(log, result):
+# The cap is injected (D37) — the guard cannot read settings, so the service
+# hands `WHATSAPP_MAX_ATTEMPTS` in. Three is the production default.
+DEPS = SimpleNamespace(now=lambda: None, max_attempts=lambda: 3)
+
+
+def attempt(log, result, deps=DEPS):
     return dispatch(
-        delivery_machine, log, "ATTEMPT", state_attr="status", outcome=result
+        delivery_machine, log, "ATTEMPT", deps=deps, state_attr="status", outcome=result
     )
 
 
@@ -76,11 +82,28 @@ class DeliveryTests(TestCase):
         self.assertEqual(log.attempts, 4)
 
     def test_a_transient_failure_below_the_cap_still_retries(self):
-        log = Log(attempts=2)
+        log = Log(attempts=1)
 
         result = attempt(log, outcome(transient=True, error="timeout"))
 
         self.assertEqual(result.state, PENDING)
+
+    def test_the_cap_counts_provider_calls_not_retries(self):
+        """`WHATSAPP_MAX_ATTEMPTS = 3` means three calls, not three retries.
+
+        Until this machine was wired, it allowed a fourth: the guard asked
+        `attempts < max` where `attempts` is the count *before* the increment, so
+        the third failure stayed pending and a fourth call followed. The service
+        loop only ever made three. Two copies of one retry policy, disagreeing —
+        which is the drift D27 required this table to make impossible, latent
+        only because nothing called it.
+        """
+        log = Log(attempts=2)      # two calls already made
+
+        result = attempt(log, outcome(transient=True, error="timeout"))
+
+        self.assertEqual(result.state, FAILED)
+        self.assertEqual(log.attempts, 3)
 
     def test_a_failure_records_the_provider_error(self):
         log = Log()
@@ -98,14 +121,14 @@ class DeliveryTests(TestCase):
         self.assertEqual(result.state, SENT)
         self.assertEqual(result.refusal, "no_transition")
 
-    def test_three_transient_failures_then_success_walks_the_whole_table(self):
+    def test_two_transient_failures_then_success_walks_the_whole_table(self):
         log = Log()
 
-        for _ in range(3):
+        for _ in range(2):
             attempt(log, outcome(transient=True, error="timeout"))
         self.assertEqual(log.status, PENDING)
 
         result = attempt(log, outcome(accepted=True, provider_message_id="SM9"))
 
         self.assertEqual(result.state, SENT)
-        self.assertEqual(log.attempts, 4)
+        self.assertEqual(log.attempts, 3)
