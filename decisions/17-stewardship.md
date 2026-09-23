@@ -11,6 +11,9 @@ goes in services (a new `services/catalog.py`, plus additions to `onboarding.py`
 moves it in one piece (#138 `apps/catalog`, #137 `apps/identity`). It shares no files with cadence
 (#112–#114), so the two tracks run in parallel.
 
+**Issues:** #165 metadata + video (D76, D77) → #166 folder upload (D78) and #168 cover library (D79) ·
+#167 admin theme + reader CRUD (D75, D80) → #169 reader dossier (D75).
+
 ---
 
 ## D75 — The admin is an upgraded Django admin, not a React admin

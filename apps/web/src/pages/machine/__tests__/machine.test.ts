@@ -35,6 +35,11 @@ function route(actor: ReturnType<typeof start>, path: string) {
 }
 
 describe("the page region", () => {
+  it("routes /begin to its own page (#160)", () => {
+    const snapshot = route(start(), "/begin");
+    expect(snapshot.matches({ page: "begin" })).toBe(true);
+  });
+
   it("starts in unknown, so Home never flashes before the first ROUTE", () => {
     expect(start().getSnapshot().matches({ page: "unknown" })).toBe(true);
   });

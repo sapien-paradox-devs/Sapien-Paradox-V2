@@ -2,13 +2,18 @@ export type Chapter = {
   id: string;
   number: number;
   title: string;
-  /** A quiet mark, not a progress bar (D11). */
+  /** Opened at least once. */
   read: boolean;
+  /** 0–1; 1 only once the reader marked it complete (D70). */
+  progress: number;
+  completed: boolean;
 };
 
 export type Book = {
   id: string;
   title: string;
+  /** The mean across its chapters (D70). */
+  progress: number;
   chapters: Chapter[];
 };
 

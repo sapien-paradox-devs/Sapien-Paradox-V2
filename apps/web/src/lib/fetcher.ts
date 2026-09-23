@@ -68,8 +68,24 @@ async function blob(path: string): Promise<Blob> {
   return response.blob();
 }
 
+/**
+ * Fire-and-forget POST that survives the page closing (`keepalive`), for the
+ * last word of a reading session on `pagehide` (D70). Errors are dropped:
+ * there is nobody left to show them to.
+ */
+function send(path: string, body: unknown): void {
+  void fetch(API_BASE + path, {
+    method: "POST",
+    credentials: "include",
+    keepalive: true,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }).catch(() => {});
+}
+
 export const mappedFetcher = {
   get: <T>(path: string) => request<T>("GET", path),
   post: <T>(path: string, body?: unknown) => request<T>("POST", path, body),
   blob,
+  send,
 };

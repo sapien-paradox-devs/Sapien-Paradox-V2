@@ -9,7 +9,10 @@ const BOOKS: Book[] = [
   {
     id: "b1",
     title: "The Sapien Paradox",
-    chapters: [{ id: "c1", number: 1, title: "The Long Descent", read: false }],
+    progress: 0,
+    chapters: [
+      { id: "c1", number: 1, title: "The Long Descent", read: false, progress: 0, completed: false },
+    ],
   },
 ];
 

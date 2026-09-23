@@ -6,13 +6,15 @@ them in a response that gets cached, logged and screenshotted would undo the
 point of expiry.
 
 Read/unread comes from `opened_at`, which the reading machine stamps on the
-first open only — a quiet mark, not a progress bar.
+first open only. Progress and completion come from `ReadingProgress` (D70),
+quietly: a ring per chapter, a total per book.
 """
 
 from ninja import Router
 
 from ..auth import session_auth
 from ..models import Chapter, Order, TemporalGrant
+from .. import selectors
 from ..schemas.home import BookOut, ChapterOut, HomeOut
 
 router = Router()
@@ -41,22 +43,29 @@ def home(request):
         .values_list("chapter_id", flat=True)
     )
 
+    # And one for every chapter's progress (D70).
+    places = selectors.progress_by_chapter(user)
+
     books = []
     for order in orders:
-        chapters = Chapter.objects.filter(book=order.book).order_by("order_index")
+        chapters = list(Chapter.objects.filter(book=order.book).order_by("order_index"))
+        rows = [
+            ChapterOut(
+                id=str(chapter.pk),
+                number=chapter.order_index,
+                title=chapter.title,
+                read=chapter.pk in opened_ids,
+                progress=places.get(chapter.pk, selectors.NONE).furthest,
+                completed=places.get(chapter.pk, selectors.NONE).completed,
+            )
+            for chapter in chapters
+        ]
         books.append(
             BookOut(
                 id=str(order.book.pk),
                 title=order.book.title,
-                chapters=[
-                    ChapterOut(
-                        id=str(chapter.pk),
-                        number=chapter.order_index,
-                        title=chapter.title,
-                        read=chapter.pk in opened_ids,
-                    )
-                    for chapter in chapters
-                ],
+                progress=sum(row.progress for row in rows) / len(rows) if rows else 0.0,
+                chapters=rows,
             )
         )
 

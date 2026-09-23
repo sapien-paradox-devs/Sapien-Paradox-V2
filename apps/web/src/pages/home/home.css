@@ -17,6 +17,19 @@
   gap: var(--space-4);
 }
 
+.home-book-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-4);
+}
+
+.home-book-progress {
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
 .home-book h2 {
   font-size: 1.15rem;
   color: var(--ink-soft);
