@@ -104,6 +104,7 @@ class ChecklistOut(Schema):
 class BookDetailOut(BookRowOut):
     description: str
     priceMinorUnits: int
+    hasVideo: bool
     hasSample: bool
     chapters: list[ChapterAdminOut]
     checklist: ChecklistOut
@@ -129,3 +130,42 @@ class ChapterTitleIn(Schema):
 
 class ChapterOrderIn(Schema):
     chapterIds: list[int]
+
+
+class UploadStartIn(Schema):
+    """What the file is and where it goes (D85). `chapterId` for a chapter's PDF
+    or video; `title` for a new chapter, cleaned from its filename (D86)."""
+
+    destination: str
+    bookId: int
+    chapterId: int | None = None
+    filename: str
+    size: int
+    title: str = ""
+
+
+class UploadPlanOut(Schema):
+    ticket: str
+    mode: str                      # single | multipart | direct
+    url: str | None = None
+    uploadId: str | None = None
+    partSize: int | None = None
+    partUrls: list[str] | None = None
+    contentType: str
+
+
+class UploadPartIn(Schema):
+    partNumber: int
+    etag: str
+
+
+class UploadCompleteIn(Schema):
+    ticket: str
+    parts: list[UploadPartIn] | None = None
+
+
+class UploadDoneOut(Schema):
+    """The book as it is after the upload landed, so the workspace redraws from truth."""
+
+    book: BookDetailOut
+    chapterId: str | None = None

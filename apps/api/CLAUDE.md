@@ -195,6 +195,7 @@ siblings.
 | `GET/POST /api/admin/books` · `GET/PATCH /api/admin/books/{id}` | **staff** | the book workspace (D84); created unpublished |
 | `POST /api/admin/books/{id}/publish` · `/unpublish` | **staff** | publish refused until the checklist passes |
 | `POST /api/admin/books/{id}/chapters/order` · `PATCH/DELETE /api/admin/chapters/{id}` | **staff** | reorder/delete only while a draft; never a chapter with grants |
+| `POST /api/admin/uploads` → `PUT …/direct` (no R2) → `POST …/complete` | **staff** | D85: signed ticket, bytes straight to R2, then attach + render |
 
 **Three Ninja auth classes**: `SessionAuth` (Django session), `StaffAuth` (a session whose user is
 staff, for `/api/admin/*`, D82) and `GrantAuth` (resolves the token from the path). **Each endpoint
