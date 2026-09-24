@@ -201,9 +201,11 @@ siblings.
 staff, for `/api/admin/*`, D82) and `GrantAuth` (resolves the token from the path). **Each endpoint
 declares exactly one. No endpoint accepts both a session and a grant.**
 
-**CSRF: only `StaffAuth` enforces it today.** Ninja checks CSRF only for its own cookie auth
-classes, so the plain `SessionAuth` does not, despite D30. `StaffAuth` calls `check_csrf` itself.
-Turning it on for `SessionAuth` is its own issue.
+**CSRF is enforced by `SessionAuth` itself** (and so by `StaffAuth`), because Ninja checks CSRF only
+for its own cookie auth classes (#176). The token reaches the SPA as an `X-CSRFToken` response
+header from `/auth/me` and login, exposed through CORS, since on the split origin the app cannot read
+the API's cookie. While `SESSION_COOKIE_SAMESITE=None`, `CSRF_COOKIE_SAMESITE` must be `None` too;
+settings refuse to start otherwise.
 
 ## API-layer rules — all locked
 
