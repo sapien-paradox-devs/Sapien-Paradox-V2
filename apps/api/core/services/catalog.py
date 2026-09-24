@@ -18,6 +18,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from django.db import transaction
+from django.db.models import Max
 from django.utils.text import slugify
 
 from ..models import Book, Chapter, TemporalGrant
@@ -114,7 +115,7 @@ def unpublish(book: Book) -> Book:
     return book
 
 
-MEDIA_FIELDS = {"cover": "cover", "sample": "sample_video"}
+MEDIA_FIELDS = {"cover": "cover", "video": "video", "sample": "sample_video"}
 
 
 def remove_book_media(book: Book, which: str) -> Book:
@@ -193,3 +194,49 @@ def prepare(chapter: Chapter) -> bool:
     """
     extraction.extract_and_save(chapter)
     return pages.render_and_save(chapter)
+
+
+# ── attaching a finished upload ─────────────────────────────────────────────
+
+
+def attach(claims: dict):
+    """Put an uploaded object where its ticket said it goes. Returns what changed.
+
+    Idempotent on the storage key: completing the same upload twice finds the
+    chapter or field already pointing at it and returns that, so a retried
+    request never makes a second chapter.
+    """
+    destination, key = claims["d"], claims["k"]
+    book = Book.objects.get(pk=claims["b"])
+
+    if destination == "new_chapter":
+        existing = book.chapters.filter(file=key).first()
+        if existing is not None:
+            return existing
+        with transaction.atomic():
+            last = book.chapters.aggregate(n=Max("order_index"))["n"] or 0
+            chapter = Chapter(book=book, order_index=last + 1,
+                              title=claims.get("t") or f"Chapter {last + 1}")
+            chapter.file.name = key
+            chapter.save()
+        prepare(chapter)
+        return chapter
+
+    if destination in ("chapter_pdf", "chapter_video"):
+        chapter = Chapter.objects.get(pk=claims["c"], book=book)
+        field = "file" if destination == "chapter_pdf" else "video"
+        if getattr(chapter, field).name == key:
+            return chapter
+        getattr(chapter, field).name = key
+        if destination == "chapter_pdf":
+            chapter.page_layout = None
+            chapter.save(update_fields=["file", "page_layout"])
+            prepare(chapter)
+        else:
+            chapter.save(update_fields=["video"])
+        return chapter
+
+    field = {"book_video": "video", "book_sample": "sample_video", "book_cover": "cover"}[destination]
+    getattr(book, field).name = key
+    book.save(update_fields=[field])
+    return book
