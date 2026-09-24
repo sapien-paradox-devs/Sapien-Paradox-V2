@@ -1,6 +1,7 @@
 /**
- * Chapters (D84): one list that can be renamed, reordered while a draft,
- * retried and deleted. Adding PDFs arrives in #183.
+ * Chapters (D84, D86): drop a folder or add PDFs, check the proposed list, then
+ * one list of chapters that can be renamed, reordered while a draft, replaced,
+ * retried and deleted.
  */
 
 import { useState } from "react";
@@ -8,29 +9,93 @@ import { useState } from "react";
 import { Button } from "../../../components/Button";
 import { labels } from "../../../lib/labels";
 import type { AdminChapter, BookDetail } from "../types";
-import type { Send } from "./shared";
+import { DropZone, PickFile } from "./DropZone";
+import type { StagedPdfs, UploadItem } from "./machine/types";
+import { fill, percent, type Send } from "./shared";
 
-export function Chapters({ book, busyChapterId, send }: {
+export function Chapters({ book, staged, uploads, busyChapterId, send }: {
   book: BookDetail;
+  staged: StagedPdfs | null;
+  uploads: UploadItem[];
   busyChapterId: string | null;
   send: Send;
 }) {
   const l = labels.admin.book;
+  const pending = uploads.filter((u) => u.target.destination === "new_chapter" && u.status !== "done");
 
   return (
     <div className="admin-chapters">
+      {staged ? (
+        <StagedList staged={staged} send={send} />
+      ) : (
+        <DropZone title={l.dropPdfs} hint={l.dropPdfsHint} accept=".pdf,application/pdf"
+          folderLabel={l.chooseFolder} filesLabel={l.addPdfs}
+          onFiles={(files) => send({ type: "STAGE_PDFS", files })} />
+      )}
+
       {book.isPublished && book.chapters.length > 1 && <p className="admin-note">{l.orderFixed}</p>}
-      {book.chapters.length === 0 ? (
+
+      {book.chapters.length === 0 && pending.length === 0 ? (
         <p className="admin-muted">{l.noChapters}</p>
       ) : (
-        <ChapterList book={book} busyChapterId={busyChapterId} send={send} />
+        <ChapterList book={book} uploads={uploads} busyChapterId={busyChapterId} send={send} />
+      )}
+
+      {pending.length > 0 && (
+        <ol className="admin-chapter-list admin-chapter-pending" start={book.chapters.length + 1}>
+          {pending.map((u) => (
+            <li key={u.id} className="admin-chapter">
+              <span className="admin-chapter-n">·</span>
+              <span className="admin-chapter-title">{u.title || u.file.name}</span>
+              <UploadStatus upload={u} pdf />
+            </li>
+          ))}
+        </ol>
       )}
     </div>
   );
 }
 
-function ChapterList({ book, busyChapterId, send }: {
+function StagedList({ staged, send }: { staged: StagedPdfs; send: Send }) {
+  const l = labels.admin.book.staged;
+  const [dragging, setDragging] = useState<number | null>(null);
+
+  return (
+    <div className="admin-staged">
+      <h3>{l.title}</h3>
+      <p className="admin-muted">{l.lead}</p>
+      <ol className="admin-chapter-list">
+        {staged.chapters.map((c, index) => (
+          <li key={c.key} className={`admin-chapter ${dragging === index ? "admin-dragging" : ""}`}
+            draggable onDragStart={() => setDragging(index)} onDragEnd={() => setDragging(null)}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={() => {
+              if (dragging !== null) send({ type: "MOVE_STAGED", from: dragging, to: index });
+              setDragging(null);
+            }}>
+            <span className="admin-grip" aria-hidden="true">⋮⋮</span>
+            <span className="admin-chapter-n">{index + 1}</span>
+            <input className="admin-inline-input" value={c.title} aria-label={labels.admin.book.rename}
+              onChange={(e) => send({ type: "RETITLE_STAGED", key: c.key, title: e.target.value })} />
+            <span className="admin-file-name">{c.file.name}</span>
+            <Button variant="text" onClick={() => send({ type: "UNSTAGE", key: c.key })}>{l.remove}</Button>
+          </li>
+        ))}
+      </ol>
+      {staged.skipped.length > 0 && (
+        <p className="admin-muted admin-skipped">{l.skipped} {staged.skipped.join(", ")}</p>
+      )}
+      <div className="admin-form-actions">
+        <Button onClick={() => send({ type: "CONFIRM_PDFS" })}>{fill(l.confirm, staged.chapters.length)}</Button>
+        <Button variant="text" onClick={() => send({ type: "CANCEL_PDFS" })}>{l.cancel}</Button>
+      </div>
+    </div>
+  );
+}
+
+function ChapterList({ book, uploads, busyChapterId, send }: {
   book: BookDetail;
+  uploads: UploadItem[];
   busyChapterId: string | null;
   send: Send;
 }) {
@@ -53,13 +118,15 @@ function ChapterList({ book, busyChapterId, send }: {
           onDragStart={() => setDragging(index)} onDragEnd={() => setDragging(null)}
           onDrop={() => { drop(index); setDragging(null); }}
           busy={busyChapterId === chapter.id}
+          replacing={uploads.find((u) => u.target.destination === "chapter_pdf" && "chapterId" in u.target
+            && u.target.chapterId === chapter.id && u.status !== "done")}
           send={send} />
       ))}
     </ol>
   );
 }
 
-function ChapterRow({ chapter, book, draggable, dragging, onDragStart, onDragEnd, onDrop, busy, send }: {
+function ChapterRow({ chapter, book, draggable, dragging, onDragStart, onDragEnd, onDrop, busy, replacing, send }: {
   chapter: AdminChapter;
   book: BookDetail;
   index: number;
@@ -69,6 +136,7 @@ function ChapterRow({ chapter, book, draggable, dragging, onDragStart, onDragEnd
   onDragEnd: () => void;
   onDrop: () => void;
   busy: boolean;
+  replacing: UploadItem | undefined;
   send: Send;
 }) {
   const l = labels.admin.book;
@@ -103,7 +171,9 @@ function ChapterRow({ chapter, book, draggable, dragging, onDragStart, onDragEnd
         </span>
       )}
 
-      {chapter.status === "ready" ? (
+      {replacing ? (
+        <UploadStatus upload={replacing} pdf />
+      ) : chapter.status === "ready" ? (
         <span className="admin-status admin-status-ready">{chapter.pageCount} {l.pages}</span>
       ) : (
         <span className="admin-status admin-status-failed">
@@ -117,6 +187,8 @@ function ChapterRow({ chapter, book, draggable, dragging, onDragStart, onDragEnd
       {!renaming && (
         <span className="admin-row-actions">
           <Button variant="text" onClick={() => setRenaming(true)}>{l.rename}</Button>
+          <PickFile label={l.replacePdf} accept=".pdf,application/pdf"
+            onFile={(file) => send({ type: "UPLOAD", file, target: { destination: "chapter_pdf", chapterId: chapter.id } })} />
           {canDelete && !confirmingDelete && (
             <Button variant="text" className="admin-danger-text" onClick={() => setConfirmingDelete(true)}>{l.delete}</Button>
           )}
@@ -135,5 +207,22 @@ function ChapterRow({ chapter, book, draggable, dragging, onDragStart, onDragEnd
         </div>
       )}
     </li>
+  );
+}
+
+export function UploadStatus({ upload, pdf }: { upload: UploadItem; pdf?: boolean }) {
+  const l = labels.admin.book;
+  if (upload.status === "failed") {
+    return <span className="admin-status admin-status-failed">{upload.error ?? l.uploadFailed}</span>;
+  }
+  const text = upload.status === "queued" ? l.queued
+    : upload.status === "finishing" ? (pdf ? l.finishing : l.finishingVideo)
+    : upload.status === "done" ? l.uploaded
+    : `${l.sending} ${percent(upload)}%`;
+  return (
+    <span className="admin-status admin-status-moving">
+      <span className="admin-progress" aria-hidden="true"><span style={{ width: `${percent(upload)}%` }} /></span>
+      {text}
+    </span>
   );
 }
