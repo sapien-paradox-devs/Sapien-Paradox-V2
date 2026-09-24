@@ -84,6 +84,15 @@ services:
         sync: false           # the SPA origin — https://<project>.vercel.app, later https://app.<domain>
       - key: CSRF_TRUSTED_ORIGINS
         sync: false           # same as CORS_ALLOWED_ORIGINS
+      # While the app is on *.vercel.app and the API on *.onrender.com (#92,
+      # #176), BOTH cookies must be cross-site: SESSION_COOKIE_SAMESITE=None and
+      # CSRF_COOKIE_SAMESITE=None, or every change is refused as csrf_failed.
+      # Settings refuse to start with only the first. Back to Lax (both) once
+      # the real domain and COOKIE_DOMAIN are set.
+      - key: SESSION_COOKIE_SAMESITE
+        sync: false
+      - key: CSRF_COOKIE_SAMESITE
+        sync: false
       - key: COOKIE_DOMAIN
         sync: false           # .<domain>  — leading dot matters. Empty until then.
       - key: APP_BASE_URL

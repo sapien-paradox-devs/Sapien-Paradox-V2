@@ -30,13 +30,22 @@ _TOKEN_IN_PATH = re.compile(r"/api/grants/(?P<token>[^/]+)")
 
 
 class SessionAuth:
-    """The SPA's logged-in reader. Django's session cookie does the work."""
+    """The SPA's logged-in reader. Django's session cookie does the work.
+
+    **CSRF is checked here (D30).** Ninja checks CSRF only for its own cookie
+    auth classes, so a plain callable like this one gets none unless it asks,
+    which is how #176 found it had never been enforced. Safe methods pass;
+    unsafe ones need `X-CSRFToken` matching the `csrftoken` cookie. A session
+    cookie is ambient authority, the one thing CSRF defends.
+    """
 
     def __call__(self, request):
         user = getattr(request, "user", None)
-        if user is not None and user.is_authenticated:
-            return user
-        return None
+        if user is None or not user.is_authenticated:
+            return None
+        if check_csrf(request) is not None:
+            raise HttpError(403, "csrf_failed")
+        return user
 
 
 class GrantAuth:
@@ -84,21 +93,14 @@ class StaffAuth(SessionAuth):
 
     A reader's session is not enough, and gets a 401 like an anonymous one: Ninja
     has no "authenticated but not allowed" from an auth class. The admin screens
-    only ever run for staff, so the distinction would help nobody.
-
-    **CSRF is checked here, explicitly.** Ninja only checks CSRF for its own
-    cookie auth classes, so `SessionAuth` above does not get it, whatever D30 and
-    this module's docstring say (tracked separately). A staff session is the
-    last place that gap may exist. Safe methods pass; unsafe ones need the
-    `X-CSRFToken` header matching the `csrftoken` cookie.
+    only ever run for staff, so the distinction would help nobody. CSRF is
+    checked by `SessionAuth`, before the staff check.
     """
 
     def __call__(self, request):
         user = super().__call__(request)
         if user is None or not user.is_active or not user.is_staff:
             return None
-        if check_csrf(request) is not None:
-            raise HttpError(403, "csrf_failed")
         return user
 
 
