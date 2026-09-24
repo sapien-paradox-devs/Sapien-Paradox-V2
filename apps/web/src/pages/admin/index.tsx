@@ -10,6 +10,8 @@ import { useCallback, useEffect, useState } from "react";
 
 import { labels } from "../../lib/labels";
 import { useNavigation } from "../useNavigation";
+import { BooksScreen } from "./books";
+import { NewBookScreen } from "./book-new";
 import { NewReaderScreen } from "./reader-new";
 import { ReaderScreen } from "./reader";
 import { ReadersScreen } from "./readers";
@@ -43,24 +45,31 @@ export function AdminPage() {
   }
 
   const l = labels.admin.nav;
-  const inReaders = route.screen !== "books";
+  const inBooks = route.screen === "books" || route.screen === "newBook";
 
   return (
     <div className="admin">
       <nav className="admin-nav" aria-label={l.label}>
         <p className="admin-nav-label">{l.label}</p>
-        <a href="/admin/readers" aria-current={inReaders ? "page" : undefined}
+        <a href="/admin/readers" aria-current={!inBooks ? "page" : undefined}
           onClick={(e) => { e.preventDefault(); navigate("/admin/readers"); }}>
           {l.readers}
         </a>
-        {/* Books arrive with the book workspace (#166, D84). */}
+        <a href="/admin/books" aria-current={inBooks ? "page" : undefined}
+          onClick={(e) => { e.preventDefault(); navigate("/admin/books"); }}>
+          {l.books}
+        </a>
         <a href="/" className="admin-nav-out" onClick={(e) => { e.preventDefault(); navigate("/"); }}>
           {l.library}
         </a>
       </nav>
 
       <main className="admin-main">
-        {route.screen === "newReader" ? (
+        {route.screen === "books" ? (
+          <BooksScreen navigate={navigate} />
+        ) : route.screen === "newBook" ? (
+          <NewBookScreen navigate={navigate} />
+        ) : route.screen === "newReader" ? (
           <NewReaderScreen navigate={navigate} onCreated={onCreated} />
         ) : route.screen === "reader" ? (
           // Keyed on the id so opening another reader starts a fresh machine.
