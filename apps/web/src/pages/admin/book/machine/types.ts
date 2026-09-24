@@ -23,6 +23,11 @@ export type UploadItem = {
 export type StagedChapter = { key: string; file: File; title: string };
 export type StagedPdfs = { chapters: StagedChapter[]; skipped: string[] };
 
+/** Where a dropped video is headed: a chapter's id, the book video, the sample, or the tray. */
+export type Slot = { kind: "chapter"; chapterId: string } | { kind: "book_video" } | { kind: "book_sample" } | { kind: "tray" };
+export type StagedVideo = { key: string; file: File; slot: Slot };
+export type StagedVideos = { videos: StagedVideo[]; skipped: string[] };
+
 export type Details = { title: string; author: string; description: string; priceMinorUnits: number };
 
 /** One change to the book or a chapter. Each is a single request that returns the book. */
@@ -44,6 +49,7 @@ export type Context = {
   /** The op in flight, so the screen can show which row is busy. */
   op: Op | null;
   stagedPdfs: StagedPdfs | null;
+  stagedVideos: StagedVideos | null;
   uploads: UploadItem[];
   nextUploadId: number;
 };
@@ -59,6 +65,10 @@ export type Event =
   | { type: "UNSTAGE"; key: string }
   | { type: "CONFIRM_PDFS" }
   | { type: "CANCEL_PDFS" }
+  | { type: "STAGE_VIDEOS"; files: File[] }
+  | { type: "ASSIGN_VIDEO"; key: string; slot: Slot }
+  | { type: "CONFIRM_VIDEOS" }
+  | { type: "CANCEL_VIDEOS" }
   // D85: one file, straight to a known place
   | { type: "UPLOAD"; file: File; target: Target }
   | { type: "RETRY_UPLOAD"; id: string }

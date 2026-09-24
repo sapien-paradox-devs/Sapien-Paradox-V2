@@ -112,6 +112,34 @@ describe("the upload queue (D85)", () => {
   });
 });
 
+describe("staging videos (D86)", () => {
+  it("matches chapters, and a drag onto a taken slot sends the old one to the tray", async () => {
+    const { actor } = start();
+    await settle();
+    actor.send({ type: "STAGE_VIDEOS", files: [file("1-descent.mp4"), file("intro.mp4")] });
+    const videos = actor.getSnapshot().context.stagedVideos?.videos ?? [];
+    expect(videos.map((v) => v.slot)).toEqual([
+      { kind: "chapter", chapterId: "10" },
+      { kind: "tray" },
+    ]);
+
+    actor.send({ type: "ASSIGN_VIDEO", key: videos[1].key, slot: { kind: "chapter", chapterId: "10" } });
+    const after = actor.getSnapshot().context.stagedVideos?.videos ?? [];
+    expect(after.map((v) => v.slot.kind)).toEqual(["tray", "chapter"]);
+  });
+
+  it("uploads only what is in a slot; the tray stays behind", async () => {
+    const { actor, started } = start();
+    await settle();
+    actor.send({ type: "STAGE_VIDEOS", files: [file("2.mp4"), file("mystery.mp4"), file("sample.mp4")] });
+    actor.send({ type: "CONFIRM_VIDEOS" });
+    expect(started.map((s) => s.target)).toEqual([
+      { destination: "chapter_video", chapterId: "11" },
+      { destination: "book_sample" },
+    ]);
+  });
+});
+
 describe("startable", () => {
   const u = (id: string, destination: UploadItem["target"]["destination"], status: UploadItem["status"]) =>
     ({ id, file: file(id), target: { destination } as UploadItem["target"], title: "", status, loaded: 0, error: null });

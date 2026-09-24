@@ -2,8 +2,8 @@ import type { AnyEventObject } from "xstate";
 
 import { refusalOf } from "../../refusal";
 import type { BookDetail } from "../../types";
-import { planChapters } from "../../books/match";
-import type { Context, Event, Target, UploadItem } from "./types";
+import { planChapters, planVideos } from "../../books/match";
+import type { Context, Event, StagedVideo, Target, UploadItem } from "./types";
 
 const PDF_LANE = new Set(["new_chapter", "chapter_pdf"]);
 const OTHER_CONCURRENCY = 2;
@@ -87,6 +87,68 @@ export function enqueueStagedPdfs({ context }: { context: Context }): Partial<Co
 
 export function cancelPdfs(): Pick<Context, "stagedPdfs"> {
   return { stagedPdfs: null };
+}
+
+// ── staging a batch of videos (D86) ───────────────────────────────────────────
+
+export function stageVideos({ context, event }: { context: Context; event: Event }): Pick<Context, "stagedVideos"> {
+  if (event.type !== "STAGE_VIDEOS" || !context.book) return { stagedVideos: null };
+  const chapters = context.book.chapters.map((c) => ({ id: c.id, number: c.number, title: c.title }));
+  const named = event.files.map((file) => ({ name: pathOf(file), file }));
+  const plan = planVideos(named, chapters);
+  let n = 0;
+  const videos: StagedVideo[] = [
+    ...plan.matches.map((m) => ({ key: `${n++}`, file: m.file.file, slot: { kind: "chapter" as const, chapterId: m.chapterId } })),
+    ...(plan.sample ? [{ key: `${n++}`, file: plan.sample.file, slot: { kind: "book_sample" as const } }] : []),
+    ...plan.tray.map((f) => ({ key: `${n++}`, file: f.file, slot: { kind: "tray" as const } })),
+  ];
+  return { stagedVideos: { videos, skipped: plan.skipped.map((f) => f.name) } };
+}
+
+/**
+ * Moving a staged video into a slot. A slot holds one video: whatever was there
+ * goes back to the tray, so a drag never silently drops a file.
+ */
+export function assignVideo({ context, event }: { context: Context; event: Event }): Pick<Context, "stagedVideos"> {
+  const staged = context.stagedVideos;
+  if (!staged || event.type !== "ASSIGN_VIDEO") return { stagedVideos: staged };
+  const target = event.slot;
+  const same = (a: StagedVideo["slot"]) =>
+    target.kind !== "tray" && a.kind === target.kind &&
+    (a.kind !== "chapter" || (target.kind === "chapter" && a.chapterId === target.chapterId));
+  return {
+    stagedVideos: {
+      ...staged,
+      videos: staged.videos.map((v) => {
+        if (v.key === event.key) return { ...v, slot: target };
+        if (same(v.slot)) return { ...v, slot: { kind: "tray" } };
+        return v;
+      }),
+    },
+  };
+}
+
+export function enqueueStagedVideos({ context }: { context: Context }): Partial<Context> {
+  const staged = context.stagedVideos;
+  if (!staged) return {};
+  let next = context.nextUploadId;
+  const items: UploadItem[] = [];
+  for (const video of staged.videos) {
+    const target = targetOf(video.slot);
+    if (target) items.push(item(`u${next++}`, video.file, target, ""));
+  }
+  return { stagedVideos: null, uploads: [...context.uploads, ...items], nextUploadId: next };
+}
+
+export function cancelVideos(): Pick<Context, "stagedVideos"> {
+  return { stagedVideos: null };
+}
+
+function targetOf(slot: StagedVideo["slot"]): Target | null {
+  if (slot.kind === "chapter") return { destination: "chapter_video", chapterId: slot.chapterId };
+  if (slot.kind === "book_video") return { destination: "book_video" };
+  if (slot.kind === "book_sample") return { destination: "book_sample" };
+  return null; // still in the tray: not uploaded
 }
 
 // ── the queue (D85) ───────────────────────────────────────────────────────────

@@ -1,6 +1,7 @@
 /**
  * Dev-only visual preview of the book workspace (#166), with sample data and
- * no API. Open http://localhost:5173/harness.html (add ?v=staged or publish). Not part of the build: Vite builds index.html only.
+ * no API. Open http://localhost:5173/harness.html (add ?v=staged, board,
+ * videos or publish). Not part of the build: Vite builds index.html only.
  * The sections take props, so what is drawn here is what staff see.
  */
 import { createRoot } from "react-dom/client";
@@ -9,6 +10,7 @@ import "./pages/admin/admin.css";
 import "./pages/admin/book/book.css";
 import "./pages/admin/books/books.css";
 import { Chapters } from "./pages/admin/book/Chapters";
+import { Videos } from "./pages/admin/book/Videos";
 import { Publish } from "./pages/admin/book/Publish";
 import { Uploads } from "./pages/admin/book/Uploads";
 import type { BookDetail } from "./pages/admin/types";
@@ -41,6 +43,11 @@ const staged = { chapters: [
   { key: "1", file: f("ch1_the_long_descent.pdf"), title: "The long descent" },
   { key: "2", file: f("Chapter 2 - Clocks.pdf"), title: "Clocks" },
   { key: "3", file: f("10 Return.pdf"), title: "Return" }], skipped: ["notes.docx"] };
+const stagedVideos = { videos: [
+  { key: "a", file: sized("1-descent.mp4", 120), slot: { kind: "chapter" as const, chapterId: "10" } },
+  { key: "b", file: sized("sample.mp4", 40), slot: { kind: "book_sample" as const } },
+  { key: "c", file: sized("intro.mp4", 90), slot: { kind: "tray" as const } }], skipped: [] };
+
 function App() {
   return (
     <div className="admin"><nav className="admin-nav"><p className="admin-nav-label">Admin</p><a>Readers</a><a aria-current="page">Books</a></nav>
@@ -49,6 +56,8 @@ function App() {
       <nav className="admin-tabs">{["Details","Chapters","Videos","Publish"].map((t) => <button key={t} className="admin-tab" aria-selected={t.toLowerCase() === (mode ?? "chapters").replace("staged","chapters").replace("board","videos")}>{t}{t==="Chapters"&&<span className="admin-tab-count">3</span>}{t==="Videos"&&<span className="admin-tab-count">1/5</span>}</button>)}</nav>
       {!mode && <Uploads uploads={uploads} send={send} />}
       <div className="admin-section">
+        {mode === "videos" && <Videos book={book} staged={null} uploads={uploads} send={send} />}
+        {mode === "board" && <Videos book={book} staged={stagedVideos} uploads={[]} send={send} />}
         {mode === "publish" && <Publish book={book} working={false} send={send} />}
         {mode === "staged" && <Chapters book={book} staged={staged} uploads={[]} busyChapterId={null} send={send} />}
         {!mode && <Chapters book={book} staged={null} uploads={uploads} busyChapterId={null} send={send} />}

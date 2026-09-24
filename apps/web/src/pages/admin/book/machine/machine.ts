@@ -5,8 +5,9 @@
  *   ops      idle ──RUN──▶ working → idle            (one change at a time)
  *   uploads  idle ⇄ active                           (the queue, see below)
  *
- * **Staging (D86).** A dropped folder is held in context (`stagedPdfs`) until
- * CONFIRM: titles and order can be fixed first, and nothing uploads until then.
+ * **Staging (D86).** A dropped folder or batch of videos is held in context
+ * (`stagedPdfs`, `stagedVideos`) until CONFIRM: titles, order and video slots
+ * can all be fixed first, and nothing uploads until then.
  *
  * **The upload queue (D85).** Each file is an item in `uploads` and, while it
  * moves, a spawned child actor named by its id. `pump` starts what may start:
@@ -23,6 +24,7 @@ const initialContext: Context = {
   refusal: null,
   op: null,
   stagedPdfs: null,
+  stagedVideos: null,
   uploads: [],
   nextUploadId: 1,
 };
@@ -39,6 +41,11 @@ export const bookConfig = {
     UNSTAGE: { actions: "unstage" },
     CONFIRM_PDFS: { guard: "hasStagedPdfs", actions: ["enqueueStagedPdfs", "pump"] },
     CANCEL_PDFS: { actions: "cancelPdfs" },
+
+    STAGE_VIDEOS: { guard: "hasBook", actions: "stageVideos" },
+    ASSIGN_VIDEO: { actions: "assignVideo" },
+    CONFIRM_VIDEOS: { guard: "hasStagedVideos", actions: ["enqueueStagedVideos", "pump"] },
+    CANCEL_VIDEOS: { actions: "cancelVideos" },
 
     UPLOAD: { actions: ["enqueueOne", "pump"] },
     RETRY_UPLOAD: { actions: ["requeue", "pump"] },
