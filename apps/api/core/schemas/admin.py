@@ -61,3 +61,71 @@ class RefusalOut(Schema):
 
     code: str
     field: str | None = None
+
+
+# ── books (D83–D86) ───────────────────────────────────────────────────────────
+
+
+class BookRowOut(Schema):
+    id: str
+    slug: str
+    title: str
+    author: str
+    isPublished: bool
+    chapterCount: int
+    readyCount: int
+    hasCover: bool
+    readerCount: int
+    createdAt: str
+
+
+class BookListOut(Schema):
+    books: list[BookRowOut]
+
+
+class ChapterAdminOut(Schema):
+    id: str
+    number: int
+    title: str
+    # `ready`: pages rendered, readable. `failed`: the PDF did not render (D73).
+    status: str
+    pageCount: int | None
+    hasVideo: bool
+    hasReaders: bool
+
+
+class ChecklistOut(Schema):
+    hasChapters: bool
+    allReady: bool
+    hasCover: bool
+    passes: bool
+
+
+class BookDetailOut(BookRowOut):
+    description: str
+    priceMinorUnits: int
+    hasSample: bool
+    chapters: list[ChapterAdminOut]
+    checklist: ChecklistOut
+
+
+class BookIn(Schema):
+    title: str
+    author: str = ""
+    description: str = ""
+    priceMinorUnits: int = 0
+
+
+class BookUpdateIn(Schema):
+    title: str | None = None
+    author: str | None = None
+    description: str | None = None
+    priceMinorUnits: int | None = None
+
+
+class ChapterTitleIn(Schema):
+    title: str
+
+
+class ChapterOrderIn(Schema):
+    chapterIds: list[int]
