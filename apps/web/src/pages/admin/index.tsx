@@ -10,6 +10,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { labels } from "../../lib/labels";
 import { useNavigation } from "../useNavigation";
+import { BookWorkspace } from "./book";
 import { BooksScreen } from "./books";
 import { NewBookScreen } from "./book-new";
 import { NewReaderScreen } from "./reader-new";
@@ -45,7 +46,7 @@ export function AdminPage() {
   }
 
   const l = labels.admin.nav;
-  const inBooks = route.screen === "books" || route.screen === "newBook";
+  const inBooks = route.screen === "books" || route.screen === "newBook" || route.screen === "book";
 
   return (
     <div className="admin">
@@ -69,6 +70,8 @@ export function AdminPage() {
           <BooksScreen navigate={navigate} />
         ) : route.screen === "newBook" ? (
           <NewBookScreen navigate={navigate} />
+        ) : route.screen === "book" ? (
+          <BookWorkspace key={route.id} id={route.id} navigate={navigate} />
         ) : route.screen === "newReader" ? (
           <NewReaderScreen navigate={navigate} onCreated={onCreated} />
         ) : route.screen === "reader" ? (

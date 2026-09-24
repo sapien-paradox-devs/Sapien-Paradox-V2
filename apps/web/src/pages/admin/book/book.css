@@ -1,0 +1,143 @@
+/* Admin · The book workspace (D84). Palette roles from D81: cobalt to act,
+   saffron for progress, coral for chapter numerals, teal for done. */
+
+.admin-workspace { display: flex; flex-direction: column; gap: var(--space-4); padding-bottom: var(--space-16); }
+.admin-workspace .admin-screen-head { margin-bottom: 0; align-items: flex-start; }
+
+.admin-pill-inline {
+  padding: 2px var(--space-3);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--paper-sunk);
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/* Section tabs */
+.admin-tabs { display: flex; gap: var(--space-1); border-bottom: 1px solid var(--rule); overflow-x: auto; }
+
+.admin-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  color: var(--ink-soft);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+  transition: color var(--dur-quick) var(--ease-settle), border-color var(--dur-quick) var(--ease-settle);
+}
+
+.admin-tab:hover { color: var(--ink); }
+.admin-tab[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+
+.admin-tab-count {
+  font-size: 0.72rem;
+  padding: 0 var(--space-2);
+  border-radius: 999px;
+  background: var(--paper-sunk);
+  color: var(--ink-soft);
+}
+
+.admin-section { padding-top: var(--space-2); }
+.admin-small { font-size: 0.8rem; }
+.admin-note { font-size: 0.88rem; color: var(--saffron-text); }
+
+/* Details */
+.admin-details { display: grid; grid-template-columns: minmax(0, 1fr) 13rem; gap: var(--space-8); }
+.admin-cover-slot { display: flex; flex-direction: column; gap: var(--space-2); }
+.admin-slot-label { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }
+
+/* Chapter lists */
+.admin-chapters { display: flex; flex-direction: column; gap: var(--space-4); }
+.admin-chapter-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+
+.admin-chapter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-2);
+  border-bottom: 1px solid var(--rule-soft);
+  transition: background var(--dur-quick) var(--ease-settle), opacity var(--dur-quick) var(--ease-settle);
+}
+
+.admin-chapter[draggable="true"] { cursor: grab; }
+.admin-chapter:hover { background: var(--paper-raised); }
+.admin-dragging { opacity: 0.4; }
+.admin-busy { opacity: 0.6; pointer-events: none; }
+
+.admin-grip { color: var(--ink-faint); letter-spacing: -2px; user-select: none; }
+
+.admin-chapter-n {
+  min-width: 1.6rem;
+  font-family: var(--font-display);
+  color: var(--coral-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-chapter-title { flex: 1 1 12rem; font-family: var(--font-read); font-size: 1.02rem; }
+.admin-video-mark { margin-left: var(--space-2); font-size: 0.7rem; color: var(--teal-text); }
+.admin-file-name { font-size: 0.8rem; color: var(--ink-faint); }
+
+.admin-inline-input {
+  flex: 1 1 12rem;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  font-family: var(--font-read);
+  font-size: 1rem;
+}
+
+.admin-inline-input:focus { border-color: var(--accent); outline: none; }
+.admin-rename { flex: 1 1 16rem; display: flex; gap: var(--space-2); align-items: center; }
+.admin-row-actions { display: inline-flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; }
+
+/* Row actions stay quiet until wanted: grey, cobalt on hover, delete in red. */
+.admin-row-actions .ui-btn-text { color: var(--ink-faint); font-size: 0.82rem; font-weight: 400; }
+.admin-row-actions .ui-btn-text:hover { color: var(--accent); }
+.admin-chapter:hover .admin-row-actions .ui-btn-text,
+.admin-slot:hover .admin-row-actions .ui-btn-text { color: var(--ink-soft); }
+.admin-row-actions .ui-btn-text.admin-danger-text,
+.admin-row-actions .ui-btn-text.admin-danger-text:hover { color: var(--danger); }
+
+.admin-inline-confirm {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--danger);
+  background: var(--paper-sunk);
+  font-size: 0.9rem;
+}
+
+/* Status (teal = ready, D81) */
+.admin-status { display: inline-flex; align-items: center; gap: var(--space-2); font-size: 0.82rem; color: var(--ink-soft); }
+.admin-status-ready { color: var(--teal-text); }
+.admin-status-failed { color: var(--danger); }
+/* Publish (D84) */
+.admin-publish { display: flex; flex-direction: column; gap: var(--space-4); align-items: flex-start; max-width: 32rem; }
+.admin-checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.admin-checklist li { display: flex; align-items: center; gap: var(--space-3); color: var(--ink-soft); }
+.admin-check-ok { color: var(--ink); }
+
+.admin-check-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--rule);
+  font-size: 0.75rem;
+}
+
+.admin-check-ok .admin-check-mark { background: var(--teal); border-color: var(--teal); color: var(--on-bright); }
+
+@media (max-width: 48rem) {
+  .admin-details { grid-template-columns: 1fr; }
+  .admin-cover-slot { max-width: 12rem; }
+}
