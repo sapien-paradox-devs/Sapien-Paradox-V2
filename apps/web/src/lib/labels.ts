@@ -330,6 +330,7 @@ export const labels = {
   admin: {
     login: {
       title: "Admin sign in",
+      identifier: "Email or username",
       lead: "For the people who run Sapien Paradox.",
       notStaff: "This account is not an admin. Readers sign in on the main sign-in page.",
       toReaderLogin: "Go to the reader sign-in",
