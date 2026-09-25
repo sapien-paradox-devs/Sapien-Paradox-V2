@@ -43,10 +43,14 @@ export function AdminLoginPage() {
           }}
         >
           <TextField
-            label={labels.login.email}
+            label={labels.admin.login.identifier}
             id="admin-email"
-            type="email"
+            // Plain text, not "email": staff may sign in with a username such
+            // as `admin` (#195). The API looks the value up either way.
+            type="text"
             autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
