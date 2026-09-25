@@ -26,6 +26,7 @@ from ..models import ChatUsage
 log = logging.getLogger(__name__)
 
 PROMPT_PATH = Path(__file__).resolve().parent.parent / "content" / "companion_prompt.md"
+OPENING_PATH = Path(__file__).resolve().parent.parent / "content" / "companion_opening.md"
 
 
 class CompanionUnavailable(RuntimeError):
@@ -100,6 +101,35 @@ def record_usage(grant, reply: Reply) -> None:
         input_tokens=F("input_tokens") + reply.input_tokens,
         output_tokens=F("output_tokens") + reply.output_tokens,
     )
+
+
+def opening_cue() -> str:
+    """What stands in for the reader's first message when the companion speaks
+    first (D13). Copy, so it lives in a content file (mandate 1)."""
+    return OPENING_PATH.read_text().strip()
+
+
+def conversation(turns: list[dict]) -> list[dict]:
+    """The panel's turns as provider messages, trimmed for cost (#202, D33).
+
+    Keeps the most recent turns within both caps, each turn cut to the input
+    limit. A provider wants the first message to be the reader's, so when the
+    kept thread starts with the companion (which spoke first), the opening cue
+    goes in front, which is exactly what it was answering.
+    """
+    kept: list[dict] = []
+    budget = settings.COMPANION_HISTORY_CHARS
+    for turn in reversed(turns[-settings.COMPANION_HISTORY_TURNS:]):
+        text = (turn.get("text") or "")[: settings.COMPANION_MAX_INPUT_CHARS]
+        if not text.strip() or len(text) > budget:
+            break
+        budget -= len(text)
+        role = "assistant" if turn.get("role") == "companion" else "user"
+        kept.insert(0, {"role": role, "content": text})
+
+    if kept and kept[0]["role"] == "assistant":
+        kept.insert(0, {"role": "user", "content": opening_cue()})
+    return kept
 
 
 def ask(grant, message: str, history: list[dict]) -> Reply | Refusal:

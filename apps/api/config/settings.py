@@ -352,5 +352,9 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 COMPANION_MODEL = os.getenv("COMPANION_MODEL", "claude-sonnet-5")
 COMPANION_CACHE_TTL = os.getenv("COMPANION_CACHE_TTL", "1h")   # not the 5m default — D24
 COMPANION_MAX_INPUT_CHARS = int(os.getenv("COMPANION_MAX_INPUT_CHARS", "2000"))
+# How much of the conversation goes back with each message (#202). Every turn is
+# paid for on every message, so the thread is kept, not the whole transcript.
+COMPANION_HISTORY_TURNS = int(os.getenv("COMPANION_HISTORY_TURNS", "12"))
+COMPANION_HISTORY_CHARS = int(os.getenv("COMPANION_HISTORY_CHARS", "8000"))
 COMPANION_DAILY_MESSAGES_PER_GRANT = int(os.getenv("COMPANION_DAILY_MESSAGES_PER_GRANT", "40"))
 COMPANION_DAILY_MESSAGES_GLOBAL = int(os.getenv("COMPANION_DAILY_MESSAGES_GLOBAL", "500"))

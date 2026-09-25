@@ -134,3 +134,56 @@ class UnconfiguredTests(Base):
         """A fake companion is worse than an absent one — the reader would
         believe they had talked to something."""
         self.assertEqual(self.ask().status_code, 503)
+
+
+class ConversationTests(Base):
+    """#202: the companion follows the thread, and can speak first (D13)."""
+
+    @patch("core.services.companion._complete", return_value=REPLY)
+    def test_the_thread_reaches_the_model_in_order(self, _complete):
+        history = [
+            {"role": "companion", "text": "Why does attention matter more than the instrument?"},
+            {"role": "reader", "text": "Because tools are cheap now."},
+            {"role": "companion", "text": "Cheap for whom?"},
+        ]
+        self.ask("For anyone with a phone.", history)
+
+        sent = _complete.call_args.kwargs
+        self.assertEqual(sent["message"], "For anyone with a phone.")
+        self.assertEqual([m["role"] for m in sent["history"]], ["user", "assistant", "user", "assistant"])
+        # The companion spoke first, so the opening cue stands in front of it.
+        self.assertEqual(sent["history"][0]["content"], companion.opening_cue())
+        self.assertEqual(sent["history"][-1]["content"], "Cheap for whom?")
+
+    @patch("core.services.companion._complete", return_value=REPLY)
+    def test_opening_asks_the_companion_to_speak_first(self, _complete):
+        response = self.client.post("/api/chat", {"token": self.grant.token, "opening": True},
+                                    content_type="application/json")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"answer": REPLY.text})
+        sent = _complete.call_args.kwargs
+        self.assertEqual(sent["message"], companion.opening_cue())
+        self.assertEqual(sent["history"], [])
+
+    @patch("core.services.companion._complete", return_value=REPLY)
+    def test_an_opening_still_counts_against_the_caps(self, _complete):
+        self.client.post("/api/chat", {"token": self.grant.token, "opening": True},
+                         content_type="application/json")
+        self.assertEqual(ChatUsage.objects.get(grant=self.grant).message_count, 1)
+
+    def test_an_empty_question_is_refused(self):
+        self.assertEqual(self.ask("   ").status_code, 422)
+
+    @override_settings(COMPANION_HISTORY_TURNS=2)
+    def test_only_the_recent_turns_go_back(self):
+        turns = [{"role": "companion" if n % 2 else "reader", "text": f"turn {n}"} for n in range(6)]
+        kept = companion.conversation(turns)
+        self.assertEqual([m["content"] for m in kept], ["turn 4", "turn 5"])
+
+    @override_settings(COMPANION_HISTORY_CHARS=12)
+    def test_the_character_budget_keeps_the_newest(self):
+        turns = [{"role": "reader", "text": "an old long turn"}, {"role": "companion", "text": "newest"}]
+        kept = companion.conversation(turns)
+        # The newest fits; the older one does not, and the cue fronts the companion's turn.
+        self.assertEqual([m["content"] for m in kept], [companion.opening_cue(), "newest"])
