@@ -1,4 +1,4 @@
-/** Details and the cover (D84). Editing saves in one request. Uploading a cover arrives in #183. */
+/** Details and the cover (D84). Editing saves in one request; the cover is an upload (D85). */
 
 import { useState } from "react";
 
@@ -8,12 +8,16 @@ import { labels } from "../../../lib/labels";
 import { Cover } from "../books/Cover";
 import { refusalText } from "../refusal";
 import type { BookDetail, Refusal } from "../types";
-import type { Send } from "./shared";
+import { PickFile } from "./DropZone";
+import type { UploadItem } from "./machine/types";
+import { percent, type Send } from "./shared";
 
-export function Details({ book, refusal, saving, send }: {
+export function Details({ book, refusal, saving, coverUpload, coverVersion, send }: {
   book: BookDetail;
   refusal: Refusal | null;
   saving: boolean;
+  coverUpload: UploadItem | undefined;
+  coverVersion: number;
   send: Send;
 }) {
   const l = labels.admin.book;
@@ -52,8 +56,16 @@ export function Details({ book, refusal, saving, send }: {
 
       <div className="admin-cover-slot">
         <p className="admin-slot-label">{l.cover}</p>
-        <Cover bookId={book.id} title={book.title} hasCover={book.hasCover} />
+        <Cover bookId={book.id} title={book.title} hasCover={book.hasCover} version={coverVersion} />
+        {coverUpload && coverUpload.status !== "done" && (
+          <div className="admin-progress" aria-label={l.sending}>
+            <span style={{ width: `${percent(coverUpload)}%` }} />
+          </div>
+        )}
+        <p className="admin-drop-hint">{l.coverHint}</p>
         <div className="admin-form-actions">
+          <PickFile variant="quiet" label={book.hasCover ? l.replace : l.addCover} accept=".jpg,.jpeg,.png,.webp"
+            onFile={(file) => send({ type: "UPLOAD", file, target: { destination: "book_cover" } })} />
           {book.hasCover && !book.isPublished && (
             <Button variant="text" onClick={() => send({ type: "RUN", op: { kind: "removeMedia", which: "cover" } })}>
               {l.remove}
