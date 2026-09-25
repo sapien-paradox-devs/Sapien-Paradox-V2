@@ -10,18 +10,20 @@
  * The bar carries the chapter's name, a way to jump between sections, and a
  * 2px line that fills as the reader moves through. After a few seconds of
  * reading it fades, and it comes back the moment the reader reaches for it.
- * Nothing in it counts, times, or nudges.
+ * Nothing in it counts, times, or nudges. A full-screen control (and the `f`
+ * key) takes the pages to the edges of the screen (#198).
  */
 
 import { useMachine } from "@xstate/react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { labels } from "../../lib/labels";
-import { pdfMachine } from "./machine";
+import { leaveFullscreen, pdfMachine } from "./machine";
 import { PageSkeletons } from "./PageSkeletons";
 import { Pages } from "./Pages";
 import { activeSection, type Section } from "./position";
 import { Sections } from "./Sections";
+import { useFullscreenEvents } from "./useFullscreenEvents";
 import { useIdle } from "./useIdle";
 import { useReadingPosition } from "./useReadingPosition";
 import "./PdfChamber.css";
@@ -47,6 +49,10 @@ export function PdfChamber({ token, bookTitle, title, footer, startAt = 0, onPro
   const position = useReadingPosition(pagesRef, layout?.pages.length ?? 0);
   const idle = useIdle(3000, drawerOpen || !layout);
   useBlockSaveAndPrint();
+  useFullscreenEvents(send);
+  // Leaving the chapter must never strand the app in full screen (#198).
+  useEffect(() => () => leaveFullscreen(), []);
+  const immersive = state.matches({ view: "immersive" });
 
   // The line shows the furthest point reached, not the current one: scrolling
   // back to reread a paragraph should not look like losing ground (D70).
@@ -74,7 +80,7 @@ export function PdfChamber({ token, bookTitle, title, footer, startAt = 0, onPro
     target?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
   };
 
-  if (state.matches("error")) {
+  if (state.matches({ document: "error" })) {
     return (
       <div className="chamber-message" role="alert">
         {/* Says the link is fine, because it is — the document failed, not the
@@ -97,6 +103,7 @@ export function PdfChamber({ token, bookTitle, title, footer, startAt = 0, onPro
             <span className="chamber-bar-book">{bookTitle}</span>
             <span className="chamber-bar-chapter">{title}</span>
           </p>
+          <div className="chamber-bar-actions">
           <button
             type="button"
             className="chamber-bar-sections"
@@ -109,6 +116,22 @@ export function PdfChamber({ token, bookTitle, title, footer, startAt = 0, onPro
             </svg>
             {labels.reader.sections}
           </button>
+          <button
+            type="button"
+            className="chamber-bar-icon"
+            onClick={() => send({ type: "TOGGLE_FULLSCREEN" })}
+            aria-pressed={immersive}
+            aria-label={immersive ? labels.reader.exitFullscreen : labels.reader.fullscreen}
+            title={immersive ? labels.reader.exitFullscreen : labels.reader.fullscreen}
+          >
+            <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none"
+              stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              {immersive
+                ? <path d="M8 3v5H3M12 3v5h5M8 17v-5H3M12 17v-5h5" />
+                : <path d="M3 8V3h5M17 8V3h-5M3 12v5h5M17 12v5h-5" />}
+            </svg>
+          </button>
+          </div>
         </div>
         <div
           className="chamber-progress"

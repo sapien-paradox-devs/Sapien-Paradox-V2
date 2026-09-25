@@ -9,7 +9,12 @@ import type { Context, Event } from "./types";
 
 export const pdfMachine = setup({
   types: {} as { context: Context; events: Event; input: { token: string } },
-  actions: { assignLayout: assign(actions.layoutFrom) },
+  actions: {
+    assignLayout: assign(actions.layoutFrom),
+    enterFullscreen: actions.enterFullscreen,
+    leaveFullscreen: actions.leaveFullscreen,
+    dropImmersive: actions.dropImmersive,
+  },
   actors: { loadLayout: actors.loadLayout },
 }).createMachine({
   ...pdfConfig,
@@ -20,3 +25,5 @@ export const pdfMachine = setup({
 });
 
 export type { Context, Event, Layout, PageSize } from "./types";
+/** For PdfChamber's unmount: an actor stopping runs no exit actions. */
+export { leaveFullscreen } from "./actions";

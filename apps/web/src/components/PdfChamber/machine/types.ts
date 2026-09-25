@@ -14,4 +14,9 @@ export type Layout = {
 };
 
 export type Context = { token: string; layout: Layout | null };
-export type Event = { type: "RETRY" };
+export type Event =
+  | { type: "RETRY" }
+  /** The reader's full-screen control, or the `f` key. */
+  | { type: "TOGGLE_FULLSCREEN" }
+  /** The browser left full screen on its own (Esc, a swipe): follow it. */
+  | { type: "FULLSCREEN_EXITED" };
