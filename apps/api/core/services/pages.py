@@ -28,10 +28,12 @@ logger = logging.getLogger(__name__)
 RENDER_WIDTH = 1400
 WEBP_QUALITY = 80
 
-# The watermark: ink at ~8% opacity, diagonal, tiled. Visible in a screenshot,
-# invisible to someone reading.
-WATERMARK_RGBA = (31, 27, 22, 22)  # the ink (D81), ~8% opacity
+# The watermark (D73, made quieter by D87): sparse diagonal marks at ~4% ink,
+# invisible while reading and recoverable from a screenshot, plus one small line
+# in the bottom margin that names whose copy it is without crossing the text.
+WATERMARK_RGBA = (31, 27, 22, 10)   # the ink (D81), ~4% opacity
 WATERMARK_ANGLE = 30
+MARGIN_RGBA = (31, 27, 22, 70)      # ~27%: legible, but quiet, like a printer's line
 
 
 # ── rendering (at upload) ─────────────────────────────────────────────────
@@ -151,9 +153,17 @@ def watermarked_page(chapter, index: int, mark: str) -> bytes | None:
 
 
 def _watermark(size: tuple[int, int], mark: str) -> Image.Image:
-    """A transparent layer the size of the page, with `mark` tiled diagonally."""
+    """A transparent layer the size of the page: sparse diagonal marks, and one
+    line in the bottom margin (D87)."""
+    layer = _diagonal_marks(size, mark)
+    _margin_line(layer, f"For {mark}")
+    return layer
+
+
+def _diagonal_marks(size: tuple[int, int], mark: str) -> Image.Image:
+    """`mark` about eight times across the page, diagonal and faint."""
     width, height = size
-    font = ImageFont.load_default(size=max(14, width // 48))
+    font = ImageFont.load_default(size=max(14, width // 44))
 
     # Draw rows on a square large enough to cover the page at any rotation,
     # rotate it, then cut the page-sized middle out.
@@ -162,8 +172,9 @@ def _watermark(size: tuple[int, int], mark: str) -> Image.Image:
     draw = ImageDraw.Draw(layer)
 
     left, top, right, bottom = draw.textbbox((0, 0), mark, font=font)
-    step_x = (right - left) + width // 6
-    step_y = (bottom - top) * 7
+    # Wide gaps, so a page carries a handful of marks rather than a wallpaper.
+    step_x = (right - left) + width // 2
+    step_y = (bottom - top) * 16
 
     for row, y in enumerate(range(0, side, step_y)):
         offset = (row % 2) * step_x // 2
@@ -174,6 +185,17 @@ def _watermark(size: tuple[int, int], mark: str) -> Image.Image:
     x0 = (side - width) // 2
     y0 = (side - height) // 2
     return rotated.crop((x0, y0, x0 + width, y0 + height))
+
+
+def _margin_line(layer: Image.Image, text: str) -> None:
+    """One small centred line in the bottom margin, where a book keeps its small print."""
+    width, height = layer.size
+    font = ImageFont.load_default(size=max(12, width // 80))
+    draw = ImageDraw.Draw(layer)
+    left, top, right, bottom = draw.textbbox((0, 0), text, font=font)
+    x = (width - (right - left)) // 2
+    y = height - int(height * 0.035) - (bottom - top)
+    draw.text((x, y), text, font=font, fill=MARGIN_RGBA)
 
 
 def mark_for(user) -> str:
