@@ -90,6 +90,40 @@ describe("the page region", () => {
   });
 });
 
+describe("changing page leaves the session alone (#193)", () => {
+  it("does not restart the session check on ROUTE", async () => {
+    let checks = 0;
+    const machine = navigationMachine.provide({
+      actors: {
+        checkSession: fromPromise<User>(async () => {
+          checks += 1;
+          return READER;
+        }),
+        logoutActor: fromPromise<void>(async () => {}),
+      },
+    });
+    const actor = createActor(machine).start();
+    await new Promise((r) => setTimeout(r, 0));
+
+    for (const path of ["/", "/login", "/admin", "/r/abc", "/"]) actor.send({ type: "ROUTE", path });
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(checks).toBe(1);
+    expect(actor.getSnapshot().matches({ session: "authenticated" })).toBe(true);
+  });
+
+  it("keeps a sign-in that arrives just before the page changes", () => {
+    const actor = start({ session: "401" });
+    return new Promise<void>((resolve) => setTimeout(() => {
+      actor.send({ type: "AUTHENTICATED", user: READER });
+      actor.send({ type: "ROUTE", path: "/" });
+      expect(actor.getSnapshot().matches({ session: "authenticated", page: "home" })).toBe(true);
+      expect(actor.getSnapshot().context.user).toEqual(READER);
+      resolve();
+    }, 0));
+  });
+});
+
 describe("the session region", () => {
   it("reaches authenticated when the boot check succeeds", async () => {
     const actor = start({ session: "ok" });

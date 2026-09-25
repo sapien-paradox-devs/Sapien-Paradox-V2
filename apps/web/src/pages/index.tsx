@@ -7,7 +7,7 @@
  */
 
 import { useMachine } from "@xstate/react";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 import { SiteHeader } from "../components/SiteHeader";
 import type { HeaderPage } from "../components/SiteHeader/contents";
@@ -32,15 +32,23 @@ export function Navigator() {
 
   useEffect(() => startRouteSync(send), [send]);
 
+  // Stable for the life of the app (#193). Pages call these from effects; if
+  // they changed identity whenever the root state did, an effect that reports
+  // a sign-in would run again on every root transition and report it again,
+  // and each report pushes a URL. With view transitions (D54) the push lands a
+  // frame later, so the effect re-fired first: a loop that never left /login.
+  const navigate = useCallback((to: string) => send({ type: "NAVIGATE", to }), [send]);
+  const authenticated = useCallback<Navigation["authenticated"]>(
+    (user, next) => send({ type: "AUTHENTICATED", user, next }),
+    [send],
+  );
+  const logout = useCallback(() => send({ type: "LOGOUT" }), [send]);
+
+  const user = state.context.user;
+  const sessionSettled = !state.matches({ session: "checking" });
   const navigation = useMemo<Navigation>(
-    () => ({
-      user: state.context.user,
-      sessionSettled: !state.matches({ session: "checking" }),
-      navigate: (to: string) => send({ type: "NAVIGATE", to }),
-      authenticated: (user, next) => send({ type: "AUTHENTICATED", user, next }),
-      logout: () => send({ type: "LOGOUT" }),
-    }),
-    [state, send],
+    () => ({ user, sessionSettled, navigate, authenticated, logout }),
+    [user, sessionSettled, navigate, authenticated, logout],
   );
 
   // `page.unknown` renders nothing on purpose: it stops Home flashing before
