@@ -25,20 +25,6 @@ export const navigationConfig = {
   },
 
   on: {
-    // sync.ts is the only sender: mount, popstate, and after any pushUrl.
-    ROUTE: [
-      { guard: "isReaderPath", target: ".page.reader" },
-      // Before isAdminPath: `/admin/login` is its own page (D82).
-      { guard: "isAdminLoginPath", target: ".page.adminLogin" },
-      { guard: "isAdminPath", target: ".page.admin" },
-      { guard: "isLoginPath", target: ".page.login" },
-      { guard: "isResetPath", target: ".page.reset" },
-      { guard: "isOpeningPath", target: ".page.opening" },
-      { guard: "isWelcomePath", target: ".page.welcome" },
-      { guard: "isBeginPath", target: ".page.begin" },
-      { target: ".page.home" },
-    ],
-
     // Navigation is unidirectional: pages ask for a URL, the URL drives state.
     // No target here — pushUrl fires ROUTE back through sync.ts.
     NAVIGATE: {
@@ -98,6 +84,30 @@ export const navigationConfig = {
       // `unknown` renders nothing. It exists so the app does not flash Home
       // before sync.ts delivers the first ROUTE on mount.
       initial: "unknown",
+
+      // sync.ts is the only sender: mount, popstate, and after any pushUrl.
+      //
+      // Handled HERE, on the page region, never on the root (#193). On the
+      // root, every ROUTE re-entered the whole parallel machine, so each page
+      // change restarted the session check: the session fell back to
+      // `checking`, a sign-in reported meanwhile was dropped, and `/me`
+      // decided all over again whether the reader was signed in. Changing
+      // page must not touch the session region.
+      on: {
+        ROUTE: [
+          { guard: "isReaderPath", target: ".reader" },
+          // Before isAdminPath: `/admin/login` is its own page (D82).
+          { guard: "isAdminLoginPath", target: ".adminLogin" },
+          { guard: "isAdminPath", target: ".admin" },
+          { guard: "isLoginPath", target: ".login" },
+          { guard: "isResetPath", target: ".reset" },
+          { guard: "isOpeningPath", target: ".opening" },
+          { guard: "isWelcomePath", target: ".welcome" },
+          { guard: "isBeginPath", target: ".begin" },
+          { target: ".home" },
+        ],
+      },
+
       states: {
         unknown: {},
         home: {},

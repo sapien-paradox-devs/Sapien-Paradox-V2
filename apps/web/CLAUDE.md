@@ -287,17 +287,26 @@ WhatsApp visitor on a phone with no cookie. **Because the page region never wait
 region, a token link can never be bounced to `/login` by a pending auth check.** `DESIGN.md` D1 is
 satisfied structurally, not by a rule someone must remember.
 
-## Root-level events
+## Events
+
+**`ROUTE` is handled on the `page` region, not the root** (#193). On the root, every ROUTE
+re-entered the whole parallel machine and restarted the session check, so a page change could
+drop a fresh sign-in. Changing page must never touch the session region.
 
 ```
-on ROUTE:                        (sync.ts is the only sender)
+page.on ROUTE:                   (sync.ts is the only sender)
   guard isReaderPath   → .page.reader
   guard isLoginPath    → .page.login
   guard isOpeningPath  → .page.opening
   (default)            → .page.home
 
-on NAVIGATE:  actions: pushUrl   ← no target
+root.on NAVIGATE:  actions: pushUrl   ← no target
 ```
+
+**`navigate`, `authenticated` and `logout` are stable functions** (#193), built once in `Navigator`
+from `send`. Pages call them from effects; if they changed identity with every root transition,
+the effect reporting a sign-in re-ran on each transition and pushed the URL again, and with view
+transitions (D54) that looped without ever leaving `/login`.
 
 **Navigation is unidirectional: all of it flows through the URL.** `NAVIGATE` transitions
 nothing — it pushes the URL, which returns as `ROUTE`. One path→state mapping, no canonical-path
