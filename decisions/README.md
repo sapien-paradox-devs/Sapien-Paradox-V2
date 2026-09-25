@@ -101,6 +101,7 @@ back to. Without it these read as taste rather than as answers to specific, obse
 | D85 | Uploads go straight to R2 on signed per-file URLs *(settles D78's open upload question)* | [stewardship](17-stewardship.md) | locked |
 | D86 | Dropped files auto-match to chapters, fixed by drag *(amends D78's strict naming)* | [stewardship](17-stewardship.md) | locked |
 | D87 | A quieter watermark: sparse marks and one line in the margin *(amends D73's watermark)* | [reading](15-reading.md) | locked |
+| D88 | The companion: a quiet launcher, a side panel or a sheet, and it speaks first *(realises D13/D14)* | [reading](15-reading.md) | locked |
 
 **Claim the number in this index first, then write the file.** Three collisions happened in one day
 because a number locked on an unmerged branch is invisible here. The index on `main` is the lock.

@@ -217,3 +217,39 @@ obvious.*
   is the whole reason D73 has one.
 
 **Revisit if** leaked pages turn up with both marks removed: then the marks go denser again.
+
+---
+
+## D88 — The companion: a quiet launcher, a side panel or a sheet, and it speaks first
+
+**Locked** 2026-09-26 · owner's call ("design a good chatbot for it; take care of the placement") ·
+#199, #202 · realises D13 and D14
+
+### Decision
+
+- **Reachable, never intrusive.** A quiet *Ask about this chapter* pill sits fixed at the bottom
+  right of the chamber, full screen included. No badge, no pulse, no auto-open (D14). It replaces
+  the button that used to appear only after the last page.
+- **Placement.** On a wide screen, a panel floats on the right and the page column shifts left, so
+  the chapter stays readable beside the conversation. On a phone, a sheet rises to ~80% of the
+  screen; a tap outside or Esc closes it.
+- **It speaks first.** Opening the panel asks the companion for a question about this chapter
+  (D13), shown with a *thinking* indicator. Closing and reopening keeps the conversation.
+- **It remembers the thread.** Recent turns go back with each message, trimmed for cost (D33,
+  #202).
+- **The look says what it is.** The companion's turns are set in the book's serif with a teal rule,
+  like notes in a margin; the reader's are compact bubbles. A line under the composer says there
+  are no right answers, because the companion is exploratory, never evaluative (D13).
+- **Refusals are gentle states,** not errors: the daily cap, the companion unavailable, a chapter
+  not yet ready.
+
+### Rejected
+
+- **The companion only after the last page** (what was built). D14 forbids interrupting, not
+  being available; readers want to ask mid-chapter.
+- **A full-screen chat page.** It takes the reader away from the page the conversation is about.
+- **Streaming replies.** Worth it later (DESIGN.md: keep the transport swappable); the replies
+  are two or three sentences, and a thinking indicator is honest about the wait.
+
+**Revisit if** readers ignore the launcher: then the end-of-chapter invitation comes back beside it.
+
