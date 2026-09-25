@@ -187,3 +187,33 @@ image storage beside each PDF, more bandwidth than a PDF, and CPU per page view 
 The admin save did not run text extraction at all. `Chapter`'s docstring said it did, and only
 `seed_dev` called it, so a chapter uploaded through admin gave the companion nothing. Rendering
 and extraction now run together from the admin save.
+
+---
+
+## D87 — A quieter watermark: sparse marks and one line in the margin *(amends D73's watermark)*
+
+**Locked** 2026-09-26 · owner's call · #197
+
+### Why it changed
+
+D73's watermark tiled the reader's name and masked number about sixty times per page at ~8% ink.
+On a real page it competed with the text. The owner: *the watermark should be there, but not too
+obvious.*
+
+### Decision
+
+- **Sparse diagonal marks:** about eight per page, widely spaced, at ~4% ink. Invisible while
+  reading; visible in a screenshot once the contrast is raised.
+- **One line in the bottom margin:** *For <name> · <masked number>*, small, at ~27% ink, where a
+  printed book keeps its small print. It never crosses the text, and it names whose copy a
+  screenshot came from without anyone having to look for it.
+- **Unchanged:** burned in on every page request, per reader, never stored (D73). Stored page images
+  need no re-render.
+
+### Rejected
+
+- **The margin line alone.** A crop removes it in one step; the sparse marks survive a crop.
+- **Removing the watermark.** Then a shared screenshot says nothing about where it came from, which
+  is the whole reason D73 has one.
+
+**Revisit if** leaked pages turn up with both marks removed: then the marks go denser again.
