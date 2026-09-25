@@ -1,12 +1,277 @@
-/* Structure only. It must never steal focus or cover the chapter. */
+/* The companion (D88). Quiet until asked for; then it sits beside the page on a
+   wide screen and rises from the bottom on a phone. Palette roles from D81:
+   cobalt to act, teal for the companion's voice. Motion from D54: fast start,
+   slow settle, transform and opacity only. */
 
-.companion {
-  border-top: 1px solid currentColor;
-  margin-top: 2rem;
-  padding-top: 1rem;
+/* ── the launcher ────────────────────────────────────────────────────── */
+
+.companion-launcher {
+  position: fixed;
+  right: max(var(--space-4), env(safe-area-inset-right));
+  bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.65rem 1.05rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper-raised);
+  color: var(--ink);
+  font-size: 0.9rem;
+  box-shadow: var(--shadow-card);
+  animation: companion-arrive var(--dur-base) var(--ease-settle) both;
+  transition: box-shadow var(--dur-quick) var(--ease-settle), border-color var(--dur-quick) var(--ease-settle),
+    transform var(--dur-quick) var(--ease-settle);
 }
 
-.companion ol {
+.companion-launcher svg { color: var(--teal-text); }
+.companion-launcher:hover { border-color: var(--accent); box-shadow: var(--shadow-lift); transform: translateY(-1px); }
+.companion-launcher-short { display: none; }
+
+@media (max-width: 30rem) {
+  .companion-launcher { padding: 0.7rem 0.95rem; }
+  .companion-launcher-long { display: none; }
+  .companion-launcher-short { display: inline; }
+}
+
+/* ── the panel ───────────────────────────────────────────────────────── */
+
+.companion {
+  position: fixed;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  box-shadow: var(--shadow-lift);
+  /* Wide screens: a column beside the page. */
+  top: var(--space-4);
+  right: var(--space-4);
+  bottom: var(--space-4);
+  width: min(24rem, calc(100vw - 2 * var(--space-4)));
+  border-radius: var(--radius-lg);
+  animation: companion-slide-in var(--dur-settle) var(--ease-settle) both;
+}
+
+.companion-backdrop { display: none; }
+.companion-handle { display: none; }
+
+/* The page makes room, so the chapter stays readable beside the conversation. */
+@media (min-width: 64rem) {
+  :root[data-companion="open"] .reader { padding-right: calc(24rem + var(--space-8)); }
+}
+
+.companion-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-4) var(--space-3) var(--space-6);
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.companion-eyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--teal-text);
+}
+
+.companion-title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  line-height: 1.3;
+  margin-top: 2px;
+}
+
+.companion-close {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  color: var(--ink-soft);
+  flex-shrink: 0;
+  transition: background var(--dur-quick) var(--ease-settle), color var(--dur-quick) var(--ease-settle);
+}
+
+.companion-close:hover { background: var(--paper-sunk); color: var(--ink); }
+
+/* ── the conversation ────────────────────────────────────────────────── */
+
+.companion-turns {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   list-style: none;
-  padding: 0;
+  margin: 0;
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  scroll-behavior: smooth;
+}
+
+.companion-turn {
+  max-width: 100%;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  animation: companion-turn-in var(--dur-base) var(--ease-settle) both;
+}
+
+/* The companion's voice: the book's serif, a teal rule, like a note in a margin. */
+.companion-turn-companion {
+  align-self: stretch;
+  padding-left: var(--space-4);
+  border-left: 2px solid var(--teal);
+  font-family: var(--font-read);
+  font-size: 1.04rem;
+  color: var(--ink);
+}
+
+/* The reader's own turns: compact, to the right, in the interface face. */
+.companion-turn-reader {
+  align-self: flex-end;
+  max-width: 85%;
+  padding: var(--space-2) var(--space-4);
+  border-radius: 14px 14px 4px 14px;
+  background: var(--accent-wash);
+  color: var(--ink);
+  font-size: 0.93rem;
+}
+
+/* Thinking: three dots that breathe. Reduced motion keeps them still. */
+.companion-thinking { display: flex; gap: 6px; align-items: center; min-height: 1.6rem; }
+.companion-thinking span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--teal);
+  animation: companion-breathe 1.2s var(--ease-settle) infinite;
+}
+.companion-thinking span:nth-child(2) { animation-delay: 0.15s; }
+.companion-thinking span:nth-child(3) { animation-delay: 0.3s; }
+
+.companion-status {
+  font-size: 0.88rem;
+  color: var(--danger);
+}
+
+.companion-status button { color: var(--accent); text-decoration: underline; text-underline-offset: 0.2em; }
+.companion-status-calm { color: var(--ink-soft); font-style: italic; }
+
+/* ── the composer ────────────────────────────────────────────────────── */
+
+.companion-compose {
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border-top: 1px solid var(--rule-soft);
+}
+
+.companion-field {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  padding: 6px 6px 6px var(--space-4);
+  border: 1px solid var(--rule);
+  border-radius: 20px;
+  background: var(--paper);
+  transition: border-color var(--dur-quick) var(--ease-settle);
+}
+
+.companion-field:focus-within { border-color: var(--accent); }
+
+.companion-field textarea {
+  flex: 1;
+  min-height: 1.6rem;
+  max-height: 160px;
+  padding: 0.3rem 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.companion-field textarea:disabled { opacity: 0.55; }
+
+.companion-send {
+  display: inline-grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  flex-shrink: 0;
+  transition: background var(--dur-quick) var(--ease-settle), opacity var(--dur-quick) var(--ease-settle);
+}
+
+.companion-send:hover:not(:disabled) { background: var(--accent-hover); }
+.companion-send:disabled { opacity: 0.35; cursor: default; }
+
+.companion-note {
+  margin-top: var(--space-2);
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+/* ── phones: a sheet from the bottom ─────────────────────────────────── */
+
+@media (max-width: 40rem) {
+  .companion-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+    background: var(--backdrop);
+    animation: companion-fade var(--dur-base) var(--ease-settle) both;
+  }
+
+  .companion {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: min(82dvh, 44rem);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    animation: companion-rise var(--dur-settle) var(--ease-settle) both;
+  }
+
+  .companion-handle {
+    display: block;
+    width: 2.5rem;
+    height: 4px;
+    margin: var(--space-2) auto 0;
+    border-radius: 999px;
+    background: var(--rule);
+  }
+
+  .companion-turns { padding: var(--space-4); }
+}
+
+/* ── motion (D54) ────────────────────────────────────────────────────── */
+
+@keyframes companion-arrive { from { opacity: 0; transform: translateY(var(--rise)); } }
+@keyframes companion-slide-in { from { opacity: 0; transform: translateX(24px); } }
+@keyframes companion-rise { from { transform: translateY(100%); } }
+@keyframes companion-fade { from { opacity: 0; } }
+@keyframes companion-turn-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes companion-breathe { 0%, 100% { opacity: 0.25; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .companion-launcher, .companion, .companion-turn, .companion-backdrop { animation: none; }
+  .companion-thinking span { animation: none; opacity: 0.6; }
+}
+
+/* Printing never shows the conversation (D73). */
+@media print {
+  .companion-launcher, .companion, .companion-backdrop { display: none; }
 }

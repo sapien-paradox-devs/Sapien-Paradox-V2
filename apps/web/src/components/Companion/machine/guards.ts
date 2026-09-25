@@ -1,10 +1,19 @@
 import type { AnyEventObject } from "xstate";
 
-import { ApiError } from "../../../lib/fetcher";
+import { pauseOf } from "./actions";
+import type { Context, Event } from "./types";
+
+/** Reopening returns to the conversation instead of asking a new opening question. */
+export const hasConversation = ({ context }: { context: Context }) => context.turns.length > 0;
+
+export const hasText = ({ event }: { event: Event }) => event.type === "ASK" && event.question.trim().length > 0;
 
 /**
- * The reader has reached the chapter's limit. A boundary, not a failure — the
- * caps live in the service, and the panel renders what it is told (D33, D45).
+ * A refusal the panel shows as a calm state, not an error (D33, D45): the daily
+ * cap, the companion unavailable, a chapter not ready, a message too long.
  */
-export const isCapped = ({ event }: { event: AnyEventObject }) =>
-  "error" in event && event.error instanceof ApiError && event.error.status === 429;
+export const isPause = ({ event }: { event: AnyEventObject }) => pauseOf(event) !== null;
+
+/** Only a too-long message can be fixed by the reader and sent again. */
+export const canAskAgain = ({ context, event }: { context: Context; event: Event }) =>
+  context.pause === "tooLong" && hasText({ event });

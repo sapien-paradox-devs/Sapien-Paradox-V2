@@ -1,10 +1,15 @@
-export type Exchange = { question: string; answer: string };
+/** One turn of the conversation, as the panel shows it and the API receives it (#202). */
+export type Turn = { role: "reader" | "companion"; text: string };
+
+/** Why the companion is not answering. Each is a calm state, not an error (D45). */
+export type Pause = "capped" | "unavailable" | "notReady" | "tooLong" | null;
 
 export type Context = {
   token: string;
-  exchanges: Exchange[];
-  /** Kept so a failed question can be retried without retyping it. */
+  turns: Turn[];
+  /** The reader's message in flight, kept so a failed send can be retried unchanged. */
   pending: string;
+  pause: Pause;
 };
 
 export type Event =

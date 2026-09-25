@@ -137,11 +137,11 @@ export function ReaderPage() {
                 </button>
               </>
             )}
-            {/* Discussion comes after reading, and only when asked for (D14). */}
-            <Companion token={token} />
           </footer>
         }
       />
+      {/* Reachable from anywhere in the chapter, never opening on its own (D14, D88). */}
+      {chapter && <Companion token={token} chapterTitle={chapter.title} />}
     </main>
     </>
   );

@@ -11,18 +11,29 @@ import type { Context, Event } from "./types";
 export const companionMachine = setup({
   types: {} as { context: Context; events: Event; input: { token: string } },
   actions: {
-    rememberQuestion: assign(actions.rememberQuestion),
-    recordAnswer: assign(actions.recordAnswer),
+    addReaderTurn: assign(actions.addReaderTurn),
+    addCompanionTurn: assign(actions.addCompanionTurn),
+    rememberPending: assign(actions.rememberPending),
+    clearPending: assign(actions.clearPending),
+    assignPause: assign(actions.assignPause),
+    clearPause: assign(actions.clearPause),
+    dropUnsentTurn: assign(actions.dropUnsentTurn),
   },
-  actors: { askCompanion: actors.askCompanion },
-  guards: { isCapped: guards.isCapped },
+  actors: { openCompanion: actors.openCompanion, askCompanion: actors.askCompanion },
+  guards: {
+    hasConversation: guards.hasConversation,
+    hasText: guards.hasText,
+    isPause: guards.isPause,
+    canAskAgain: guards.canAskAgain,
+  },
 }).createMachine({
   ...companionConfig,
   context: ({ input }: { input: { token: string } }) => ({
     token: input.token,
-    exchanges: [],
+    turns: [],
     pending: "",
+    pause: null,
   }),
 });
 
-export type { Context, Event, Exchange } from "./types";
+export type { Context, Event, Pause, Turn } from "./types";

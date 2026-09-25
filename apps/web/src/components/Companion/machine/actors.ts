@@ -1,13 +1,21 @@
 import { fromPromise } from "xstate";
 
 import { mappedFetcher } from "../../../lib/fetcher";
+import type { Turn } from "./types";
 
-type Ask = { token: string; question: string };
+type Answer = { answer: string };
 
-/** Chapter-scoped, and capped in the service rather than here (D33). */
-export const askCompanion = fromPromise<{ answer: string }, Ask>(({ input }) =>
-  mappedFetcher.post<{ answer: string }>("/api/chat", {
-    token: input.token,
-    question: input.question,
-  }),
+/** The companion speaks first, with a question about the chapter (D13, #202). */
+export const openCompanion = fromPromise<Answer, { token: string }>(({ input }) =>
+  mappedFetcher.post<Answer>("/api/chat", { token: input.token, opening: true }),
+);
+
+/** Chapter-scoped, with the thread so far; capped in the service (D33). */
+export const askCompanion = fromPromise<Answer, { token: string; question: string; history: Turn[] }>(
+  ({ input }) =>
+    mappedFetcher.post<Answer>("/api/chat", {
+      token: input.token,
+      question: input.question,
+      history: input.history,
+    }),
 );
