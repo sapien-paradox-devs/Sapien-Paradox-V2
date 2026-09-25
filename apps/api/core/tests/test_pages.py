@@ -132,6 +132,25 @@ class ServingTests(PagesTestBase):
         darkest, _ = served.getextrema()
         self.assertLess(darkest, 250)
 
+    def test_the_watermark_is_quiet_and_names_the_copy_in_the_margin(self):
+        """D87: faint sparse marks over the page, one legible line in the margin."""
+        width, height = 1400, 1982
+        layer = pages._watermark((width, height), "Ada Reader · +91 ******3210")
+        alpha = layer.getchannel("A")
+
+        margin_top = height - int(height * 0.08)
+        body = alpha.crop((0, 0, width, margin_top))
+        margin = alpha.crop((0, margin_top, width, height))
+
+        # Over the text: faint, and on a small share of the page. The bicubic
+        # rotation overshoots a little at letter edges (14 for 10), so allow ~6% ink.
+        self.assertLessEqual(body.getextrema()[1], 16)
+        marked = sum(1 for value in body.getdata() if value)
+        self.assertLess(marked / (width * margin_top), 0.03)
+
+        # In the margin: the named line, legible.
+        self.assertEqual(margin.getextrema()[1], pages.MARGIN_RGBA[3])
+
     def test_page_numbers_outside_the_chapter_are_404(self):
         self.assertEqual(self.client.get(f"/api/grants/{self.grant.token}/pages/0").status_code, 404)
         self.assertEqual(self.client.get(f"/api/grants/{self.grant.token}/pages/3").status_code, 404)
