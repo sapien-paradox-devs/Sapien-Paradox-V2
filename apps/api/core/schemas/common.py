@@ -1,3 +1,5 @@
+from typing import Literal
+
 from ninja import Schema
 
 
@@ -30,13 +32,25 @@ class ChapterOut(Schema):
     hasVideo: bool
 
 
+class ChatTurnIn(Schema):
+    """One earlier turn of the conversation, as the panel holds it."""
+
+    role: Literal["reader", "companion"]
+    text: str
+
+
 class ChatIn(Schema):
-    """The panel's existing contract: the token identifies the chapter, and the
-    question is one turn. History is not sent -- the companion is chapter-scoped
-    and the chapter is the context that matters (D13)."""
+    """One message to the companion (#202).
+
+    `history` is the conversation so far, so the companion follows the thread;
+    the service trims it for cost (D33). `opening` asks the companion to speak
+    first, with a question about the chapter (D13); `question` is then ignored.
+    """
 
     token: str
-    question: str
+    question: str = ""
+    history: list[ChatTurnIn] = []
+    opening: bool = False
 
 
 class ChatOut(Schema):

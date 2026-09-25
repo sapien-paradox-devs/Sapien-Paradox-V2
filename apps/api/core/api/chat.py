@@ -44,12 +44,18 @@ def chat(request, payload: ChatIn):
         # improvise about a chapter it cannot see.
         raise HttpError(409, "chapter_not_extracted")
 
+    if payload.opening:
+        # The companion speaks first (D13): the cue stands in for a question,
+        # and there is no thread yet.
+        message, history = companion.opening_cue(), []
+    else:
+        if not payload.question.strip():
+            raise HttpError(422, "empty_question")
+        message = payload.question
+        history = companion.conversation([turn.dict() for turn in payload.history])
+
     try:
-        result = companion.ask(
-            grant,
-            payload.question,
-            [],
-        )
+        result = companion.ask(grant, message, history)
     except companion.CompanionUnavailable as exc:
         log.warning("companion unavailable: %s", exc)
         raise HttpError(503, "companion_unavailable") from exc
