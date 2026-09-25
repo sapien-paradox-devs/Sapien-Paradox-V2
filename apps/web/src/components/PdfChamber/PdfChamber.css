@@ -71,6 +71,24 @@
 }
 
 .chamber-bar-sections:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-faint); }
+
+.chamber-bar-actions { display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+
+/* Full screen (#198): a round twin of the Sections pill. */
+.chamber-bar-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  background: var(--paper-raised);
+  color: var(--ink-soft);
+  transition: color var(--dur-quick) var(--ease-settle), border-color var(--dur-quick) var(--ease-settle);
+}
+
+.chamber-bar-icon:hover { color: var(--ink); border-color: var(--ink-faint); }
+.chamber-bar-icon[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
 .chamber-bar-sections:disabled { opacity: 0.5; cursor: default; }
 
 /* The progress line: a hairline that fills. Transform only (D54). */
@@ -278,3 +296,21 @@
 }
 
 .pdf-page-skeleton { box-shadow: var(--shadow-card); }
+
+/* ── immersive (#198) ────────────────────────────────────────────────────
+   Set on <html> by the chamber's machine, with or without the browser's own
+   full screen (an iPhone has none for pages). The page is all there is: no
+   site header, no chapter heading, the pages as wide as a book can usefully be.
+   The bar stays, and fades while reading as it always does. */
+
+:root[data-view="immersive"] .ui-header,
+:root[data-view="immersive"] .reader-opening { display: none; }
+
+:root[data-view="immersive"] .reader {
+  max-width: none;
+  padding: 0 var(--space-4) var(--space-12);
+}
+
+:root[data-view="immersive"] .chamber-bar { margin: 0 calc(var(--space-4) * -1); }
+
+:root[data-view="immersive"] .pdf-pages { max-width: min(100%, 72rem); }

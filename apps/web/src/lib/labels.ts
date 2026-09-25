@@ -237,6 +237,9 @@ export const labels = {
     loading: "Opening the chapter…",
     // The chamber's bar and drawer (#150, D70–D71).
     sections: "Sections",
+    // Full screen (#198).
+    fullscreen: "Full screen (F)",
+    exitFullscreen: "Leave full screen (Esc)",
     sectionsTitle: "In this chapter",
     page: "Page",
     close: "Close",
