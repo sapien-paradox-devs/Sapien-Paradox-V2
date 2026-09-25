@@ -26,11 +26,15 @@ export type AdminRoute =
   | { screen: "readers" }
   | { screen: "newReader" }
   | { screen: "reader"; id: string }
-  | { screen: "books" };
+  | { screen: "books" }
+  | { screen: "newBook" }
+  | { screen: "book"; id: string };
 
 /** `/admin/...` → which screen. Anything unknown is the reader list. */
 export function adminRoute(path: string): AdminRoute {
   const parts = path.replace(/\/+$/, "").split("/").slice(2); // drop "", "admin"
+  if (parts[0] === "books" && parts[1] === "new") return { screen: "newBook" };
+  if (parts[0] === "books" && parts[1] && /^\d+$/.test(parts[1])) return { screen: "book", id: parts[1] };
   if (parts[0] === "books") return { screen: "books" };
   if (parts[0] === "readers" && parts[1] === "new") return { screen: "newReader" };
   if (parts[0] === "readers" && parts[1] && /^\d+$/.test(parts[1])) {

@@ -195,14 +195,17 @@ siblings.
 | `GET/POST /api/admin/books` · `GET/PATCH /api/admin/books/{id}` | **staff** | the book workspace (D84); created unpublished |
 | `POST /api/admin/books/{id}/publish` · `/unpublish` | **staff** | publish refused until the checklist passes |
 | `POST /api/admin/books/{id}/chapters/order` · `PATCH/DELETE /api/admin/chapters/{id}` | **staff** | reorder/delete only while a draft; never a chapter with grants |
+| `POST /api/admin/uploads` → `PUT …/direct` (no R2) → `POST …/complete` | **staff** | D85: signed ticket, bytes straight to R2, then attach + render |
 
 **Three Ninja auth classes**: `SessionAuth` (Django session), `StaffAuth` (a session whose user is
 staff, for `/api/admin/*`, D82) and `GrantAuth` (resolves the token from the path). **Each endpoint
 declares exactly one. No endpoint accepts both a session and a grant.**
 
-**CSRF: only `StaffAuth` enforces it today.** Ninja checks CSRF only for its own cookie auth
-classes, so the plain `SessionAuth` does not, despite D30. `StaffAuth` calls `check_csrf` itself.
-Turning it on for `SessionAuth` is its own issue.
+**CSRF is enforced by `SessionAuth` itself** (and so by `StaffAuth`), because Ninja checks CSRF only
+for its own cookie auth classes (#176). The token reaches the SPA as an `X-CSRFToken` response
+header from `/auth/me` and login, exposed through CORS, since on the split origin the app cannot read
+the API's cookie. While `SESSION_COOKIE_SAMESITE=None`, `CSRF_COOKIE_SAMESITE` must be `None` too;
+settings refuse to start otherwise.
 
 ## API-layer rules — all locked
 

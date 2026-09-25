@@ -13,8 +13,10 @@
  *    backend bug: the request succeeds, the cookie is dropped, the next call is anonymous.
  * 3. **One error shape carrying `status`**, so a guard stays a single line:
  *    `export const isRateLimited = ({ event }) => event.error.status === 429;`
- * 4. **The CSRF header** on every unsafe request (D30), read from Django's
- *    `csrftoken` cookie, which `/api/auth/me` and login make sure exists.
+ * 4. **The CSRF header** on every unsafe request (D30). The token comes from the
+ *    `X-CSRFToken` response header that `/api/auth/me` and login send, kept in
+ *    memory, because while the app and API are on unrelated sites the app cannot
+ *    read the API's cookie (#176). The cookie is the fallback.
  */
 
 import { API_BASE } from "./env";
@@ -42,10 +44,25 @@ export class ApiError extends Error {
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
-/** Django's CSRF cookie, or null. Readable because it is not HttpOnly (D30). */
+/** The token the API last handed over in a header (#176). Never persisted. */
+let handedOver: string | null = null;
+
+function remember(response: Response): void {
+  const token = response.headers.get("X-CSRFToken");
+  if (token) handedOver = token;
+}
+
+/** The CSRF token: the one the API handed over, else Django's cookie when readable. */
 function csrfToken(): string | null {
+  if (handedOver) return handedOver;
   const match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
   return match ? decodeURIComponent(match[1]) : null;
+}
+
+/** The CSRF header for a request made outside `request` (an upload's XHR, D85). */
+export function csrfHeader(): Record<string, string> {
+  const token = csrfToken();
+  return token ? { "X-CSRFToken": token } : {};
 }
 
 function headersFor(method: string, hasBody: boolean): Record<string, string> {
@@ -65,6 +82,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     headers: headersFor(method, body !== undefined),
     body: body === undefined ? undefined : JSON.stringify(body),
   });
+  remember(response);
 
   if (!response.ok) {
     throw await errorFrom(response);
@@ -134,6 +152,7 @@ export const mappedFetcher = {
   get: <T>(path: string) => request<T>("GET", path),
   post: <T>(path: string, body?: unknown) => request<T>("POST", path, body),
   patch: <T>(path: string, body?: unknown) => request<T>("PATCH", path, body),
+  delete: <T>(path: string) => request<T>("DELETE", path),
   blob,
   send,
 };

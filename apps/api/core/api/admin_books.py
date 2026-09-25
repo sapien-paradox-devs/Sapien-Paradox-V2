@@ -1,8 +1,9 @@
 """The book workspace's API (D82–D86). Staff only, CSRF enforced (StaffAuth).
 
 **HTTP only.** Reads go through `selectors` (D61); every change is a function
-in `services/catalog.py`. Refusals come back as `409 {code, field}`, which the
-workspace puts into words next to what caused them.
+in `services/catalog.py`; every upload goes through `services/uploads.py`
+(D85). Refusals come back as `409 {code, field}`, which the workspace puts into
+words next to what caused them.
 """
 
 from django.http import HttpResponse
@@ -23,8 +24,12 @@ from ..schemas.admin import (
     ChapterTitleIn,
     ChecklistOut,
     RefusalOut,
+    UploadCompleteIn,
+    UploadDoneOut,
+    UploadPlanOut,
+    UploadStartIn,
 )
-from ..services import catalog, media
+from ..services import catalog, media, uploads
 
 router = Router()
 
@@ -56,6 +61,7 @@ def _detail(book_id) -> BookDetailOut:
         **_row_fields(book),
         description=book.description,
         priceMinorUnits=book.price_cents,
+        hasVideo=bool(book.video),
         hasSample=bool(book.sample_video),
         chapters=[
             ChapterAdminOut(
@@ -222,3 +228,52 @@ def retry_chapter(request, chapter_id: int):
     chapter = _chapter_or_404(chapter_id)
     catalog.prepare(chapter)
     return _detail(chapter.book_id)
+
+
+# ── uploads (D85) ─────────────────────────────────────────────────────────────
+
+
+@router.post("/admin/uploads", response={200: UploadPlanOut, **REFUSED}, auth=staff_auth,
+             url_name="admin_upload_start")
+def start_upload(request, payload: UploadStartIn):
+    book = _book_or_404(payload.bookId)
+    chapter = None
+    if payload.chapterId is not None:
+        chapter = Chapter.objects.filter(pk=payload.chapterId, book=book).first()
+        if chapter is None:
+            raise HttpError(404, "no_such_chapter")
+    elif payload.destination in ("chapter_pdf", "chapter_video"):
+        return 409, RefusalOut(code="chapter_required")
+    try:
+        plan = uploads.start(destination=payload.destination, book=book, chapter=chapter,
+                             filename=payload.filename, size=payload.size, title=payload.title)
+    except uploads.UploadRefused as exc:
+        return _refused(exc)
+    return 200, UploadPlanOut(ticket=plan.ticket, mode=plan.mode, url=plan.url,
+                              uploadId=plan.upload_id, partSize=plan.part_size,
+                              partUrls=plan.part_urls, contentType=plan.content_type)
+
+
+@router.put("/admin/uploads/direct", response={204: None, **REFUSED}, auth=staff_auth,
+            url_name="admin_upload_direct")
+def direct_upload(request):
+    """The no-R2 fallback (mandate 6). The ticket travels in a header, never the URL (D22)."""
+    try:
+        uploads.direct(request.headers.get("X-Upload-Ticket", ""), request)
+    except uploads.UploadRefused as exc:
+        return _refused(exc)
+    return 204, None
+
+
+@router.post("/admin/uploads/complete", response={200: UploadDoneOut, **REFUSED}, auth=staff_auth,
+             url_name="admin_upload_complete")
+def complete_upload(request, payload: UploadCompleteIn):
+    """Check, attach, and for a PDF render its pages: one chapter per request (D85)."""
+    parts = [p.dict() for p in payload.parts] if payload.parts else None
+    try:
+        claims = uploads.complete(payload.ticket, parts)
+    except uploads.UploadRefused as exc:
+        return _refused(exc)
+    changed = catalog.attach(claims)
+    chapter_id = str(changed.pk) if isinstance(changed, Chapter) else None
+    return 200, UploadDoneOut(book=_detail(claims["b"]), chapterId=chapter_id)

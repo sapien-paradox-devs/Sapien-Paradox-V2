@@ -234,6 +234,35 @@ command into the dashboard (Settings → Start Command). To run it yourself, any
 New uploads render from the admin save (the chapter screen and the book screen's chapter
 inline), and `seed_dev` renders its own chapters.
 
+### Uploads from the admin — R2 CORS, once (D85)
+
+The book workspace (`/admin/books/:id`) sends files **straight from the browser to R2** on signed
+URLs, so the bucket must accept a `PUT` from the app's origin and expose the `ETag` header (each part
+of a large upload returns one, and completing needs them). In the Cloudflare dashboard → R2 → the
+bucket → **Settings → CORS policy**:
+
+```json
+[
+  {
+    "AllowedOrigins": ["https://app.<domain>", "http://localhost:5173"],
+    "AllowedMethods": ["PUT"],
+    "AllowedHeaders": ["Content-Type"],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+Until the domain exists, use the Vercel URL in `AllowedOrigins`. Without this rule, uploads fail in
+the browser with a CORS error before any bytes move. **Without R2 configured at all** (a fresh
+clone), uploads go through the API instead and need nothing.
+
+Optional env: `PDF_MAX_MB` (100), `COVER_MAX_MB` (10), `UPLOAD_URL_TTL_SECONDS` (21600),
+`UPLOAD_MULTIPART_THRESHOLD_MB` (50), `UPLOAD_PART_MB` (16).
+
+**Preview the workspace without an account:** `npm run dev`, then
+`http://localhost:5173/harness.html` (`?v=staged`, `board`, `videos`, `publish`). Sample data, no API.
+
 ### Web — Vercel (D34)
 
 `apps/web/vercel.json` carries the framework, build, output, and the SPA rewrite. **Three settings

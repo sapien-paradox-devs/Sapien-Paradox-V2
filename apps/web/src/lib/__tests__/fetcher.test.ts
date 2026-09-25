@@ -92,4 +92,18 @@ describe("mappedFetcher", () => {
     // matters is that nothing hardcodes a host.
     expect(calls[0].url).toBe("/api/home");
   });
+
+  it("sends the CSRF token the API handed over in a header (#176)", async () => {
+    vi.stubGlobal("fetch", async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response("{}", { status: 200, headers: { "X-CSRFToken": "handed-over" } });
+    });
+
+    await mappedFetcher.get("/api/auth/me");
+    await mappedFetcher.post("/api/auth/logout");
+
+    expect(new Headers(calls[1].init.headers).get("X-CSRFToken")).toBe("handed-over");
+    // Reads do not carry it.
+    expect(new Headers(calls[0].init.headers).get("X-CSRFToken")).toBeNull();
+  });
 });

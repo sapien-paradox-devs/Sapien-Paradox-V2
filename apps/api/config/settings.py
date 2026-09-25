@@ -188,6 +188,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", ["http://localhost:5173"])
 CORS_ALLOW_CREDENTIALS = True
+# The CSRF token travels in this header too, because on the split origin the SPA
+# cannot read the API's cookie (#176). Without exposing it, the browser hides it.
+CORS_EXPOSE_HEADERS = ["X-CSRFToken"]
 
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", ["http://localhost:5173"])
 
@@ -224,6 +227,15 @@ if SESSION_COOKIE_SAMESITE == "None" and not SESSION_COOKIE_SECURE:
     raise RuntimeError(
         "SESSION_COOKIE_SAMESITE=None requires SESSION_COOKIE_SECURE, which is off "
         "because DJANGO_DEBUG is on. Browsers drop the cookie without it."
+    )
+
+# Django checks the X-CSRFToken header against the `csrftoken` COOKIE. When the
+# session cookie has to travel cross-site, so does this one, or every unsafe
+# request fails CSRF while login appears to work (#176). Fail at startup instead.
+if SESSION_COOKIE_SAMESITE == "None" and CSRF_COOKIE_SAMESITE != "None":
+    raise RuntimeError(
+        "SESSION_COOKIE_SAMESITE=None needs CSRF_COOKIE_SAMESITE=None as well: the "
+        "CSRF cookie must reach the API from the app's site for the check to pass."
     )
 
 if not DEBUG:
@@ -272,6 +284,14 @@ RESET_TOKEN_TTL_MINUTES = int(os.getenv("RESET_TOKEN_TTL_MINUTES", "60"))  # D21
 # making Range requests against it; two hours covers any chapter video.
 VIDEO_URL_TTL_SECONDS = int(os.getenv("VIDEO_URL_TTL_SECONDS", "7200"))
 VIDEO_MAX_MB = int(os.getenv("VIDEO_MAX_MB", "500"))
+# Uploads from the in-app admin (D85). A signed upload URL lives this long; a
+# large video on a slow connection needs the time. Files above the threshold go
+# up in parts, so a dropped connection retries one part, not the whole file.
+PDF_MAX_MB = int(os.getenv("PDF_MAX_MB", "100"))
+COVER_MAX_MB = int(os.getenv("COVER_MAX_MB", "10"))
+UPLOAD_URL_TTL_SECONDS = int(os.getenv("UPLOAD_URL_TTL_SECONDS", "21600"))
+UPLOAD_MULTIPART_THRESHOLD_MB = int(os.getenv("UPLOAD_MULTIPART_THRESHOLD_MB", "50"))
+UPLOAD_PART_MB = int(os.getenv("UPLOAD_PART_MB", "16"))  # R2's minimum is 5
 # Where this API is reached from a browser. Only used when storage is local (no R2), to
 # turn a `/media/...` path into a URL the SPA, on another origin, can play.
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000").rstrip("/")
