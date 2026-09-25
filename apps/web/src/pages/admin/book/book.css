@@ -71,7 +71,7 @@
 .admin-drop-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: center; margin-top: var(--space-2); }
 
 /* Chapter lists */
-.admin-chapters { display: flex; flex-direction: column; gap: var(--space-4); }
+.admin-chapters, .admin-videos { display: flex; flex-direction: column; gap: var(--space-4); }
 .admin-chapter-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 
 .admin-chapter {
@@ -173,6 +173,53 @@
 
 .admin-staged h3 { font-size: 1.2rem; }
 .admin-skipped { font-size: 0.82rem; }
+
+/* Video slots and the board */
+.admin-slots { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+
+.admin-slot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-3) var(--space-2);
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.admin-slot-text { flex: 1 1 14rem; display: flex; flex-direction: column; gap: 2px; }
+/* Inside the column, the name must not take the row's flex basis as a height. */
+.admin-slot-text .admin-slot-name { flex: none; }
+.admin-slot-name { flex: 1 1 14rem; font-family: var(--font-read); }
+.admin-slot-target { border: 1px dashed transparent; border-radius: var(--radius); transition: background var(--dur-quick) var(--ease-settle); }
+.admin-slot-over { background: var(--accent-wash); border-color: var(--accent); }
+.admin-slot-drop { display: flex; flex-wrap: wrap; gap: var(--space-2); min-height: 2rem; align-items: center; }
+
+.admin-chip {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+  background: var(--teal-wash);
+  color: var(--teal-text);
+  font-size: 0.82rem;
+  cursor: grab;
+  user-select: none;
+}
+
+.admin-tray {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  padding: var(--space-4);
+  border: 1.5px dashed var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper-sunk);
+}
+
+.admin-tray .admin-slot-label { flex-basis: 100%; }
+.admin-tray .admin-chip { background: var(--saffron-wash); color: var(--saffron-text); }
 
 /* Publish (D84) */
 .admin-publish { display: flex; flex-direction: column; gap: var(--space-4); align-items: flex-start; max-width: 32rem; }

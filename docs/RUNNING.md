@@ -261,7 +261,7 @@ Optional env: `PDF_MAX_MB` (100), `COVER_MAX_MB` (10), `UPLOAD_URL_TTL_SECONDS` 
 `UPLOAD_MULTIPART_THRESHOLD_MB` (50), `UPLOAD_PART_MB` (16).
 
 **Preview the workspace without an account:** `npm run dev`, then
-`http://localhost:5173/harness.html` (`?v=staged`, `publish`). Sample data, no API.
+`http://localhost:5173/harness.html` (`?v=staged`, `board`, `videos`, `publish`). Sample data, no API.
 
 ### Web — Vercel (D34)
 

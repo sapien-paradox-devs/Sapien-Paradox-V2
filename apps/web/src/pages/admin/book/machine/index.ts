@@ -24,6 +24,10 @@ export const bookMachine = setup({
     unstage: assign(actions.unstage),
     enqueueStagedPdfs: assign(actions.enqueueStagedPdfs),
     cancelPdfs: assign(actions.cancelPdfs),
+    stageVideos: assign(actions.stageVideos),
+    assignVideo: assign(actions.assignVideo),
+    enqueueStagedVideos: assign(actions.enqueueStagedVideos),
+    cancelVideos: assign(actions.cancelVideos),
 
     enqueueOne: assign(actions.enqueueOne),
     requeue: assign(actions.requeue),
@@ -51,6 +55,7 @@ export const bookMachine = setup({
   guards: {
     hasBook: guards.hasBook,
     hasStagedPdfs: guards.hasStagedPdfs,
+    hasStagedVideos: guards.hasStagedVideos,
   },
 }).createMachine({
   ...bookConfig,
@@ -60,9 +65,10 @@ export const bookMachine = setup({
     refusal: null,
     op: null,
     stagedPdfs: null,
+    stagedVideos: null,
     uploads: [],
     nextUploadId: 1,
   }),
 });
 
-export type { Details, Op, Target, UploadItem } from "./types";
+export type { Details, Op, Slot, StagedVideo, Target, UploadItem } from "./types";

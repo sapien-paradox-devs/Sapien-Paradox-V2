@@ -188,6 +188,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", ["http://localhost:5173"])
 CORS_ALLOW_CREDENTIALS = True
+# The CSRF token travels in this header too, because on the split origin the SPA
+# cannot read the API's cookie (#176). Without exposing it, the browser hides it.
+CORS_EXPOSE_HEADERS = ["X-CSRFToken"]
 
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", ["http://localhost:5173"])
 
@@ -224,6 +227,15 @@ if SESSION_COOKIE_SAMESITE == "None" and not SESSION_COOKIE_SECURE:
     raise RuntimeError(
         "SESSION_COOKIE_SAMESITE=None requires SESSION_COOKIE_SECURE, which is off "
         "because DJANGO_DEBUG is on. Browsers drop the cookie without it."
+    )
+
+# Django checks the X-CSRFToken header against the `csrftoken` COOKIE. When the
+# session cookie has to travel cross-site, so does this one, or every unsafe
+# request fails CSRF while login appears to work (#176). Fail at startup instead.
+if SESSION_COOKIE_SAMESITE == "None" and CSRF_COOKIE_SAMESITE != "None":
+    raise RuntimeError(
+        "SESSION_COOKIE_SAMESITE=None needs CSRF_COOKIE_SAMESITE=None as well: the "
+        "CSRF cookie must reach the API from the app's site for the check to pass."
     )
 
 if not DEBUG:
