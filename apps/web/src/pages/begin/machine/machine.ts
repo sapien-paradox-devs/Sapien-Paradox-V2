@@ -1,20 +1,21 @@
 /**
  * Begin — level 1. Where a book is bought (D47), on its own page (#160).
  *
- *   loading → browsing → submitting → redirecting
- *           ↘ failed   ↖ refused ↙
+ *   loading → browsing → submitting → paying → redirecting
+ *           ↘ failed   ↖ refused ↙ ↖ browsing (dismissed)
  *
- * `redirecting` is final on purpose: the browser is leaving for Razorpay, so
- * there is no state after it. The reader returns at `/welcome` as a fresh load.
+ * `submitting` creates a Razorpay order. `paying` opens the Standard Checkout
+ * modal, waits for payment, then verifies with the backend — all inside one
+ * actor. `redirecting` navigates to `/welcome`.
  *
  * `refused` returns to the form with everything still typed. Re-entering five
  * fields because the gateway hiccuped is its own insult, and D45 says a
  * refusal is a normal state rather than an error screen.
  */
 
-import type { Context, Event } from "./types";
+import type { Context } from "./types";
 
-const initialContext: Context = { books: [], paymentUrl: null };
+const initialContext: Context = { books: [], orderDetails: null, signup: null };
 
 export const beginConfig = {
   id: "begin",
@@ -32,27 +33,39 @@ export const beginConfig = {
 
     failed: { on: { RETRY: { target: "loading" } } },
 
-    browsing: { on: { SUBMIT: { target: "submitting" } } },
+    browsing: { on: { SUBMIT: { target: "submitting", actions: "assignSignup" } } },
 
     submitting: {
       invoke: {
         src: "startCheckout",
-        // `submitting` is only reachable from SUBMIT, and the mapper must return
-        // a Signup rather than `Signup | null`. Narrow by throwing rather than
-        // casting: mandate 4 forbids `as any`, and this states the invariant.
-        input: ({ event }: { event: Event }) => {
-          if (event.type !== "SUBMIT") {
-            throw new Error("begin: submitting entered without a SUBMIT event");
+        input: ({ context }: { context: Context }) => {
+          if (!context.signup) {
+            throw new Error("begin: submitting entered without a signup");
           }
-          return event.signup;
+          return context.signup;
         },
-        onDone: { target: "redirecting", actions: "assignPaymentUrl" },
+        onDone: { target: "paying", actions: "assignOrderDetails" },
         onError: { target: "refused" },
       },
     },
 
-    refused: { on: { SUBMIT: { target: "submitting" } } },
+    paying: {
+      invoke: {
+        src: "payAndConfirm",
+        input: ({ context }: { context: Context }) => ({
+          orderDetails: context.orderDetails!,
+          signup: context.signup!,
+        }),
+        onDone: { target: "redirecting" },
+        onError: [
+          { guard: "isDismissed", target: "browsing" },
+          { target: "refused" },
+        ],
+      },
+    },
 
-    redirecting: { type: "final", entry: "leaveForPayment" },
+    refused: { on: { SUBMIT: { target: "submitting", actions: "assignSignup" } } },
+
+    redirecting: { type: "final", entry: "navigateToWelcome" },
   },
 } as const;

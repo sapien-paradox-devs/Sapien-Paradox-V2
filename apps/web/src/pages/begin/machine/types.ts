@@ -13,10 +13,18 @@ export type Signup = {
   pace: string;
 };
 
+export type OrderDetails = {
+  orderId: string;
+  keyId: string;
+  amount: number;
+  currency: string;
+  bookTitle: string;
+};
+
 export type Context = {
   books: Book[];
-  /** Set once checkout succeeds; the page redirects the browser to it. */
-  paymentUrl: string | null;
+  orderDetails: OrderDetails | null;
+  signup: Signup | null;
 };
 
 export type Event =
