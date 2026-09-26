@@ -301,12 +301,22 @@ REISSUE_COOLDOWN_MINUTES = int(os.getenv("REISSUE_COOLDOWN_MINUTES", "60"))     
 CHAPTER_SEND_COOLDOWN_MINUTES = int(os.getenv("CHAPTER_SEND_COOLDOWN_MINUTES", "60"))  # D11
 RESET_REQUEST_COOLDOWN_MINUTES = int(os.getenv("RESET_REQUEST_COOLDOWN_MINUTES", "15"))  # D21
 
-# Cadence delays in days, per pace key. Config, never a table (D19).
+# Cadence delays in days, per pace key. Config, never a table (D19, D50).
+# Floats so a test deployment can set `PACE_DELAY_DAYS_FAST=0.01` and watch a
+# whole book flow in a quarter of an hour.
 PACE_DELAY_DAYS = {
-    "slow": int(os.getenv("PACE_DELAY_DAYS_SLOW", "7")),
-    "medium": int(os.getenv("PACE_DELAY_DAYS_MEDIUM", "3")),
-    "fast": int(os.getenv("PACE_DELAY_DAYS_FAST", "1")),
+    "slow": float(os.getenv("PACE_DELAY_DAYS_SLOW", "7")),
+    "medium": float(os.getenv("PACE_DELAY_DAYS_MEDIUM", "3")),
+    "fast": float(os.getenv("PACE_DELAY_DAYS_FAST", "1")),
 }
+
+# Chapters land at a fixed morning hour in this zone (D50): a 2 a.m. purchase must
+# not deliver chapter 2 at 2 a.m. Set CADENCE_DELIVERY_HOUR to an empty string to
+# drop the anchor, so unlocks fall at exact offsets from the purchase — which is
+# what a test deployment with fractional delays needs.
+CADENCE_TIMEZONE = os.getenv("CADENCE_TIMEZONE", "Asia/Kolkata")
+_cadence_hour = os.getenv("CADENCE_DELIVERY_HOUR", "8").strip()
+CADENCE_DELIVERY_HOUR = int(_cadence_hour) if _cadence_hour else None
 
 # WhatsApp (D12, D17). Without credentials the backend prints to console.
 # Under test this is ALWAYS console, whatever the environment says. Without the guard,

@@ -352,7 +352,7 @@ class TemporalGrant(models.Model):
     unlock_at = models.DateTimeField(
         null=True,
         blank=True,
-        help_text="The cadence seam. Always null until cadence lands (D1).",
+        help_text="When this chapter unlocks (D50). Null for chapter 1, which is delivered at purchase.",
     )
     opened_at = models.DateTimeField(
         null=True,
@@ -361,8 +361,9 @@ class TemporalGrant(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
-    # The reading machine's state (D36). Grants begin live because `unlock_at`
-    # is null until cadence lands; `scheduled` is reachable only once it does.
+    # The reading machine's state (D36). Chapter 1 begins live; the rest of the
+    # book is minted `scheduled` at purchase and the cadence tick moves each to
+    # `live` on its day (D50).
     #
     # There is no `expired` state on purpose: expiry is derived from
     # `expires_at`, and storing it too would need a sweeper to keep the two
@@ -376,7 +377,11 @@ class TemporalGrant(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
-        indexes = [models.Index(fields=["user", "chapter"])]
+        indexes = [
+            models.Index(fields=["user", "chapter"]),
+            # The cadence tick's one query: scheduled and due (D50).
+            models.Index(fields=["state", "unlock_at"]),
+        ]
 
     def __str__(self):
         # Never the token — D22 forbids putting one anywhere it might be logged.

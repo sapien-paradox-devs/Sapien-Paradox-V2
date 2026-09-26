@@ -33,14 +33,25 @@ STATES = [SCHEDULED, LIVE, OPENED]
 # `dest: None` is an internal transition — it runs its action without changing
 # state, which is what every refusal wants.
 TRANSITIONS = [
-    # Cadence. Unreachable until `unlock_at` is set, which is after cadence
-    # lands (D21, D39). The scheduler sends this; nothing else does.
+    # Cadence (D39, D50). The tick sends this; nothing else does. A failed send
+    # refuses inside `deliver_chapter`, which is not persisted, so the grant
+    # stays scheduled and the next tick retries it (D40).
     {
         "trigger": "UNLOCK",
         "source": SCHEDULED,
         "dest": LIVE,
-        "conditions": [guards.is_due],
+        "conditions": [guards.is_due, guards.still_owns],
         "after": [actions.deliver_chapter],
+    },
+    # Due, but the reader was deactivated, erased or refunded (D80). Nothing is
+    # sent, and the row stays scheduled, so a reactivated reader picks up where
+    # the schedule has reached. Not yet due is `no_transition`.
+    {
+        "trigger": "UNLOCK",
+        "source": SCHEDULED,
+        "dest": None,
+        "conditions": [guards.is_due],
+        "after": [actions.refuse_not_owner],
     },
     # The ordinary path: a live token, still owned, opened for the first time.
     {
