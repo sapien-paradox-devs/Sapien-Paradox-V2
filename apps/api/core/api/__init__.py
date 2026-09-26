@@ -16,6 +16,7 @@ from .checkout import router as checkout_router
 from .grants import router as grants_router
 from .health import router as health_router
 from .home import router as home_router
+from .profile import router as profile_router
 from .read import router as read_router
 from .reset import router as reset_router
 
@@ -34,6 +35,7 @@ api.add_router("", home_router, tags=["home"])
 api.add_router("", read_router, tags=["read"])
 api.add_router("", checkout_router, tags=["checkout"])
 api.add_router("", books_router, tags=["books"])
+api.add_router("", profile_router, tags=["profile"])
 api.add_router("", admin_router, tags=["admin"])
 api.add_router("", admin_books_router, tags=["admin"])
 api.add_router("", chat_router, tags=["companion"])
