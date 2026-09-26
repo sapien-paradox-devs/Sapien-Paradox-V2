@@ -32,6 +32,7 @@ export function BeginPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
   const [pace, setPace] = useState<Pace>(() => paceFrom(params.get("pace")));
 
   const book = bookFrom(state.context.books, params.get("book"));
@@ -69,7 +70,7 @@ export function BeginPage() {
               e.preventDefault();
               send({
                 type: "SUBMIT",
-                signup: { fullName, email, phone, bookSlug: book.slug, pace },
+                signup: { fullName, email, phone, bookSlug: book.slug, pace, password },
               });
             }}
           >
@@ -93,11 +94,24 @@ export function BeginPage() {
             </div>
 
             <div className="field">
-              <label htmlFor="phone">{labels.begin.phone}</label>
-              <input id="phone" required placeholder="+91" value={phone}
+              <label htmlFor="phone">
+                {labels.begin.phone}
+                <span className="optional">{labels.begin.phoneOptional}</span>
+              </label>
+              <input id="phone" placeholder="+91" value={phone}
                      onChange={(e) => setPhone(e.target.value)} />
               <span className="begin-hint">{labels.begin.phoneHint}</span>
             </div>
+
+            {!phone.trim() && (
+              <div className="field">
+                <label htmlFor="password">{labels.begin.password}</label>
+                <input id="password" type="password" required minLength={8}
+                       value={password}
+                       onChange={(e) => setPassword(e.target.value)} />
+                <span className="begin-hint">{labels.begin.passwordHint}</span>
+              </div>
+            )}
 
             <div className="field">
               <label htmlFor="pace">{labels.begin.pace}</label>

@@ -69,6 +69,23 @@ TRANSITIONS = [
         "conditions": [guards.is_exact_match],
         "after": [actions.create_reader],
     },
+    # #214 — returning reader, no phone provided. Email alone identifies.
+    # MUST sit after the phone-bearing exact-match rows so a submission with
+    # both fields still goes through the stricter check.
+    {
+        "trigger": "PAID",
+        "source": NEW,
+        "dest": None,
+        "conditions": [guards.is_email_only_match, guards.owns_book],
+        "after": [actions.adopt_reference, actions.refuse_already_owns],
+    },
+    {
+        "trigger": "PAID",
+        "source": NEW,
+        "dest": FULFILLED,
+        "conditions": [guards.is_email_only_match],
+        "after": [actions.create_reader],
+    },
     # D26 case 4a — the two fields name two different readers.
     {
         "trigger": "PAID",

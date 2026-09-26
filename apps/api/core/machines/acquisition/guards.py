@@ -30,6 +30,14 @@ class AcquisitionGuards:
         by_email, by_phone = self._by_email(attempt, ctx), self._by_phone(attempt, ctx)
         return by_email is not None and by_email == by_phone
 
+    def is_email_only_match(self, attempt, ctx):
+        """Email matches an existing reader, and no phone was provided (#214).
+
+        Without a phone there is nothing to cross-check, so email alone
+        identifies. The reader keeps whatever phone they already have.
+        """
+        return not attempt.phone and self._by_email(attempt, ctx) is not None
+
     def matches_two_readers(self, attempt, ctx):
         """Email says one person, phone says another. Refuse loudly (D26)."""
         by_email, by_phone = self._by_email(attempt, ctx), self._by_phone(attempt, ctx)

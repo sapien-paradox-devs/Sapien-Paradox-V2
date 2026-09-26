@@ -25,7 +25,7 @@ const settle = () => new Promise((r) => setTimeout(r, 0));
 
 describe("the welcome machine", () => {
   it("lands on fulfilled when the redirect created the reader", async () => {
-    const actor = start({ status: "fulfilled", delivered: true, detail: "" });
+    const actor = start({ status: "fulfilled", delivered: true, hasPhone: true, detail: "" });
     await settle();
 
     expect(actor.getSnapshot().matches("fulfilled")).toBe(true);
@@ -35,7 +35,7 @@ describe("the welcome machine", () => {
   it("separates fulfilled-and-delivered from fulfilled-but-not", async () => {
     // Twilio refusing the message is not the purchase failing, and the page must
     // not say the chapter is on its way when it never left.
-    const actor = start({ status: "fulfilled", delivered: false, detail: "" });
+    const actor = start({ status: "fulfilled", delivered: false, hasPhone: true, detail: "" });
     await settle();
 
     expect(actor.getSnapshot().matches("fulfilled")).toBe(true);
@@ -43,14 +43,14 @@ describe("the welcome machine", () => {
   });
 
   it("treats an unpaid link as pending, not as a failure", async () => {
-    const actor = start({ status: "pending", delivered: false, detail: "" });
+    const actor = start({ status: "pending", delivered: false, hasPhone: true, detail: "" });
     await settle();
 
     expect(actor.getSnapshot().matches("pending")).toBe(true);
   });
 
   it("carries the refusal reason so the page can explain it", async () => {
-    const actor = start({ status: "refused", delivered: false, detail: "already_owns_book" });
+    const actor = start({ status: "refused", delivered: false, hasPhone: true, detail: "already_owns_book" });
     await settle();
 
     expect(actor.getSnapshot().matches("refused")).toBe(true);
@@ -65,7 +65,7 @@ describe("the welcome machine", () => {
   });
 
   it("lets a reader ask for the messages again without paying again", async () => {
-    const actor = start({ status: "fulfilled", delivered: false, detail: "" });
+    const actor = start({ status: "fulfilled", delivered: false, hasPhone: true, detail: "" });
     await settle();
 
     actor.send({ type: "RESEND" });
@@ -77,7 +77,7 @@ describe("the welcome machine", () => {
 
   it("reports a throttled resend as its own outcome, not a failure", async () => {
     const actor = start(
-      { status: "fulfilled", delivered: true, detail: "" },
+      { status: "fulfilled", delivered: true, hasPhone: true, detail: "" },
       { status: "throttled", chapterSent: false, passwordSent: false, detail: "" },
     );
     await settle();
@@ -89,7 +89,7 @@ describe("the welcome machine", () => {
   });
 
   it("offers a retry from pending too, where the reader is also still waiting", async () => {
-    const actor = start({ status: "pending", delivered: false, detail: "" });
+    const actor = start({ status: "pending", delivered: false, hasPhone: true, detail: "" });
     await settle();
 
     actor.send({ type: "RESEND" });
@@ -98,7 +98,7 @@ describe("the welcome machine", () => {
   });
 
   it("does not offer one from a refusal, where sending again cannot help", async () => {
-    const actor = start({ status: "refused", delivered: false, detail: "already_owns_book" });
+    const actor = start({ status: "refused", delivered: false, hasPhone: true, detail: "already_owns_book" });
     await settle();
 
     actor.send({ type: "RESEND" });
@@ -107,7 +107,7 @@ describe("the welcome machine", () => {
   });
 
   it("survives the resend call itself failing", async () => {
-    const actor = start({ status: "fulfilled", delivered: false, detail: "" }, new ApiError(502, null));
+    const actor = start({ status: "fulfilled", delivered: false, hasPhone: true, detail: "" }, new ApiError(502, null));
     await settle();
 
     actor.send({ type: "RESEND" });
@@ -118,7 +118,7 @@ describe("the welcome machine", () => {
   });
 
   it("treats owning the book as its own state, not a refusal", async () => {
-    const actor = start({ status: "owned", delivered: false, detail: "already_owns_book" });
+    const actor = start({ status: "owned", delivered: false, hasPhone: true, detail: "already_owns_book" });
     await settle();
 
     expect(actor.getSnapshot().matches("owned")).toBe(true);
@@ -128,7 +128,7 @@ describe("the welcome machine", () => {
   it("lets a reader who owns the book send the links again", async () => {
     // The case that sent them back to us: they own it, the grant exists, and the
     // only thing they need is the message.
-    const actor = start({ status: "owned", delivered: false, detail: "already_owns_book" });
+    const actor = start({ status: "owned", delivered: false, hasPhone: true, detail: "already_owns_book" });
     await settle();
 
     actor.send({ type: "RESEND" });

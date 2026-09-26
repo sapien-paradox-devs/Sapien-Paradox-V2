@@ -47,9 +47,13 @@ class UserTests(TestCase):
         self.assertTrue(user.check_password("pw"))
         self.assertFalse(user.is_staff)
 
-    def test_phone_is_required(self):
-        with self.assertRaises(ValueError):
-            User.objects.create_user(email="a@b.com", phone="", full_name="X")
+    def test_phone_is_optional(self):
+        user = User.objects.create_user(email="a@b.com", full_name="X")
+        self.assertIsNone(user.phone)
+
+    def test_empty_phone_stored_as_null(self):
+        user = User.objects.create_user(email="a@b.com", full_name="X", phone="")
+        self.assertIsNone(user.phone)
 
     def test_phone_is_unique(self):
         """Not cosmetic: phone is the account-recovery channel, so two accounts sharing

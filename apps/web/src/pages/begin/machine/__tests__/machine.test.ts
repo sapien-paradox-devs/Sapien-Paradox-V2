@@ -14,7 +14,7 @@ const BOOKS: Book[] = [
 
 const SIGNUP: Signup = {
   fullName: "New Reader", email: "new@example.com",
-  phone: "+919111000111", bookSlug: "tsp", pace: "medium",
+  phone: "+919111000111", bookSlug: "tsp", pace: "medium", password: "",
 };
 
 const ORDER_DETAILS = {

@@ -56,16 +56,15 @@ def create_reader(full_name, email, phone, book, pace, user=None) -> OnboardingR
     genuinely new reader, the resolved reader for one we already know. Every
     other guarantee D26 locked is unchanged — three rows atomic, delivery after
     the block, the `MessageLog` returned in the result.
+
+    Phone is optional (#214). A reader without one can still pay and read
+    through the web app; WhatsApp delivery and password reset are skipped.
     """
-    # One spelling, or `+918712740175` and `8712740175` become two readers —
-    # and `User.phone` is unique on the string, so one human holds two accounts.
-    phone = phone_service.normalize(phone)
+    phone = phone_service.normalize(phone) or None
 
     created = user is None
     if created:
         user = User(email=email, full_name=full_name, phone=phone)
-        # No password. They read chapter 1 from the WhatsApp link, and the
-        # reset link is how they reach Home (D26).
         user.set_unusable_password()
 
     with transaction.atomic():
@@ -83,32 +82,26 @@ def create_reader(full_name, email, phone, book, pace, user=None) -> OnboardingR
 
         grant = TemporalGrant.objects.create(user=user, chapter=first)
 
-        # The rest of the book, as scheduled rows (D50). They are rows, not sends,
-        # so this belongs inside the transaction: a reader must never exist with
-        # half a schedule.
         cadence.schedule(order)
 
-        # Only for a reader who cannot log in yet. Minting one unconditionally
-        # also throttles them: `reset_request` counts PasswordResetToken rows in
-        # a window (D31), so an unsent token silently blocks the "send me a
-        # sign-in link" they would reach for next.
+        has_phone = bool(user.phone)
         needs_password = not user.has_usable_password()
-        reset_token = PasswordResetToken.objects.create(user=user) if needs_password else None
+        reset_token = (
+            PasswordResetToken.objects.create(user=user)
+            if needs_password and has_phone
+            else None
+        )
 
-    # Outside the transaction, deliberately (D26). A failed send must not
-    # discard the reader, and the caller needs to know it failed — a mistyped
-    # phone number is the likeliest failure in concierge onboarding, and the
-    # person who can fix it is in the admin at that moment.
     from . import whatsapp as whatsapp_service
 
-    chapter_message = whatsapp_service.send_chapter(grant)
+    chapter_message = None
+    password_message = None
 
-    # Gated on the password, not on `created`. A reader who bought once, never
-    # set a password, and came back was previously skipped here — so the one
-    # message that could let them in was the one we withheld.
-    password_message = (
-        whatsapp_service.send_password_reset(reset_token) if reset_token is not None else None
-    )
+    if has_phone:
+        chapter_message = whatsapp_service.send_chapter(grant)
+        password_message = (
+            whatsapp_service.send_password_reset(reset_token) if reset_token is not None else None
+        )
 
     return OnboardingResult(
         user=user,

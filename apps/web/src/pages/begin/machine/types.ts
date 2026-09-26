@@ -11,6 +11,7 @@ export type Signup = {
   phone: string;
   bookSlug: string;
   pace: string;
+  password: string;
 };
 
 export type OrderDetails = {

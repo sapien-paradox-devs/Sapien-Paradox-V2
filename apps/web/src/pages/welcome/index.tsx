@@ -65,18 +65,25 @@ export function WelcomePage() {
   }
 
   if (state.matches("fulfilled") || state.matches("resending") || state.matches("resent")) {
-    // `delivered` is whether the chapter message actually left. Saying it is on
-    // its way when Twilio refused it is the lie this page used to tell.
-    const delivered = state.context.delivered;
+    const { delivered, hasPhone } = state.context;
     return (
       <main className="shell">
         <div className="welcome">
-          <h1>{delivered ? labels.welcome.headline : labels.welcome.sentButUndelivered}</h1>
-          <p className="welcome-body">
-            {delivered ? labels.welcome.body : labels.welcome.sandboxNote}
-          </p>
-          <p className="welcome-quiet">{labels.welcome.password}</p>
-          {resend}
+          {!hasPhone ? (
+            <>
+              <h1>{labels.welcome.headline}</h1>
+              <p className="welcome-body">{labels.welcome.noPhoneBody}</p>
+            </>
+          ) : (
+            <>
+              <h1>{delivered ? labels.welcome.headline : labels.welcome.sentButUndelivered}</h1>
+              <p className="welcome-body">
+                {delivered ? labels.welcome.body : labels.welcome.sandboxNote}
+              </p>
+              <p className="welcome-quiet">{labels.welcome.password}</p>
+              {resend}
+            </>
+          )}
           {signIn}
         </div>
       </main>
