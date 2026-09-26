@@ -1,28 +1,29 @@
 import type { AnyEventObject } from "xstate";
 
-import type { Book, Context } from "./types";
+import type { Book, Context, OrderDetails, Signup } from "./types";
 
 export function booksFrom({ event }: { event: AnyEventObject }): Pick<Context, "books"> {
   const output = "output" in event ? event.output : null;
   return { books: Array.isArray(output) ? (output as Book[]) : [] };
 }
 
-export function paymentUrlFrom({ event }: { event: AnyEventObject }): Pick<Context, "paymentUrl"> {
+export function orderDetailsFrom({ event }: { event: AnyEventObject }): Pick<Context, "orderDetails"> {
   const output = "output" in event ? event.output : null;
 
-  if (typeof output === "object" && output !== null && "paymentUrl" in output) {
-    const { paymentUrl } = output as { paymentUrl: unknown };
-    return { paymentUrl: typeof paymentUrl === "string" ? paymentUrl : null };
+  if (typeof output === "object" && output !== null && "orderId" in output) {
+    return { orderDetails: output as OrderDetails };
   }
-  return { paymentUrl: null };
+  return { orderDetails: null };
 }
 
-/**
- * Leave the SPA for Razorpay's hosted page.
- *
- * A full navigation, not a fetch: the payment page is theirs, and the card and
- * UPI flows must run on their origin. The reader returns at `/welcome`.
- */
-export function leaveForPayment({ context }: { context: Context }) {
-  if (context.paymentUrl) window.location.assign(context.paymentUrl);
+export function signupFrom({ event }: { event: AnyEventObject }): Pick<Context, "signup"> {
+  if (event.type === "SUBMIT" && "signup" in event) {
+    return { signup: (event as { type: string; signup: Signup }).signup };
+  }
+  return { signup: null };
+}
+
+export function navigateToWelcome({ context }: { context: Context }) {
+  const orderId = context.orderDetails?.orderId ?? "";
+  window.location.assign(`/welcome?razorpay_order_id=${encodeURIComponent(orderId)}`);
 }

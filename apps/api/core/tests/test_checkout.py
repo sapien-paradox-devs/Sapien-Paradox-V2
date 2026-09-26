@@ -2,6 +2,9 @@
 
 The webhook tests are the ones that matter: signature, idempotency, and never
 500-ing on a business refusal. Each of those fails quietly if it is wrong.
+
+Confirm and resend use the Orders API (Standard Checkout) instead of Payment
+Links, because Razorpay's test mode caps Payment Links at 30 per account.
 """
 
 import hashlib
@@ -16,6 +19,7 @@ from core.models import Book, Chapter, MessageLog, Order, TemporalGrant, User
 
 PDF = b"%PDF-1.7\n%tiny\n%%EOF\n"
 SECRET = "test-webhook-secret"
+RZP_KEY_SECRET = "secret"
 
 
 def sign(raw: bytes, secret: str = SECRET) -> str:
@@ -29,6 +33,20 @@ def paid_event(book_slug="tsp", email="new@example.com", phone="+919111000111",
         "event": "payment_link.paid",
         "id": "evt_TEST0001",
         "payload": {"payment_link": {"entity": {
+            "id": payment_ref, "status": "paid", "amount": 190000, "currency": "INR",
+            "notes": {"full_name": "New Reader", "email": email, "phone": phone,
+                      "book_slug": book_slug, "pace": "medium"},
+        }}},
+    }
+
+
+def order_paid_event(book_slug="tsp", email="new@example.com", phone="+919111000111",
+                     payment_ref="order_TEST0001"):
+    return {
+        "entity": "event",
+        "event": "order.paid",
+        "id": "evt_TEST0002",
+        "payload": {"order": {"entity": {
             "id": payment_ref, "status": "paid", "amount": 190000, "currency": "INR",
             "notes": {"full_name": "New Reader", "email": email, "phone": phone,
                       "book_slug": book_slug, "pace": "medium"},
@@ -63,7 +81,7 @@ class BooksTests(Base):
         self.assertEqual(slugs, ["tsp"])
 
 
-@override_settings(RAZORPAY_KEY_ID="rzp_test_x", RAZORPAY_KEY_SECRET="s")
+@override_settings(RAZORPAY_KEY_ID="rzp_test_x", RAZORPAY_KEY_SECRET=RZP_KEY_SECRET)
 class CheckoutTests(Base):
     def post(self, **over):
         body = {"fullName": "New Reader", "email": "new@example.com",
@@ -71,20 +89,29 @@ class CheckoutTests(Base):
         body.update(over)
         return self.client.post("/api/checkout", body, content_type="application/json")
 
-    @patch("core.services.payments.create_link")
-    def test_returns_the_hosted_payment_url(self, create_link):
-        create_link.return_value = {"short_url": "https://rzp.io/i/abc"}
+    @patch("core.services.payments.create_order")
+    def test_returns_the_order_details_for_the_modal(self, create_order):
+        create_order.return_value = {
+            "id": "order_TEST0001", "amount": 190000, "currency": "INR",
+        }
 
         response = self.post()
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"paymentUrl": "https://rzp.io/i/abc"})
+        data = response.json()
+        self.assertEqual(data["orderId"], "order_TEST0001")
+        self.assertEqual(data["keyId"], "rzp_test_x")
+        self.assertEqual(data["amount"], 190000)
+        self.assertEqual(data["currency"], "INR")
+        self.assertEqual(data["bookTitle"], "The Sapien Paradox")
 
-    @patch("core.services.payments.create_link")
-    def test_creates_nothing_until_the_money_arrives(self, create_link):
+    @patch("core.services.payments.create_order")
+    def test_creates_nothing_until_the_money_arrives(self, create_order):
         """An unpaid Order is an entitlement, and can_read would have to start
         asking about payment status (D47)."""
-        create_link.return_value = {"short_url": "https://rzp.io/i/abc"}
+        create_order.return_value = {
+            "id": "order_TEST0001", "amount": 190000, "currency": "INR",
+        }
 
         self.post()
 
@@ -112,8 +139,15 @@ class WebhookTests(Base):
             "/api/payments/webhook", body, content_type="application/json",
             HTTP_X_RAZORPAY_SIGNATURE=sign(body, secret))
 
-    def test_a_valid_event_creates_the_reader(self):
+    def test_a_valid_payment_link_event_creates_the_reader(self):
         response = self.post()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(User.objects.filter(email="new@example.com").exists())
+        self.assertEqual(Order.objects.count(), 1)
+
+    def test_a_valid_order_paid_event_creates_the_reader(self):
+        response = self.post(order_paid_event())
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(User.objects.filter(email="new@example.com").exists())
@@ -153,9 +187,6 @@ class WebhookTests(Base):
         """Semantically identical, different bytes. This is what breaks when a
         framework hands you a parsed dict instead of the body."""
         raw = json.dumps(paid_event()).encode()
-        # Different separators -> same meaning, different bytes. The previous
-        # version used plain json.dumps and reproduced `raw` exactly, so it
-        # asserted nothing.
         reserialised = json.dumps(json.loads(raw), separators=(", ", ": "), indent=2).encode()
         response = self.client.post(
             "/api/payments/webhook", reserialised, content_type="application/json",
@@ -190,9 +221,9 @@ def real_send(to_phone, body):
     return "SMfake0000000000000000000000000000"
 
 
-def paid_link(payment_ref="plink_TEST0001", status="paid", book_slug="tsp",
-              email="new@example.com", phone="+919111000111"):
-    """What `payments.fetch_link` returns — the payment-link entity itself."""
+def paid_order(payment_ref="order_TEST0001", status="paid", book_slug="tsp",
+               email="new@example.com", phone="+919111000111"):
+    """What `payments.fetch_order` returns — the order entity."""
     return {
         "id": payment_ref, "status": status, "amount": 190000, "currency": "INR",
         "notes": {"full_name": "New Reader", "email": email, "phone": phone,
@@ -200,38 +231,67 @@ def paid_link(payment_ref="plink_TEST0001", status="paid", book_slug="tsp",
     }
 
 
-@override_settings(RAZORPAY_KEY_ID="rzp_test", RAZORPAY_KEY_SECRET="secret",
+@override_settings(RAZORPAY_KEY_ID="rzp_test", RAZORPAY_KEY_SECRET=RZP_KEY_SECRET,
                    RAZORPAY_WEBHOOK_SECRET=SECRET, WHATSAPP_BACKEND="console")
 class ConfirmTests(Base):
     """D48 — the redirect leg fulfils too.
 
-    V1's spike worked because of this path; its run recorded `fulfilled_by: redirect`.
-    The webhook needs a public URL, a dashboard entry, a matching secret and an awake
-    instance. This needs none of them.
+    With Standard Checkout, the begin page confirms via signature verification.
+    The welcome page re-confirms via order lookup (the fallback path).
     """
 
-    def post(self, payment_link_id="plink_TEST0001"):
+    def post(self, order_id="order_TEST0001", payment_id="", signature=""):
+        body = {"razorpayOrderId": order_id}
+        if payment_id:
+            body["razorpayPaymentId"] = payment_id
+        if signature:
+            body["razorpaySignature"] = signature
         return self.client.post(
             "/api/checkout/confirm",
-            json.dumps({"paymentLinkId": payment_link_id}),
+            json.dumps(body),
             content_type="application/json",
         )
 
-    @patch("core.services.payments.fetch_link")
-    def test_a_paid_link_creates_the_reader(self, fetch):
-        fetch.return_value = paid_link()
+    @patch("core.services.payments.fetch_order")
+    def test_a_paid_order_creates_the_reader(self, fetch):
+        fetch.return_value = paid_order()
 
         response = self.post()
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["status"], "fulfilled")
         self.assertTrue(User.objects.filter(email="new@example.com").exists())
-        self.assertEqual(Order.objects.get().payment_reference, "plink_TEST0001")
+        self.assertEqual(Order.objects.get().payment_reference, "order_TEST0001")
 
-    @patch("core.services.payments.fetch_link")
-    def test_an_unpaid_link_creates_nothing_and_is_not_an_error(self, fetch):
+    @patch("core.services.payments.fetch_order")
+    def test_signature_path_verifies_and_fulfils(self, fetch):
+        """The begin page sends all three fields; the server verifies the HMAC."""
+        fetch.return_value = paid_order()
+        order_id, payment_id = "order_TEST0001", "pay_TEST0001"
+        sig = hmac.new(
+            RZP_KEY_SECRET.encode(),
+            f"{order_id}|{payment_id}".encode(),
+            hashlib.sha256,
+        ).hexdigest()
+
+        response = self.post(order_id, payment_id, sig)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "fulfilled")
+
+    @patch("core.services.payments.fetch_order")
+    def test_a_bad_signature_is_400(self, fetch):
+        fetch.return_value = paid_order()
+
+        response = self.post("order_TEST0001", "pay_TEST0001", "bad_sig")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(User.objects.count(), 0)
+
+    @patch("core.services.payments.fetch_order")
+    def test_an_unpaid_order_creates_nothing_and_is_not_an_error(self, fetch):
         """Razorpay can lag. Pending is not failed — the webhook may still land."""
-        fetch.return_value = paid_link(status="created")
+        fetch.return_value = paid_order(status="created")
 
         response = self.post()
 
@@ -240,19 +300,19 @@ class ConfirmTests(Base):
         self.assertEqual(User.objects.count(), 0)
         self.assertEqual(Order.objects.count(), 0)
 
-    @patch("core.services.payments.fetch_link")
-    def test_the_browsers_id_is_never_taken_as_proof_of_payment(self, fetch):
-        """The id selects which link to ask about; Razorpay says whether it was paid."""
-        fetch.return_value = paid_link(status="created")
+    @patch("core.services.payments.fetch_order")
+    def test_the_order_id_selects_what_to_ask_razorpay_about(self, fetch):
+        """The order ID is not proof of payment; Razorpay's response is."""
+        fetch.return_value = paid_order(status="created")
 
-        self.post("plink_FORGED")
+        self.post("order_FORGED")
 
-        fetch.assert_called_once_with("plink_FORGED")
+        fetch.assert_called_once_with("order_FORGED")
         self.assertEqual(Order.objects.count(), 0)
 
-    @patch("core.services.payments.fetch_link")
+    @patch("core.services.payments.fetch_order")
     def test_confirming_twice_fulfils_once(self, fetch):
-        fetch.return_value = paid_link()
+        fetch.return_value = paid_order()
 
         self.post()
         again = self.post()
@@ -261,13 +321,13 @@ class ConfirmTests(Base):
         self.assertEqual(Order.objects.count(), 1)
         self.assertEqual(User.objects.count(), 1)
 
-    @patch("core.services.payments.fetch_link")
-    def test_a_webhook_arriving_after_the_redirect_is_a_no_op(self, fetch):
+    @patch("core.services.payments.fetch_order")
+    def test_a_webhook_arriving_after_the_confirm_is_a_no_op(self, fetch):
         """Both legs run in the real world. The second must change nothing."""
-        fetch.return_value = paid_link()
+        fetch.return_value = paid_order()
         self.post()
 
-        body = json.dumps(paid_event()).encode()
+        body = json.dumps(order_paid_event()).encode()
         late = self.client.post("/api/payments/webhook", body,
                                 content_type="application/json",
                                 HTTP_X_RAZORPAY_SIGNATURE=sign(body))
@@ -276,34 +336,34 @@ class ConfirmTests(Base):
         self.assertTrue(late.json()["duplicate"])
         self.assertEqual(Order.objects.count(), 1)
 
-    @patch("core.services.payments.fetch_link")
-    def test_a_redirect_arriving_after_the_webhook_is_a_no_op(self, fetch):
-        body = json.dumps(paid_event()).encode()
+    @patch("core.services.payments.fetch_order")
+    def test_a_confirm_arriving_after_the_webhook_is_a_no_op(self, fetch):
+        body = json.dumps(order_paid_event()).encode()
         self.client.post("/api/payments/webhook", body, content_type="application/json",
                          HTTP_X_RAZORPAY_SIGNATURE=sign(body))
-        fetch.return_value = paid_link()
+        fetch.return_value = paid_order()
 
         response = self.post()
 
         self.assertEqual(response.json()["status"], "fulfilled")
         self.assertEqual(Order.objects.count(), 1)
 
-    @patch("core.services.payments.fetch_link")
+    @patch("core.services.payments.fetch_order")
     def test_owning_the_book_is_reported_as_owned_not_as_a_failure(self, fetch):
         """Still a 200 and still creates nothing — but the reader owns it, and
         that is a state they can act on rather than a dead end."""
-        fetch.return_value = paid_link()
+        fetch.return_value = paid_order()
         self.post()
-        fetch.return_value = paid_link(payment_ref="plink_TEST0002")
+        fetch.return_value = paid_order(payment_ref="order_TEST0002")
 
-        response = self.post("plink_TEST0002")
+        response = self.post("order_TEST0002")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["status"], "owned")
         self.assertEqual(response.json()["detail"], "already_owns_book")
         self.assertEqual(Order.objects.count(), 1)
 
-    @patch("core.services.payments.fetch_link")
+    @patch("core.services.payments.fetch_order")
     def test_a_lookup_failure_is_502_not_a_silent_success(self, fetch):
         from core.services.payments import PaymentsUnavailable
         fetch.side_effect = PaymentsUnavailable("razorpay refused (404)")
@@ -316,7 +376,7 @@ class ConfirmTests(Base):
         self.assertEqual(self.post().status_code, 503)
 
 
-@override_settings(RAZORPAY_KEY_ID="rzp_test", RAZORPAY_KEY_SECRET="secret",
+@override_settings(RAZORPAY_KEY_ID="rzp_test", RAZORPAY_KEY_SECRET=RZP_KEY_SECRET,
                    RAZORPAY_WEBHOOK_SECRET=SECRET, WHATSAPP_BACKEND="console")
 class ResendTests(Base):
     """Sending the chapter and the set-a-password link again after checkout.
@@ -325,24 +385,24 @@ class ResendTests(Base):
     unable to log in until the link they are asking for arrives.
     """
 
-    def post(self, payment_link_id="plink_TEST0001"):
+    def post(self, order_id="order_TEST0001"):
         return self.client.post(
             "/api/checkout/resend",
-            json.dumps({"paymentLinkId": payment_link_id}),
+            json.dumps({"razorpayOrderId": order_id}),
             content_type="application/json",
         )
 
     def confirm(self, fetch, **kw):
-        fetch.return_value = paid_link(**kw)
+        fetch.return_value = paid_order(**kw)
         return self.client.post(
-            "/api/checkout/confirm", json.dumps({"paymentLinkId": "plink_TEST0001"}),
+            "/api/checkout/confirm", json.dumps({"razorpayOrderId": "order_TEST0001"}),
             content_type="application/json")
 
     @patch("core.services.whatsapp._backend", return_value=real_send)
-    @patch("core.services.payments.fetch_link")
+    @patch("core.services.payments.fetch_order")
     def test_it_sends_both_again(self, fetch, _backend):
         self.confirm(fetch)
-        MessageLog.objects.all().delete()          # clear the cooldown window
+        MessageLog.objects.all().delete()
 
         response = self.post()
 
@@ -352,7 +412,7 @@ class ResendTests(Base):
         self.assertTrue(body["chapterSent"])
         self.assertTrue(body["passwordSent"])
 
-    @patch("core.services.payments.fetch_link")
+    @patch("core.services.payments.fetch_order")
     def test_it_does_not_mint_a_second_live_link_for_one_chapter(self, fetch):
         """Two taps must not leave two live tokens (D27)."""
         self.confirm(fetch)
@@ -363,7 +423,7 @@ class ResendTests(Base):
 
         self.assertEqual(TemporalGrant.objects.count(), before)
 
-    @patch("core.services.payments.fetch_link")
+    @patch("core.services.payments.fetch_order")
     def test_a_second_press_inside_the_window_is_throttled_not_an_error(self, fetch):
         self.confirm(fetch)
 
@@ -372,7 +432,7 @@ class ResendTests(Base):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["status"], "throttled")
 
-    @patch("core.services.payments.fetch_link")
+    @patch("core.services.payments.fetch_order")
     def test_no_password_link_for_a_reader_who_has_one(self, fetch):
         self.confirm(fetch)
         user = User.objects.get(email="new@example.com")
@@ -382,10 +442,10 @@ class ResendTests(Base):
 
         self.assertFalse(self.post().json()["passwordSent"])
 
-    @patch("core.services.payments.fetch_link")
+    @patch("core.services.payments.fetch_order")
     def test_an_unfulfilled_purchase_is_fulfilled_rather_than_resent(self, fetch):
         """Resending nothing is meaningless — do what they actually wanted."""
-        fetch.return_value = paid_link()
+        fetch.return_value = paid_order()
 
         response = self.post()
 
@@ -393,14 +453,14 @@ class ResendTests(Base):
         self.assertTrue(User.objects.filter(email="new@example.com").exists())
         self.assertEqual(Order.objects.count(), 1)
 
-    @patch("core.services.payments.fetch_link")
-    def test_an_unpaid_link_sends_nothing(self, fetch):
-        fetch.return_value = paid_link(status="created")
+    @patch("core.services.payments.fetch_order")
+    def test_an_unpaid_order_sends_nothing(self, fetch):
+        fetch.return_value = paid_order(status="created")
 
         self.assertEqual(self.post().json()["status"], "pending")
         self.assertEqual(MessageLog.objects.count(), 0)
 
-    @patch("core.services.payments.fetch_link")
+    @patch("core.services.payments.fetch_order")
     def test_everything_goes_to_the_phone_on_the_account(self, fetch):
         """Holding the id can make the OWNER receive a message; never the asker."""
         self.confirm(fetch)
@@ -416,130 +476,130 @@ class ResendTests(Base):
         self.assertEqual(self.post().status_code, 503)
 
 
-@override_settings(RAZORPAY_KEY_ID="rzp_test", RAZORPAY_KEY_SECRET="secret",
+@override_settings(RAZORPAY_KEY_ID="rzp_test", RAZORPAY_KEY_SECRET=RZP_KEY_SECRET,
                    RAZORPAY_WEBHOOK_SECRET=SECRET, WHATSAPP_BACKEND="console")
 class AlreadyOwnedTests(Base):
     """Owning the book is the easiest case to serve, not a dead end.
 
-    `payment_reference` only matches when the same link is replayed. An order from
+    `payment_reference` only matches when the same order is replayed. An order from
     an earlier payment, or from concierge onboarding with no reference, is
     invisible to it — and the replay was then refused for a book the reader owns.
     """
 
-    def confirm(self, payment_link_id="plink_TEST0001"):
+    def confirm(self, order_id="order_TEST0001"):
         return self.client.post(
-            "/api/checkout/confirm", json.dumps({"paymentLinkId": payment_link_id}),
+            "/api/checkout/confirm", json.dumps({"razorpayOrderId": order_id}),
             content_type="application/json")
 
-    def resend(self, payment_link_id="plink_TEST0001"):
+    def resend(self, order_id="order_TEST0001"):
         return self.client.post(
-            "/api/checkout/resend", json.dumps({"paymentLinkId": payment_link_id}),
+            "/api/checkout/resend", json.dumps({"razorpayOrderId": order_id}),
             content_type="application/json")
 
-    @patch("core.services.payments.fetch_link")
-    def test_a_different_link_for_a_book_already_owned_reports_owned(self, fetch):
-        fetch.return_value = paid_link()
+    @patch("core.services.payments.fetch_order")
+    def test_a_different_order_for_a_book_already_owned_reports_owned(self, fetch):
+        fetch.return_value = paid_order()
         self.confirm()
-        Order.objects.update(payment_reference="")      # an order with no reference
+        Order.objects.update(payment_reference="")
 
-        fetch.return_value = paid_link(payment_ref="plink_OTHER")
-        response = self.confirm("plink_OTHER")
+        fetch.return_value = paid_order(payment_ref="order_OTHER")
+        response = self.confirm("order_OTHER")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["status"], "owned")
         self.assertEqual(response.json()["detail"], "already_owns_book")
 
-    @patch("core.services.payments.fetch_link")
+    @patch("core.services.payments.fetch_order")
     def test_it_adopts_the_reference_so_the_next_replay_short_circuits(self, fetch):
-        fetch.return_value = paid_link()
+        fetch.return_value = paid_order()
         self.confirm()
         Order.objects.update(payment_reference="")
 
-        fetch.return_value = paid_link(payment_ref="plink_OTHER")
-        self.confirm("plink_OTHER")
+        fetch.return_value = paid_order(payment_ref="order_OTHER")
+        self.confirm("order_OTHER")
 
-        self.assertEqual(Order.objects.get().payment_reference, "plink_OTHER")
+        self.assertEqual(Order.objects.get().payment_reference, "order_OTHER")
 
     @patch("core.services.whatsapp._backend", return_value=real_send)
-    @patch("core.services.payments.fetch_link")
+    @patch("core.services.payments.fetch_order")
     def test_owning_the_book_still_lets_you_resend(self, fetch, _backend):
         """The whole point: you own it, so send the links again."""
-        fetch.return_value = paid_link()
+        fetch.return_value = paid_order()
         self.confirm()
         Order.objects.update(payment_reference="")
         MessageLog.objects.all().delete()
 
-        fetch.return_value = paid_link(payment_ref="plink_OTHER")
-        response = self.resend("plink_OTHER")
+        fetch.return_value = paid_order(payment_ref="order_OTHER")
+        response = self.resend("order_OTHER")
 
         self.assertEqual(response.json()["status"], "sent")
         self.assertTrue(response.json()["chapterSent"])
 
-    @patch("core.services.payments.fetch_link")
+    @patch("core.services.payments.fetch_order")
     def test_it_does_not_create_a_second_order(self, fetch):
-        fetch.return_value = paid_link()
+        fetch.return_value = paid_order()
         self.confirm()
         Order.objects.update(payment_reference="")
 
-        fetch.return_value = paid_link(payment_ref="plink_OTHER")
-        self.confirm("plink_OTHER")
+        fetch.return_value = paid_order(payment_ref="order_OTHER")
+        self.confirm("order_OTHER")
 
         self.assertEqual(Order.objects.count(), 1)
         self.assertEqual(User.objects.count(), 1)
 
-    @patch("core.services.payments.fetch_link")
+    @patch("core.services.payments.fetch_order")
     def test_a_genuine_refusal_is_still_a_refusal(self, fetch):
         """partial_identity_match must not be swept into `owned`."""
-        fetch.return_value = paid_link()
+        fetch.return_value = paid_order()
         self.confirm()
 
-        fetch.return_value = paid_link(payment_ref="plink_OTHER",
-                                       email="someone-else@example.com")
-        response = self.confirm("plink_OTHER")
+        fetch.return_value = paid_order(payment_ref="order_OTHER",
+                                        email="someone-else@example.com")
+        response = self.confirm("order_OTHER")
 
         self.assertEqual(response.json()["status"], "refused")
         self.assertEqual(response.json()["detail"], "partial_identity_match")
 
 
 
-@override_settings(RAZORPAY_KEY_ID="rzp_test", RAZORPAY_KEY_SECRET="secret",
+@override_settings(RAZORPAY_KEY_ID="rzp_test", RAZORPAY_KEY_SECRET=RZP_KEY_SECRET,
                    RAZORPAY_WEBHOOK_SECRET=SECRET, WHATSAPP_BACKEND="console")
 class ConsoleIsNotDeliveryTests(Base):
     """A deployment with no Twilio credentials prints every message to its own
     log, records `sent`, and told the reader "Sent." Nothing ever existed."""
 
-    @patch("core.services.payments.fetch_link")
+    @patch("core.services.payments.fetch_order")
     def test_confirm_does_not_claim_delivery_on_the_console_backend(self, fetch):
-        fetch.return_value = paid_link()
+        fetch.return_value = paid_order()
 
         response = self.client.post(
-            "/api/checkout/confirm", json.dumps({"paymentLinkId": "plink_TEST0001"}),
+            "/api/checkout/confirm", json.dumps({"razorpayOrderId": "order_TEST0001"}),
             content_type="application/json")
 
         self.assertEqual(response.json()["status"], "fulfilled")   # the reader exists
         self.assertFalse(response.json()["delivered"])              # but nothing left
 
-    @patch("core.services.payments.fetch_link")
+    @patch("core.services.payments.fetch_order")
     def test_resend_does_not_claim_delivery_on_the_console_backend(self, fetch):
-        fetch.return_value = paid_link()
-        self.client.post("/api/checkout/confirm", json.dumps({"paymentLinkId": "plink_TEST0001"}),
+        fetch.return_value = paid_order()
+        self.client.post("/api/checkout/confirm", json.dumps({"razorpayOrderId": "order_TEST0001"}),
                          content_type="application/json")
         MessageLog.objects.all().delete()
 
         response = self.client.post(
-            "/api/checkout/resend", json.dumps({"paymentLinkId": "plink_TEST0001"}),
+            "/api/checkout/resend", json.dumps({"razorpayOrderId": "order_TEST0001"}),
             content_type="application/json")
 
         self.assertFalse(response.json()["chapterSent"])
         self.assertFalse(response.json()["passwordSent"])
 
     @patch("core.services.whatsapp._backend", return_value=real_send)
-    @patch("core.services.payments.fetch_link")
+    @patch("core.services.payments.fetch_order")
     def test_a_real_backend_does_claim_delivery(self, fetch, _backend):
-        fetch.return_value = paid_link()
+        fetch.return_value = paid_order()
 
         response = self.client.post(
-            "/api/checkout/confirm", json.dumps({"paymentLinkId": "plink_TEST0001"}),
+            "/api/checkout/confirm", json.dumps({"razorpayOrderId": "order_TEST0001"}),
             content_type="application/json")
 
         self.assertTrue(response.json()["delivered"])

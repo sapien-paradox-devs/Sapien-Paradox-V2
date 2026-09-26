@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { beginConfig } from "../machine";
 import * as actions from "../actions";
+import * as guards from "../guards";
 import type { Book, Context, Event, Signup } from "../types";
 
 const BOOKS: Book[] = [
@@ -16,16 +17,24 @@ const SIGNUP: Signup = {
   phone: "+919111000111", bookSlug: "tsp", pace: "medium",
 };
 
-const left: string[] = [];
+const ORDER_DETAILS = {
+  orderId: "order_TEST0001", keyId: "rzp_test_x",
+  amount: 190000, currency: "INR", bookTitle: "The Sapien Paradox",
+};
 
-function machine(options: { books?: "ok" | "fail"; checkout?: "ok" | "fail" } = {}) {
+const welcomeUrls: string[] = [];
+
+function machine(options: { books?: "ok" | "fail"; checkout?: "ok" | "fail"; payment?: "ok" | "fail" | "dismiss" } = {}) {
   return setup({
     types: {} as { context: Context; events: Event },
     actions: {
       assignBooks: assign(actions.booksFrom),
-      assignPaymentUrl: assign(actions.paymentUrlFrom),
-      // Stubbed: the real one calls window.location.assign, which jsdom cannot.
-      leaveForPayment: ({ context }) => { if (context.paymentUrl) left.push(context.paymentUrl); },
+      assignOrderDetails: assign(actions.orderDetailsFrom),
+      assignSignup: assign(actions.signupFrom),
+      navigateToWelcome: ({ context }) => {
+        const id = context.orderDetails?.orderId ?? "";
+        welcomeUrls.push(`/welcome?razorpay_order_id=${id}`);
+      },
     },
     actors: {
       fetchBooks: fromPromise(async () => {
@@ -34,9 +43,15 @@ function machine(options: { books?: "ok" | "fail"; checkout?: "ok" | "fail" } = 
       }),
       startCheckout: fromPromise(async () => {
         if (options.checkout === "fail") throw new Error("nope");
-        return { paymentUrl: "https://rzp.io/i/abc" };
+        return ORDER_DETAILS;
+      }),
+      payAndConfirm: fromPromise(async () => {
+        if (options.payment === "dismiss") throw new Error("dismissed");
+        if (options.payment === "fail") throw new Error("razorpay_script_failed");
+        return { orderId: ORDER_DETAILS.orderId };
       }),
     },
+    guards: { isDismissed: guards.isDismissed },
   }).createMachine(beginConfig);
 }
 
@@ -48,7 +63,7 @@ function start(options = {}) {
 
 const settle = () => new Promise((r) => setTimeout(r, 0));
 
-beforeEach(() => { left.length = 0; });
+beforeEach(() => { welcomeUrls.length = 0; });
 
 describe("begin", () => {
   it("loads what is for sale", async () => {
@@ -68,36 +83,57 @@ describe("begin", () => {
     expect(actor.getSnapshot().matches("loading")).toBe(true);
   });
 
-  it("redirects to the gateway once checkout succeeds", async () => {
+  it("navigates to welcome once payment is confirmed", async () => {
     const actor = start();
     await settle();
     actor.send({ type: "SUBMIT", signup: SIGNUP });
-    await settle();
+    await settle(); // submitting → paying
+    await settle(); // paying → redirecting
 
     expect(actor.getSnapshot().matches("redirecting")).toBe(true);
-    expect(left).toEqual(["https://rzp.io/i/abc"]);
+    expect(welcomeUrls).toEqual([`/welcome?razorpay_order_id=${ORDER_DETAILS.orderId}`]);
   });
 
-  it("returns to the form on refusal, and can submit again", async () => {
+  it("returns to browsing when the modal is dismissed", async () => {
+    const actor = start({ payment: "dismiss" });
+    await settle();
+    actor.send({ type: "SUBMIT", signup: SIGNUP });
+    await settle(); // submitting → paying
+    await settle(); // paying → browsing (dismissed)
+
+    expect(actor.getSnapshot().matches("browsing")).toBe(true);
+    expect(welcomeUrls).toEqual([]);
+  });
+
+  it("returns to the form on checkout refusal, and can submit again", async () => {
     const actor = start({ checkout: "fail" });
     await settle();
     actor.send({ type: "SUBMIT", signup: SIGNUP });
     await settle();
 
     expect(actor.getSnapshot().matches("refused")).toBe(true);
-    expect(left).toEqual([]);
+    expect(welcomeUrls).toEqual([]);
 
     actor.send({ type: "SUBMIT", signup: SIGNUP });
     expect(actor.getSnapshot().matches("submitting")).toBe(true);
   });
 
-  it("never leaves for payment without a url", async () => {
-    const actor = start({ checkout: "fail" });
+  it("shows refused on a non-dismiss payment error", async () => {
+    const actor = start({ payment: "fail" });
     await settle();
     actor.send({ type: "SUBMIT", signup: SIGNUP });
-    await settle();
+    await settle(); // submitting → paying
+    await settle(); // paying → refused
 
-    expect(actor.getSnapshot().context.paymentUrl).toBeNull();
-    expect(left).toEqual([]);
+    expect(actor.getSnapshot().matches("refused")).toBe(true);
+    expect(welcomeUrls).toEqual([]);
+  });
+
+  it("preserves signup in context through the flow", async () => {
+    const actor = start();
+    await settle();
+    actor.send({ type: "SUBMIT", signup: SIGNUP });
+
+    expect(actor.getSnapshot().context.signup).toEqual(SIGNUP);
   });
 });

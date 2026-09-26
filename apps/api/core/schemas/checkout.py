@@ -12,9 +12,13 @@ class CheckoutIn(Schema):
 
 
 class CheckoutOut(Schema):
-    """`paymentUrl` is Razorpay's hosted page. The SPA redirects there."""
+    """What the SPA needs to open Razorpay's Standard Checkout modal."""
 
-    paymentUrl: str
+    orderId: str
+    keyId: str
+    amount: int
+    currency: str
+    bookTitle: str
 
 
 class BookCardOut(Schema):
@@ -28,17 +32,30 @@ class BookCardOut(Schema):
 
 
 class ConfirmIn(Schema):
-    """`razorpay_payment_link_id`, as Razorpay appends it to the callback URL."""
+    """Posted by the SPA after Razorpay's modal reports success.
 
-    paymentLinkId: str
+    All three fields come from the modal's `handler(response)`. When only
+    `razorpayOrderId` is present (welcome-page reload), the backend falls back
+    to fetching the order status from Razorpay directly.
+    """
+
+    razorpayOrderId: str
+    razorpayPaymentId: str = ""
+    razorpaySignature: str = ""
+
+
+class ResendIn(Schema):
+    """Identifies a paid order so the welcome page can re-send messages."""
+
+    razorpayOrderId: str
 
 
 class ConfirmOut(Schema):
     """What the welcome page can honestly say.
 
     `fulfilled` means a reader now exists — by this call or by the webhook getting
-    there first. `pending` means Razorpay does not report the link as paid yet, which
-    is not the same as failed.
+    there first. `pending` means Razorpay does not report the order as paid yet,
+    which is not the same as failed.
     """
 
     status: str          # "fulfilled" | "pending" | "refused"

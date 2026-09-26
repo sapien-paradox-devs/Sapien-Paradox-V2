@@ -35,7 +35,7 @@ export function BeginPage() {
   const [pace, setPace] = useState<Pace>(() => paceFrom(params.get("pace")));
 
   const book = bookFrom(state.context.books, params.get("book"));
-  const busy = state.matches("submitting") || state.matches("redirecting");
+  const busy = state.matches("submitting") || state.matches("paying") || state.matches("redirecting");
 
   if (state.matches("loading")) {
     return <BeginSkeleton />;
