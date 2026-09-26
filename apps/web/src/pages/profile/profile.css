@@ -9,10 +9,164 @@
   font-size: 1.5rem;
   font-weight: 500;
   color: var(--ink);
+  margin: 0 0 var(--space-6);
+}
+
+/* --- Cards ---------------------------------------------------------------- */
+
+.profile-card {
+  background: var(--paper-raised);
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.profile-section-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--ink);
   margin: 0 0 var(--space-4);
 }
 
-.profile-placeholder {
-  font-size: 0.92rem;
+/* --- Avatar --------------------------------------------------------------- */
+
+.profile-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.profile-avatar-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-avatar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.profile-avatar-option {
+  display: flex;
+  padding: 3px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  transition: border-color var(--dur-quick) var(--ease-settle);
+}
+
+.profile-avatar-option:hover {
+  border-color: var(--rule);
+}
+
+.profile-avatar-option.selected {
+  border-color: var(--accent);
+}
+
+/* --- Static fields -------------------------------------------------------- */
+
+.profile-label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.profile-hint {
+  font-size: 0.78rem;
   color: var(--ink-faint);
+}
+
+.profile-value {
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.profile-field-static {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--space-4);
+}
+
+/* --- Actions and feedback ------------------------------------------------- */
+
+.profile-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.profile-success {
+  font-size: 0.86rem;
+  color: var(--good);
+}
+
+.profile-error {
+  font-size: 0.86rem;
+  color: var(--danger);
+  margin: var(--space-3) 0 0;
+}
+
+/* --- Books ---------------------------------------------------------------- */
+
+.profile-books {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.profile-book {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.profile-book-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.profile-book-title {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.profile-book-pct {
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+}
+
+.profile-book-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--paper-sunk);
+  overflow: hidden;
+}
+
+.profile-book-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+  transition: width var(--dur-settle) var(--ease-settle);
+}
+
+.profile-book-detail {
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+}
+
+@media (max-width: 30rem) {
+  .profile-page { padding: var(--space-6) var(--space-4); }
+  .profile-card { padding: var(--space-4); }
 }
