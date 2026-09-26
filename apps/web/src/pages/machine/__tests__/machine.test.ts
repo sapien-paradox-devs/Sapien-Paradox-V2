@@ -9,6 +9,7 @@ const READER: User = {
   fullName: "Ada",
   email: "ada@example.com",
   phone: "+919876543210",
+  avatarSeed: null,
   isStaff: false,
 };
 
@@ -83,6 +84,10 @@ describe("the page region", () => {
 
   it("does not mistake a path that merely starts with 'admin' for the admin", () => {
     expect(route(start(), "/administration").matches({ page: "home" })).toBe(true);
+  });
+
+  it("sends /profile to the profile page (#218)", () => {
+    expect(route(start(), "/profile").matches({ page: "profile" })).toBe(true);
   });
 
   it("falls unrecognised paths through to home rather than a 404", () => {

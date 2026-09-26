@@ -22,6 +22,7 @@ import { ResetPage } from "./reset";
 import { WelcomePage } from "./welcome";
 import { BeginPage } from "./begin";
 import { AdminPage } from "./admin";
+import { ProfilePage } from "./profile";
 import { AdminLoginPage } from "./admin-login";
 import { navigationMachine } from "./machine";
 import { startRouteSync } from "./machine/sync";
@@ -91,6 +92,9 @@ export function Navigator() {
   } else if (state.matches({ page: "reset" })) {
     page = <ResetPage />;
     headerPage = "reset";
+  } else if (state.matches({ page: "profile" })) {
+    page = <ProfilePage />;
+    headerPage = "profile";
   } else if (state.matches({ page: "adminLogin" })) {
     page = <AdminLoginPage />;
     headerPage = "adminLogin";
@@ -106,6 +110,8 @@ export function Navigator() {
       <SiteHeader
         page={headerPage}
         userName={signedIn ? (state.context.user?.fullName ?? null) : null}
+        userEmail={signedIn ? (state.context.user?.email ?? null) : null}
+        avatarSeed={signedIn ? (state.context.user?.avatarSeed ?? null) : null}
         navigate={navigation.navigate}
         onLogout={navigation.logout}
         trailing={<ThemeToggle />}

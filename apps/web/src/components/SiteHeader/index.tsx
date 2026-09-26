@@ -3,10 +3,14 @@
  *
  * Render props only, no machine (D15). What it shows is `headerContents`; how
  * it moves is `navigate`, so every URL change still goes through `pushUrl`.
+ *
+ * The account area is an avatar that opens a dropdown (#218). Two states
+ * (open/closed), no API, no retry — a hook, not a machine.
  */
 
-import type { MouseEvent, ReactNode } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 
+import { Avatar } from "../Avatar";
 import { labels } from "../../lib/labels";
 import { headerContents, type HeaderPage } from "./contents";
 import "./SiteHeader.css";
@@ -14,18 +18,18 @@ import "./SiteHeader.css";
 type Props = {
   page: HeaderPage;
   userName: string | null;
+  userEmail: string | null;
+  avatarSeed: string | null;
   navigate: (to: string) => void;
   onLogout: () => void;
-  /** The right-hand slot, reserved for the theme toggle (#120). */
   trailing?: ReactNode;
 };
 
-export function SiteHeader({ page, userName, navigate, onLogout, trailing }: Props) {
+export function SiteHeader({ page, userName, userEmail, avatarSeed, navigate, onLogout, trailing }: Props) {
   const contents = headerContents(page, userName !== null);
   if (contents.hidden) return null;
 
   return (
-    // In the reader the chamber's own bar is the one that stays pinned (#150).
     <header className={`ui-header${page === "reader" ? " ui-header-flat" : ""}`}>
       <nav className="ui-header-inner" aria-label={labels.nav.label}>
         <NavLink to="/" navigate={navigate} className="ui-header-mark">
@@ -39,13 +43,14 @@ export function SiteHeader({ page, userName, navigate, onLogout, trailing }: Pro
             </NavLink>
           )}
 
-          {contents.account && userName && (
-            <>
-              <span className="ui-header-name">{userName}</span>
-              <button type="button" className="ui-header-link" onClick={onLogout}>
-                {labels.nav.signOut}
-              </button>
-            </>
+          {contents.account && userName && userEmail && (
+            <AccountMenu
+              userName={userName}
+              userEmail={userEmail}
+              avatarSeed={avatarSeed ?? userEmail}
+              navigate={navigate}
+              onLogout={onLogout}
+            />
           )}
 
           {contents.signIn && (
@@ -64,6 +69,84 @@ export function SiteHeader({ page, userName, navigate, onLogout, trailing }: Pro
         </div>
       </nav>
     </header>
+  );
+}
+
+function AccountMenu({
+  userName,
+  userEmail,
+  avatarSeed,
+  navigate,
+  onLogout,
+}: {
+  userName: string;
+  userEmail: string;
+  avatarSeed: string;
+  navigate: (to: string) => void;
+  onLogout: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function close(e: globalThis.MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div className="ui-account" ref={menuRef}>
+      <button
+        type="button"
+        className="ui-account-trigger"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="true"
+      >
+        <Avatar seed={avatarSeed} size={28} />
+      </button>
+
+      {open && (
+        <div className="ui-account-menu">
+          <div className="ui-account-header">
+            <Avatar seed={avatarSeed} size={40} />
+            <div className="ui-account-identity">
+              <span className="ui-account-name">{userName}</span>
+              <span className="ui-account-email">{userEmail}</span>
+            </div>
+          </div>
+          <div className="ui-account-divider" />
+          <button
+            type="button"
+            className="ui-account-item"
+            onClick={() => { setOpen(false); navigate("/profile"); }}
+          >
+            {labels.nav.profile}
+          </button>
+          <button
+            type="button"
+            className="ui-account-item"
+            onClick={() => { setOpen(false); onLogout(); }}
+          >
+            {labels.nav.signOut}
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 

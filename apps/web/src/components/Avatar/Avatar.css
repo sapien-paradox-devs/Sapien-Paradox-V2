@@ -1,0 +1,11 @@
+.avatar {
+  display: inline-flex;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.avatar svg {
+  border-radius: 50%;
+}

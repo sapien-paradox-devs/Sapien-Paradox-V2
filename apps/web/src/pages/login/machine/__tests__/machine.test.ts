@@ -11,6 +11,7 @@ const READER: User = {
   fullName: "Ada",
   email: "ada@example.com",
   phone: "+919876543210",
+  avatarSeed: null,
   isStaff: false,
 };
 

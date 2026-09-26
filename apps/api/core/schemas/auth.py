@@ -21,7 +21,8 @@ class UserOut(Schema):
     id: str
     fullName: str
     email: str
-    phone: str
+    phone: str | None
+    avatarSeed: str | None
     isStaff: bool
 
 

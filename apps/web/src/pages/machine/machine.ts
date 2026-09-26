@@ -104,6 +104,7 @@ export const navigationConfig = {
           { guard: "isOpeningPath", target: ".opening" },
           { guard: "isWelcomePath", target: ".welcome" },
           { guard: "isBeginPath", target: ".begin" },
+          { guard: "isProfilePath", target: ".profile" },
           { target: ".home" },
         ],
       },
@@ -121,6 +122,7 @@ export const navigationConfig = {
         // what is inside them belongs to the admin's own machines.
         adminLogin: {},
         admin: {},
+        profile: {},
       },
     },
   },

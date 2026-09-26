@@ -49,6 +49,16 @@ describe("headerContents", () => {
     expect(headerContents("begin", false)).toMatchObject({ signIn: true, signUp: false });
   });
 
+  it("gives the profile page a library link and account controls", () => {
+    expect(headerContents("profile", true)).toEqual({
+      hidden: false,
+      library: true,
+      account: true,
+      signIn: false,
+      signUp: false,
+    });
+  });
+
   it.each(["reset", "welcome"] as const)("shows only the wordmark on %s", (page) => {
     expect(headerContents(page, false)).toEqual({
       hidden: false,

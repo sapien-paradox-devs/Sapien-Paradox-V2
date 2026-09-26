@@ -2,7 +2,8 @@ export type User = {
   id: string;
   fullName: string;
   email: string;
-  phone: string;
+  phone: string | null;
+  avatarSeed: string | null;
   /** Decides only whether `/admin` is shown (D82). The API checks it again. */
   isStaff: boolean;
 };
