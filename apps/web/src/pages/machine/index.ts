@@ -32,6 +32,7 @@ export const navigationMachine = setup({
     isBeginPath: guards.isBeginPath,
     isAdminLoginPath: guards.isAdminLoginPath,
     isAdminPath: guards.isAdminPath,
+    isProfilePath: guards.isProfilePath,
   },
 }).createMachine(navigationConfig);
 

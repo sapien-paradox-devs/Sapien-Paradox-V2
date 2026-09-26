@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Navigator } from "..";
 
-const READER = { id: "1", fullName: "Ada", email: "ada@example.com", phone: "+919876543210", isStaff: false };
+const READER = { id: "1", fullName: "Ada", email: "ada@example.com", phone: "+919876543210", avatarSeed: null, isStaff: false };
 
 type Pending = { update: () => void; cancelled: boolean };
 let pending: Pending | null = null;

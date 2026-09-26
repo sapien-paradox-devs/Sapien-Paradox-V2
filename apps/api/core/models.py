@@ -152,6 +152,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         help_text="E.164, e.g. +919876543210. Enables WhatsApp delivery and recovery.",
     )
 
+    avatar_seed = models.CharField(
+        max_length=64,
+        null=True,
+        blank=True,
+        help_text="Overrides email as the identicon seed. NULL uses the email.",
+    )
+
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)

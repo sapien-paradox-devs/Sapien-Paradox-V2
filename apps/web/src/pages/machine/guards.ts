@@ -41,3 +41,6 @@ export const isBeginPath = ({ event }: { event: Event }) => path(event) === "/be
 
 /** `/welcome` — where Razorpay returns the reader after paying (D47). */
 export const isWelcomePath = ({ event }: { event: Event }) => path(event) === "/welcome";
+
+/** `/profile` — account details and avatar (#218). */
+export const isProfilePath = ({ event }: { event: Event }) => path(event) === "/profile";

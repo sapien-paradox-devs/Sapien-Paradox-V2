@@ -31,7 +31,7 @@ class AuthTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {
             "id": str(self.user.pk), "fullName": "Ada Demo",
-            "email": "reader@example.com", "phone": "+919000000000", "isStaff": False,
+            "email": "reader@example.com", "phone": "+919000000000", "avatarSeed": None, "isStaff": False,
         })
         self.assertIn("sessionid", response.cookies)
 

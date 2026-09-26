@@ -15,6 +15,7 @@ export const labels = {
     signIn: "Sign in",
     signUp: "Sign up",
     signOut: "Sign out",
+    profile: "Profile",
   },
   theme: {
     system: "Theme: follows your device. Tap for light.",
@@ -231,6 +232,9 @@ export const labels = {
     limited: "Already sent — check WhatsApp.",
     sendFailed: "That did not send. Try again.",
     dismiss: "Dismiss",
+  },
+  profile: {
+    comingSoon: "Your profile is on the way.",
   },
   opening: {
     working: "Finding your place…",

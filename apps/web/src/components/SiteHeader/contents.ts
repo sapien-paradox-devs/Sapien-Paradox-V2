@@ -16,6 +16,7 @@ export type HeaderPage =
   | "opening"
   | "admin"
   | "adminLogin"
+  | "profile"
   | "unknown";
 
 export type HeaderContents = {
@@ -70,6 +71,10 @@ export function headerContents(page: HeaderPage, signedIn: boolean): HeaderConte
     // Already the sign-in page: only the way to sign up instead.
     case "login":
       return { ...NOTHING, signUp: true };
+
+    // Profile shows a way home and the account avatar (same as library).
+    case "profile":
+      return { ...NOTHING, account: true, library: true };
 
     case "reset":
     case "welcome":

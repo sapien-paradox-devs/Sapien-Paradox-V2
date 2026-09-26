@@ -7,7 +7,7 @@ import type { Credentials } from "../../../login/machine/actors";
 import { adminLoginMachine } from "..";
 
 const person = (isStaff: boolean): User => ({
-  id: "1", fullName: "Owner", email: "owner@example.com", phone: "+919876543210", isStaff,
+  id: "1", fullName: "Owner", email: "owner@example.com", phone: "+919876543210", avatarSeed: null, isStaff,
 });
 
 function start(outcome: "staff" | "reader" | 401 | 500) {

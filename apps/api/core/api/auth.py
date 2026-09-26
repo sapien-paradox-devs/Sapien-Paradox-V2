@@ -28,6 +28,7 @@ def _as_user_out(user) -> UserOut:
         fullName=user.full_name,
         email=user.email,
         phone=user.phone,
+        avatarSeed=user.avatar_seed,
         isStaff=user.is_staff,
     )
 
