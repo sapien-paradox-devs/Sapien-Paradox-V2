@@ -12,7 +12,7 @@
 export const welcomeConfig = {
   id: "welcome",
   initial: "confirming",
-  context: { delivered: false, detail: "", resend: null },
+  context: { delivered: false, hasPhone: true, detail: "", resend: null },
 
   states: {
     confirming: {

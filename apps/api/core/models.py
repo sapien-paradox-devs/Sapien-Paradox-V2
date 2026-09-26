@@ -98,20 +98,18 @@ VIDEO_VALIDATORS = [FileExtensionValidator(["mp4"]), validate_video_size]
 # ─────────────────────────────────────────────────────────────────────────────
 
 class UserManager(BaseUserManager):
-    """Email is the login field; phone is required because it is the delivery *and*
-    account-recovery channel (D16, D19)."""
+    """Email is the login field; phone enables WhatsApp delivery and recovery
+    but is optional since #214."""
 
     use_in_migrations = True
 
-    def create_user(self, email, phone, full_name, password=None, **extra):
+    def create_user(self, email, full_name, phone=None, password=None, **extra):
         if not email:
             raise ValueError("A user needs an email address.")
-        if not phone:
-            raise ValueError("A user needs a phone number — it is how chapters are delivered.")
 
         user = self.model(
             email=self.normalize_email(email),
-            phone=phone,
+            phone=phone or None,
             full_name=full_name,
             **extra,
         )
@@ -119,7 +117,7 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, email, phone, full_name, password=None, **extra):
+    def create_superuser(self, email, full_name, phone=None, password=None, **extra):
         extra.setdefault("is_staff", True)
         extra.setdefault("is_superuser", True)
 
@@ -128,19 +126,20 @@ class UserManager(BaseUserManager):
         if extra.get("is_superuser") is not True:
             raise ValueError("A superuser must have is_superuser=True.")
 
-        return self.create_user(email, phone, full_name, password, **extra)
+        return self.create_user(email, full_name, phone=phone, password=password, **extra)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    """D19.
+    """D19, amended by #214.
 
     No `role` field: V1 carried `role` *and* Django's `is_staff`/`is_superuser` — two
     systems answering one question, free to drift. Django admin gates on `is_staff`, and
     D10 makes admin the entire onboarding surface, so nothing consumes a domain role.
 
-    `phone` is unique, which V1's was not. Survivable when a phone is only a delivery
-    address; not once it is the account-recovery channel — two accounts sharing a number
-    makes "send me a reset link" ambiguous.
+    `phone` is unique and nullable (#214). A reader without a phone can still pay and
+    read through the web app; they just don't get WhatsApp delivery or WhatsApp-based
+    password reset. NULL, not empty string, so the unique constraint allows multiple
+    phoneless readers.
     """
 
     email = models.EmailField(unique=True)
@@ -148,7 +147,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone = models.CharField(
         max_length=20,
         unique=True,
-        help_text="E.164, e.g. +919876543210. Delivery and account recovery.",
+        null=True,
+        blank=True,
+        help_text="E.164, e.g. +919876543210. Enables WhatsApp delivery and recovery.",
     )
 
     is_active = models.BooleanField(default=True)
@@ -158,7 +159,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["phone", "full_name"]
+    REQUIRED_FIELDS = ["full_name"]
 
     class Meta:
         ordering = ["-date_joined"]

@@ -2,10 +2,11 @@ import type { AnyEventObject } from "xstate";
 
 import type { Context } from "./types";
 
-export function outcomeFrom({ event }: { event: AnyEventObject }): Pick<Context, "delivered" | "detail"> {
-  const output = "output" in event ? (event.output as Context & { detail?: string }) : null;
+export function outcomeFrom({ event }: { event: AnyEventObject }): Pick<Context, "delivered" | "hasPhone" | "detail"> {
+  const output = "output" in event ? (event.output as Context & { detail?: string; hasPhone?: boolean }) : null;
   return {
     delivered: Boolean(output?.delivered),
+    hasPhone: output?.hasPhone !== false,
     detail: output?.detail ?? "",
   };
 }

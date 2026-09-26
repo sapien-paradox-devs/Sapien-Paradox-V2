@@ -147,7 +147,10 @@ export const labels = {
     name: "Your name",
     email: "Email",
     phone: "WhatsApp number",
-    phoneHint: "Chapters are delivered here, so it must be the number you use.",
+    phoneOptional: " (optional)",
+    phoneHint: "Chapters are delivered here by WhatsApp. Without it, you can still read through the website.",
+    password: "Choose a password",
+    passwordHint: "Without WhatsApp, you will sign in with your email and this password.",
     pace: "How quickly",
     buy: "Begin reading \u2014",
     sending: "Opening checkout\u2026",
@@ -170,6 +173,7 @@ export const labels = {
 
     headline: "Thank you.",
     body: "Your first chapter is on its way to your WhatsApp.",
+    noPhoneBody: "Your book is ready. Sign in with your email and password to start reading.",
     password: "It arrives with a link to set your password, so you can come back here any time.",
 
     sentButUndelivered: "Paid \u2014 but WhatsApp could not reach your number yet.",

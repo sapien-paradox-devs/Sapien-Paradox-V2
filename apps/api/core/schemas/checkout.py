@@ -6,7 +6,7 @@ from ninja import Schema
 class CheckoutIn(Schema):
     fullName: str
     email: str
-    phone: str
+    phone: str = ""
     bookSlug: str
     pace: str
 
@@ -42,6 +42,7 @@ class ConfirmIn(Schema):
     razorpayOrderId: str
     razorpayPaymentId: str = ""
     razorpaySignature: str = ""
+    password: str = ""
 
 
 class ResendIn(Schema):
@@ -60,6 +61,7 @@ class ConfirmOut(Schema):
 
     status: str          # "fulfilled" | "pending" | "refused"
     delivered: bool      # whether the chapter message actually left
+    hasPhone: bool = True
     detail: str = ""     # a refusal reason, for the page to explain
 
 

@@ -1,6 +1,7 @@
 export type Outcome = {
   status: "fulfilled" | "owned" | "pending" | "refused";
   delivered: boolean;
+  hasPhone: boolean;
   detail: string;
 };
 
@@ -13,6 +14,7 @@ export type ResendOutcome = {
 
 export type Context = {
   delivered: boolean;
+  hasPhone: boolean;
   detail: string;
   /** Set once a resend has been attempted, so the page reports what happened. */
   resend: ResendOutcome | null;

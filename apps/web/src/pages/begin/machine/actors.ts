@@ -69,11 +69,13 @@ export const payAndConfirm = fromPromise<
   });
 
   try {
-    await mappedFetcher.post("/api/checkout/confirm", {
+    const body: Record<string, string> = {
       razorpayOrderId: payment.razorpay_order_id,
       razorpayPaymentId: payment.razorpay_payment_id,
       razorpaySignature: payment.razorpay_signature,
-    });
+    };
+    if (signup.password) body.password = signup.password;
+    await mappedFetcher.post("/api/checkout/confirm", body);
   } catch {
     // Best-effort. The welcome page calls confirm again on load.
   }

@@ -56,6 +56,12 @@
   color: var(--ink-faint);
 }
 
+.optional {
+  font-weight: 400;
+  color: var(--ink-faint);
+  font-size: 0.82em;
+}
+
 .begin-fineprint {
   font-size: 0.75rem;
   line-height: 1.5;

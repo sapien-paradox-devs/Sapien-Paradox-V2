@@ -135,14 +135,17 @@ def _attempt_from(entity) -> PurchaseAttempt:
     )
 
 
-def _fulfil(entity) -> tuple[str, str, bool]:
+def _fulfil(entity) -> tuple[str, str, bool, bool]:
     """Create the reader for one paid entity (order or payment link).
 
     Shared by the confirm endpoint and the webhook (D48). **Every branch lives
     in the transition table**, not here: this builds the attempt, dispatches, and
     turns the refusal code into the shape the two callers already speak (D38).
+
+    Returns (status, detail, delivered, has_phone).
     """
     attempt = _attempt_from(entity)
+    has_phone = bool(attempt.phone)
     result = dispatch(acquisition_machine, attempt, "PAID", deps=acquisition_deps())
 
     if result.ok:
@@ -152,18 +155,18 @@ def _fulfil(entity) -> tuple[str, str, bool]:
             and whatsapp.left_the_building(result.data.chapter_message)
         )
         log.info("fulfilled %s delivered=%s", attempt.payment_reference, delivered)
-        return "fulfilled", "", delivered
+        return "fulfilled", "", delivered, has_phone
 
     if result.refusal == "duplicate":
         log.info("already fulfilled: %s", attempt.payment_reference)
-        return "fulfilled", "duplicate", True
+        return "fulfilled", "duplicate", has_phone, has_phone
 
     if result.refusal == "already_owns_book":
         log.warning("already owned: %s", attempt.payment_reference)
-        return "owned", "already_owns_book", False
+        return "owned", "already_owns_book", False, has_phone
 
     log.warning("acquisition refused %s: %s", attempt.payment_reference, result.refusal)
-    return "refused", result.refusal or "refused", False
+    return "refused", result.refusal or "refused", False, has_phone
 
 
 @router.post("/checkout/confirm", response=ConfirmOut, auth=None, url_name="checkout_confirm")
@@ -202,8 +205,17 @@ def confirm(request, payload: ConfirmIn):
         log.info("confirm: %s is %r, not paid", payload.razorpayOrderId, order.get("status"))
         return ConfirmOut(status="pending", delivered=False)
 
-    status, detail, delivered = _fulfil(order)
-    return ConfirmOut(status=status, delivered=delivered, detail=detail)
+    status, detail, delivered, has_phone = _fulfil(order)
+
+    if payload.password and status == "fulfilled":
+        notes = order.get("notes", {}) or {}
+        email = (notes.get("email") or "").strip()
+        user = User.objects.filter(email__iexact=email).first() if email else None
+        if user and not user.has_usable_password():
+            user.set_password(payload.password)
+            user.save(update_fields=["password"])
+
+    return ConfirmOut(status=status, delivered=delivered, detail=detail, hasPhone=has_phone)
 
 
 @router.post("/checkout/resend", response=ResendOut, auth=None, url_name="checkout_resend")
@@ -239,7 +251,7 @@ def resend(request, payload: ResendIn):
         order = deps.order_for(user, deps.book_by_slug(attempt.book_slug))
 
     if order is None:
-        status, detail, delivered = _fulfil(rzp_order)
+        status, detail, delivered, _has_phone = _fulfil(rzp_order)
         return ResendOut(
             status="sent" if status == "fulfilled" else status,
             chapterSent=delivered,
@@ -248,6 +260,10 @@ def resend(request, payload: ResendIn):
         )
 
     user = order.user
+
+    if not user.phone:
+        return ResendOut(status="refused", chapterSent=False, passwordSent=False,
+                         detail="no_phone")
 
     if whatsapp.recently_sent(user, "chapter_delivery", settings.CHAPTER_SEND_COOLDOWN_MINUTES):
         return ResendOut(status="throttled", chapterSent=False, passwordSent=False)
@@ -303,7 +319,7 @@ def webhook(request):
     else:
         return {"status": "ignored", "event": event_type}
 
-    status, detail, _delivered = _fulfil(entity)
+    status, detail, _delivered, _has_phone = _fulfil(entity)
 
     if status in ("refused", "owned"):
         return {"status": "ok", "refused": detail}

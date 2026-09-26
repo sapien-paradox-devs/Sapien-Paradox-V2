@@ -14,7 +14,7 @@ import type { Outcome, ResendOutcome } from "./types";
 export const confirmActor = fromPromise<Outcome, void>(async () => {
   const id = new URLSearchParams(window.location.search).get("razorpay_order_id");
 
-  if (!id) return { status: "pending", delivered: false, detail: "no_order_id" };
+  if (!id) return { status: "pending", delivered: false, hasPhone: true, detail: "no_order_id" };
 
   return mappedFetcher.post<Outcome>("/api/checkout/confirm", { razorpayOrderId: id });
 });

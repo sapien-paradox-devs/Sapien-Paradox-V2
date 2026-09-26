@@ -603,3 +603,118 @@ class ConsoleIsNotDeliveryTests(Base):
             content_type="application/json")
 
         self.assertTrue(response.json()["delivered"])
+
+
+@override_settings(RAZORPAY_KEY_ID="rzp_test", RAZORPAY_KEY_SECRET=RZP_KEY_SECRET,
+                   RAZORPAY_WEBHOOK_SECRET=SECRET, WHATSAPP_BACKEND="console")
+class PhoneOptionalTests(Base):
+    """#214 — a reader can pay without providing a phone number."""
+
+    def confirm(self, order_id="order_TEST0001", password=""):
+        body = {"razorpayOrderId": order_id}
+        if password:
+            body["password"] = password
+        return self.client.post(
+            "/api/checkout/confirm", json.dumps(body),
+            content_type="application/json")
+
+    @patch("core.services.payments.fetch_order")
+    def test_a_phoneless_reader_is_created(self, fetch):
+        fetch.return_value = paid_order(phone="")
+
+        response = self.confirm()
+
+        self.assertEqual(response.json()["status"], "fulfilled")
+        user = User.objects.get(email="new@example.com")
+        self.assertIsNone(user.phone)
+
+    @patch("core.services.payments.fetch_order")
+    def test_no_whatsapp_sent_when_no_phone(self, fetch):
+        fetch.return_value = paid_order(phone="")
+
+        response = self.confirm()
+
+        self.assertFalse(response.json()["delivered"])
+        self.assertFalse(response.json()["hasPhone"])
+        self.assertEqual(MessageLog.objects.count(), 0)
+
+    @patch("core.services.payments.fetch_order")
+    def test_password_is_set_from_confirm_payload(self, fetch):
+        fetch.return_value = paid_order(phone="")
+
+        self.confirm(password="secretpass123")
+
+        user = User.objects.get(email="new@example.com")
+        self.assertTrue(user.check_password("secretpass123"))
+
+    @patch("core.services.payments.fetch_order")
+    def test_password_is_set_even_on_duplicate(self, fetch):
+        """If the webhook won the race, confirm still sets the password."""
+        body = json.dumps(order_paid_event(phone="")).encode()
+        self.client.post("/api/payments/webhook", body,
+                         content_type="application/json",
+                         HTTP_X_RAZORPAY_SIGNATURE=sign(body))
+        fetch.return_value = paid_order(phone="")
+
+        self.confirm(password="secretpass123")
+
+        user = User.objects.get(email="new@example.com")
+        self.assertTrue(user.check_password("secretpass123"))
+
+    @patch("core.services.payments.fetch_order")
+    def test_hasPhone_is_true_when_phone_provided(self, fetch):
+        fetch.return_value = paid_order()
+
+        response = self.confirm()
+
+        self.assertTrue(response.json()["hasPhone"])
+
+    @patch("core.services.payments.fetch_order")
+    def test_returning_reader_without_phone_gets_new_book(self, fetch):
+        """Email alone identifies a returning reader (#214)."""
+        fetch.return_value = paid_order()
+        self.confirm()
+
+        second_book = Book.objects.create(
+            title="Second Book", slug="sb", price_cents=100000, is_published=True)
+        Chapter.objects.create(
+            book=second_book, order_index=1, title="SB One",
+            file=ContentFile(PDF, name="sb1.pdf"))
+
+        fetch.return_value = paid_order(
+            payment_ref="order_TEST0002", book_slug="sb", phone="")
+        response = self.client.post(
+            "/api/checkout/confirm",
+            json.dumps({"razorpayOrderId": "order_TEST0002"}),
+            content_type="application/json")
+
+        self.assertEqual(response.json()["status"], "fulfilled")
+        self.assertEqual(Order.objects.count(), 2)
+        self.assertEqual(User.objects.count(), 1)
+
+    @patch("core.services.payments.fetch_order")
+    def test_resend_refused_for_phoneless_reader(self, fetch):
+        fetch.return_value = paid_order(phone="")
+        self.confirm()
+
+        response = self.client.post(
+            "/api/checkout/resend",
+            json.dumps({"razorpayOrderId": "order_TEST0001"}),
+            content_type="application/json")
+
+        self.assertEqual(response.json()["status"], "refused")
+        self.assertEqual(response.json()["detail"], "no_phone")
+
+    @patch("core.services.payments.create_order")
+    def test_checkout_accepts_empty_phone(self, create_order):
+        create_order.return_value = {
+            "id": "order_TEST0001", "amount": 190000, "currency": "INR",
+        }
+
+        response = self.client.post(
+            "/api/checkout",
+            json.dumps({"fullName": "New", "email": "n@x.com",
+                        "bookSlug": "tsp", "pace": "medium"}),
+            content_type="application/json")
+
+        self.assertEqual(response.status_code, 200)
