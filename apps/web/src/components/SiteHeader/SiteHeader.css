@@ -60,6 +60,21 @@
 
 .ui-header-link:hover { color: var(--accent); }
 
+/* Sign up (#205): the one filled control in the header, so a visitor finds it. */
+.ui-header-cta {
+  padding: 0.4rem 0.95rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.86rem;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background var(--dur-quick) var(--ease-settle);
+}
+
+.ui-header-cta:hover { background: var(--accent-hover); }
+
 @media (max-width: 30rem) {
   .ui-header-inner { padding: 0 var(--space-4); }
   /* The name is the first thing to go on a narrow phone; sign out stays. */

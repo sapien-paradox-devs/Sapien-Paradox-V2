@@ -14,6 +14,7 @@ describe("headerContents", () => {
       library: false,
       account: true,
       signIn: false,
+      signUp: false,
     });
   });
 
@@ -35,15 +36,26 @@ describe("headerContents", () => {
       library: false,
       account: false,
       signIn: false,
+      signUp: false,
     });
   });
 
-  it.each(["login", "reset", "welcome"] as const)("shows only the wordmark on %s", (page) => {
+  it("offers sign up beside sign in on the landing page (#205)", () => {
+    expect(headerContents("landing", false)).toMatchObject({ signIn: true, signUp: true });
+  });
+
+  it("offers sign up on the sign-in page, and sign in on the sign-up page (#205)", () => {
+    expect(headerContents("login", false)).toMatchObject({ signIn: false, signUp: true });
+    expect(headerContents("begin", false)).toMatchObject({ signIn: true, signUp: false });
+  });
+
+  it.each(["reset", "welcome"] as const)("shows only the wordmark on %s", (page) => {
     expect(headerContents(page, false)).toEqual({
       hidden: false,
       library: false,
       account: false,
       signIn: false,
+      signUp: false,
     });
   });
 });

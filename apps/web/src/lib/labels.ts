@@ -13,6 +13,7 @@ export const labels = {
     label: "Site",
     library: "Your library",
     signIn: "Sign in",
+    signUp: "Sign up",
     signOut: "Sign out",
   },
   theme: {
@@ -328,6 +329,8 @@ export const labels = {
     errorInvalid: "That email and password do not match. Try again.",
     errorGeneric: "We could not reach the library. Try again in a moment.",
     noPassword: "Never set a password?",
+    newHere: "New here?",
+    createAccount: "Create your account",
     sendLink: "Send me a sign-in link",
     linkTitle: "Send a sign-in link",
     linkLead:

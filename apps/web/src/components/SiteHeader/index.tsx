@@ -54,6 +54,12 @@ export function SiteHeader({ page, userName, navigate, onLogout, trailing }: Pro
             </NavLink>
           )}
 
+          {contents.signUp && (
+            <NavLink to="/begin" navigate={navigate} className="ui-header-cta">
+              {labels.nav.signUp}
+            </NavLink>
+          )}
+
           {trailing}
         </div>
       </nav>
