@@ -53,7 +53,9 @@ class SeedTests(TestCase):
         self.assertEqual(Chapter.objects.count(), 5)
         self.assertEqual(User.objects.count(), 1)
         self.assertEqual(Order.objects.count(), 1)
-        self.assertEqual(TemporalGrant.objects.count(), 1)
+        # Chapter 1 live, the other four scheduled by cadence (D50).
+        self.assertEqual(TemporalGrant.objects.count(), 5)
+        self.assertEqual(TemporalGrant.objects.filter(state=TemporalGrant.SCHEDULED).count(), 4)
 
     def test_running_it_twice_changes_nothing(self):
         call_command("seed_dev", verbosity=0)
@@ -77,5 +79,6 @@ class SeedTests(TestCase):
 
         reader = User.objects.get()
         self.assertFalse(reader.has_usable_password())
-        self.assertEqual(TemporalGrant.objects.get().chapter.order_index, 1)
+        live = TemporalGrant.objects.exclude(state=TemporalGrant.SCHEDULED)
+        self.assertEqual(live.get().chapter.order_index, 1)
         self.assertTrue(reader.reset_tokens.exists())

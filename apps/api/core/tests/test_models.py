@@ -112,7 +112,7 @@ class TemporalGrantTests(TestCase):
         self.assertGreater(grant.expires_at, timezone.now())
         self.assertFalse(grant.is_expired)
         self.assertIsNone(grant.opened_at)
-        self.assertIsNone(grant.unlock_at, "cadence seam stays null (D1)")
+        self.assertIsNone(grant.unlock_at, "only cadence sets it (D50)")
 
     def test_tokens_differ_between_grants(self):
         first = TemporalGrant.objects.create(user=self.user, chapter=self.chapter)
