@@ -25,7 +25,7 @@ class Grant:
         self.unlock_at = unlock_at
         self.opened_at = opened_at
         self.user = "reader"
-        self.chapter = SimpleNamespace(video=video)
+        self.chapter = SimpleNamespace(video=video, book="book")
 
 
 def deps(owns=True, sent=True, minted="fresh-grant", calls=None):
@@ -33,6 +33,8 @@ def deps(owns=True, sent=True, minted="fresh-grant", calls=None):
     return SimpleNamespace(
         now=lambda: NOW,
         can_read=lambda user, chapter: owns,
+        owns=lambda user, book: owns,
+        grant_expiry=lambda delivered_at: delivered_at + timedelta(days=7),
         send_chapter=lambda grant: SimpleNamespace(status="sent" if sent else "failed"),
         mint_grant=lambda user, chapter: minted,
         record_progress=lambda user, chapter, furthest: calls.append(("record", furthest)),
@@ -114,7 +116,7 @@ class ReissueTests(TestCase):
 
 
 class UnlockTests(TestCase):
-    """Cadence is not built yet, so `scheduled` is unreachable in practice."""
+    """Cadence (D50): the tick sends UNLOCK to scheduled grants that are due."""
 
     def test_a_due_grant_is_delivered_and_goes_live(self):
         grant = Grant(state=SCHEDULED, unlock_at=NOW - timedelta(minutes=1))
@@ -150,6 +152,44 @@ class UnlockTests(TestCase):
                  persist=saved.append)
 
         self.assertEqual(saved, [])
+
+    def test_delivery_restarts_the_seven_days(self):
+        """Minted at purchase, so its default expiry may be long gone (D50)."""
+        grant = Grant(state=SCHEDULED, unlock_at=NOW - timedelta(minutes=1),
+                      expires_in=timedelta(days=-20))
+
+        send(grant, "UNLOCK")
+
+        self.assertEqual(grant.expires_at, NOW + timedelta(days=7))
+
+    def test_a_failed_send_keeps_the_old_expiry(self):
+        grant = Grant(state=SCHEDULED, unlock_at=NOW - timedelta(minutes=1))
+        before = grant.expires_at
+
+        send(grant, "UNLOCK", sent=False)
+
+        self.assertEqual(grant.expires_at, before)
+
+    def test_a_reader_who_no_longer_owns_the_book_is_sent_nothing(self):
+        """Deactivated, erased or refunded (D80). Stays scheduled."""
+        grant = Grant(state=SCHEDULED, unlock_at=NOW - timedelta(minutes=1))
+        sends = []
+        d = deps(owns=False)
+        d.send_chapter = sends.append
+
+        result = dispatch(reading_machine, grant, "UNLOCK", deps=d)
+
+        self.assertFalse(result.ok)
+        self.assertEqual(result.refusal, "not_owner")
+        self.assertEqual(grant.state, SCHEDULED)
+        self.assertEqual(sends, [])
+
+    def test_a_grant_not_yet_due_is_not_called_not_owner(self):
+        grant = Grant(state=SCHEDULED, unlock_at=NOW + timedelta(days=1))
+
+        result = send(grant, "UNLOCK", owns=False)
+
+        self.assertEqual(result.refusal, "no_transition")
 
 
 class ProgressTests(TestCase):

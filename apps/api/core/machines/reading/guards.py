@@ -4,8 +4,7 @@
 def is_due(grant, ctx):
     """Has this chapter's unlock moment passed?
 
-    `unlock_at` is null until cadence lands (D21), and a grant with no unlock
-    moment is due immediately.
+    A grant with no unlock moment is due immediately.
     """
     return grant.unlock_at is None or ctx.deps.now() >= grant.unlock_at
 
@@ -26,6 +25,16 @@ def owns_book(grant, ctx):
     on every request, so a refund takes effect on the next one.
     """
     return ctx.deps.can_read(grant.user, grant.chapter)
+
+
+def still_owns(grant, ctx):
+    """Does the reader still own the book, for a chapter not yet unlocked?
+
+    `owns_book` asks `can_read`, which by design says no to a chapter that is
+    still scheduled, and UNLOCK's chapter always is. So this asks only the
+    ownership half (D25). A deactivated reader (D80) is sent nothing more.
+    """
+    return ctx.deps.owns(grant.user, grant.chapter.book)
 
 
 def has_video(grant, ctx):

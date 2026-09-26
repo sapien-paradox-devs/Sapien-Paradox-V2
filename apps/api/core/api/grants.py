@@ -19,7 +19,7 @@ from ..machines.binding import dispatch_model
 from ..machines.reading import reading_machine
 from ..schemas.common import ChapterOut, PageLayoutOut, ProgressIn, VideoOut
 from .. import selectors
-from ..services import access, grants, media, pages, progress, whatsapp
+from ..services import access, cadence, grants, media, pages, progress, whatsapp
 
 router = Router()
 
@@ -33,7 +33,9 @@ def _deps():
     return dict(
         now=timezone.now,
         can_read=access.can_read,
+        owns=access.owns,
         send_chapter=whatsapp.send_chapter,
+        grant_expiry=cadence.grant_expiry,
         mint_grant=grants.mint_or_reuse,
         record_progress=progress.record,
         complete_chapter=progress.complete,

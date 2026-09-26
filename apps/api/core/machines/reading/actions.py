@@ -16,6 +16,12 @@ def deliver_chapter(grant, ctx):
 
     if log.status != "sent":
         ctx.refuse("delivery_failed")
+        return
+
+    # Seven days from delivery, not from minting (D50). The row was minted at
+    # purchase, possibly weeks ago, so its default expiry may already be gone.
+    grant.expires_at = ctx.deps.grant_expiry(ctx.deps.now())
+    touched(grant, "expires_at")
 
 
 def stamp_opened(grant, ctx):

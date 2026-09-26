@@ -39,6 +39,9 @@ def mint_or_reuse(user, chapter) -> TemporalGrant:
         TemporalGrant.objects.filter(
             user=user, chapter=chapter, expires_at__gt=timezone.now()
         )
+        # A scheduled row holds a token nobody has been sent. Only the tick
+        # may make it live (D39, D50); `can_read` refuses before we get here.
+        .exclude(state=TemporalGrant.SCHEDULED)
         .order_by("-created_at")
         .first()
     )

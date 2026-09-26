@@ -18,6 +18,7 @@ from typing import Any
 from django.db import transaction
 
 from ..models import Order, PasswordResetToken, TemporalGrant, User
+from . import cadence
 from . import grants as grants_service
 from . import phone as phone_service
 
@@ -81,6 +82,11 @@ def create_reader(full_name, email, phone, book, pace, user=None) -> OnboardingR
             raise OnboardingRefused("book_has_no_chapters", "book")
 
         grant = TemporalGrant.objects.create(user=user, chapter=first)
+
+        # The rest of the book, as scheduled rows (D50). They are rows, not sends,
+        # so this belongs inside the transaction: a reader must never exist with
+        # half a schedule.
+        cadence.schedule(order)
 
         # Only for a reader who cannot log in yet. Minting one unconditionally
         # also throttles them: `reset_request` counts PasswordResetToken rows in
