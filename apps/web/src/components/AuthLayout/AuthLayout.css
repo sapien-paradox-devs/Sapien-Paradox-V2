@@ -1,0 +1,172 @@
+/* Sign in and sign up (#206). A two-panel frame: the book and what reading
+   here is like, then the form on a raised card. Palette D81, motion D54. */
+
+.auth {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: stretch;
+  width: 100%;
+  max-width: 68rem;
+  min-height: calc(100dvh - var(--header-height));
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6);
+}
+
+/* ── the panel ── */
+
+.auth-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-8);
+  border-radius: var(--radius-lg);
+  justify-content: center;
+  background:
+    radial-gradient(120% 70% at 100% 0%, var(--accent-wash), transparent 60%),
+    radial-gradient(90% 60% at 0% 100%, var(--saffron-wash), transparent 55%),
+    var(--paper-sunk);
+  overflow: hidden;
+  animation: auth-arrive var(--dur-settle) var(--ease-settle) both;
+}
+
+.auth-eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.auth-title {
+  font-size: clamp(1.7rem, 2.6vw, 2.3rem);
+  line-height: 1.12;
+}
+
+.auth-lede {
+  color: var(--ink-soft);
+  line-height: 1.6;
+  max-width: 30rem;
+}
+
+.auth-art {
+  max-width: 17rem;
+  margin: var(--space-4) auto var(--space-2);
+}
+
+.auth-points {
+  list-style: none;
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.auth-points li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.auth-points svg { flex-shrink: 0; margin-top: 2px; color: var(--teal-text); }
+
+/* ── the form side ── */
+
+.auth-main {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  animation: auth-arrive var(--dur-settle) var(--ease-settle) 80ms both;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 27rem;
+  margin: 0 auto;
+  padding: var(--space-8);
+  border: 1px solid var(--rule-soft);
+  border-radius: var(--radius-lg);
+  background: var(--paper-raised);
+  box-shadow: var(--shadow-lift);
+}
+
+.auth-card h1 { font-size: 1.9rem; }
+
+.auth-sub {
+  margin: var(--space-2) 0 var(--space-6);
+  color: var(--ink-soft);
+  font-size: 0.93rem;
+  line-height: 1.55;
+}
+
+.auth-form { display: flex; flex-direction: column; gap: var(--space-4); }
+
+/* A divider with words in it: "New to Sapien Paradox?" */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-6) 0 var(--space-4);
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+}
+
+.auth-divider::before,
+.auth-divider::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+
+.auth-secondary {
+  display: block;
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 500;
+  text-align: center;
+  transition: border-color var(--dur-quick) var(--ease-settle), color var(--dur-quick) var(--ease-settle);
+}
+
+.auth-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+.auth-small { margin-top: var(--space-4); font-size: 0.85rem; color: var(--ink-faint); }
+
+/* A password field with a show/hide control inside it. */
+.auth-password { position: relative; }
+.auth-password input { padding-right: 4.5rem; }
+.auth-reveal {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.45rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: var(--radius);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+.auth-reveal:hover { color: var(--accent); background: var(--paper-sunk); }
+
+@keyframes auth-arrive { from { opacity: 0; transform: translateY(var(--rise)); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-panel, .auth-main { animation: none; }
+}
+
+/* ── phones and narrow windows: the panel becomes a banner ── */
+
+@media (max-width: 52rem) {
+  .auth {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+    padding: var(--space-4);
+    min-height: auto;
+  }
+
+  .auth-panel { padding: var(--space-6); gap: var(--space-2); }
+  .auth-art, .auth-points { display: none; }
+  .auth-title { font-size: 1.45rem; }
+  .auth-lede { font-size: 0.9rem; }
+  .auth-card { max-width: none; padding: var(--space-6); box-shadow: var(--shadow-card); }
+}
