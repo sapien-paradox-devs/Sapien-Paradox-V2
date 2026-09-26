@@ -3,6 +3,7 @@ import { createActor, fromPromise } from "xstate";
 
 import { ApiError } from "../../../../lib/fetcher";
 import { profileMachine } from "..";
+import type { SaveInput, PasswordInput } from "../actors";
 import type { Profile } from "../types";
 
 const PROFILE: Profile = {
@@ -25,11 +26,11 @@ function start(
         if (fetchResult instanceof Error) throw fetchResult;
         return fetchResult;
       }),
-      saveProfile: fromPromise<Profile>(async () => {
+      saveProfile: fromPromise<Profile, SaveInput>(async () => {
         if (saveResult instanceof Error) throw saveResult;
         return saveResult as Profile;
       }),
-      changePassword: fromPromise<void>(async () => {
+      changePassword: fromPromise<void, PasswordInput>(async () => {
         if (passwordResult instanceof Error) throw passwordResult;
       }),
     },
