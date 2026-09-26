@@ -20,6 +20,61 @@ databases:
     plan: free                # D35 — was basic-256mb. Expires; see the note above.
     region: singapore
 
+# ── Shared environment (#113) ──────────────────────────────────────────────
+# The web service and the cadence cron run the same Django project, so they
+# need the same settings. Typed once here, referenced by both with `fromGroup`.
+# DATABASE_URL is NOT here: an env group cannot reference a database, so each
+# service wires its own `fromDatabase` entry below.
+#
+# Only what the cron needs is shared. R2, Razorpay, cookies and the companion key
+# stay on sapien-api alone, so a secret the tick never uses never reaches it.
+#
+# THE LIVE WEB SERVICE PREDATES THIS GROUP. Its variables were typed onto the
+# service directly, and a service-level value overrides the group's. Syncing
+# this file creates the group but does not remove them. To match this file:
+# copy each value below into the group (DJANGO_SECRET_KEY included — copying it
+# keeps everyone signed in; letting the group generate a new one signs everyone
+# out once), then delete those keys from sapien-api's own Environment tab.
+# docs/RUNNING.md, "The cadence cron", has the steps.
+#
+# WHATSAPP_BACKEND and WHATSAPP_MAX_ATTEMPTS are deliberately absent: their
+# defaults (twilio when TWILIO_AUTH_TOKEN is set, 3 attempts) are right for both.
+envVarGroups:
+  - name: sapien-shared
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+
+      - key: PYTHON_VERSION
+        value: "3.13"
+
+      - key: DJANGO_DEBUG
+        value: "false"
+
+      - key: DATABASE_SSL_REQUIRE
+        value: "false"        # private network inside one region; no SSL needed
+
+      - key: APP_BASE_URL
+        sync: false           # the SPA URL; WhatsApp links are built from it
+
+      # Twilio. Leave unset and delivery falls back to printing on screen —
+      # the app runs fine without it, which is how it stays deployable before
+      # the WhatsApp templates clear Meta review. The cron sends chapters, so
+      # it needs these as much as the web service does.
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_WHATSAPP_FROM
+        sync: false
+
+      # Cadence knobs (D50) — PACE_DELAY_DAYS_*, CADENCE_DELIVERY_HOUR,
+      # GRANT_TTL_DAYS — belong in this group too whenever they are set: the web
+      # service computes unlock_at at purchase, and the cron compares against it
+      # and stamps expiry. Not declared here, because an EMPTY
+      # CADENCE_DELIVERY_HOUR means something (no morning anchor), so they are
+      # added by hand only when wanted. See docs/RUNNING.md.
+
 services:
   - type: web
     name: sapien-api
@@ -50,22 +105,15 @@ services:
 
     envVars:
       # ── wired automatically ────────────────────────────────────────────
+      # Per service, not in the group: an env group cannot reference a database.
       - key: DATABASE_URL
         fromDatabase:
           name: sapien-db
           property: connectionString
 
-      - key: DJANGO_SECRET_KEY
-        generateValue: true
-
-      - key: PYTHON_VERSION
-        value: "3.13"
-
-      - key: DJANGO_DEBUG
-        value: "false"
-
-      - key: DATABASE_SSL_REQUIRE
-        value: "false"        # private network inside one region; no SSL needed
+      # Secret key, Python version, APP_BASE_URL and Twilio are shared with the
+      # cron, so they live in the group above. Everything else stays here.
+      - fromGroup: sapien-shared
 
       # ── set these once the domain exists ───────────────────────────────
       # LEAVE EVERY ONE OF THESE BLANK AT BLUEPRINT CREATION. The service comes
@@ -95,8 +143,6 @@ services:
         sync: false
       - key: COOKIE_DOMAIN
         sync: false           # .<domain>  — leading dot matters. Empty until then.
-      - key: APP_BASE_URL
-        sync: false           # the SPA URL; WhatsApp links are built from it
 
       # ── secrets, typed once into the dashboard ─────────────────────────
       # Cloudflare R2. THE BUCKET MUST STAY PRIVATE (D19) — nothing here
@@ -112,9 +158,6 @@ services:
       - key: AWS_S3_REGION_NAME
         value: auto
 
-      # Twilio. Leave unset and delivery falls back to printing on screen —
-      # the app runs fine without it, which is how it stays deployable before
-      # the WhatsApp templates clear Meta review.
       # Razorpay (D28, D47). These were missing from the blueprint entirely, so a
       # fresh provision never prompted for them. Checkout closes without the first
       # two; the webhook fails CLOSED and SILENTLY without the third —
@@ -137,13 +180,40 @@ services:
       - key: ONBOARDING_ALLOW_PHONE_REUSE
         sync: false
 
-      - key: TWILIO_ACCOUNT_SID
-        sync: false
-      - key: TWILIO_AUTH_TOKEN
-        sync: false
-      - key: TWILIO_WHATSAPP_FROM
-        sync: false
-
       # The companion. Unset means chat is unavailable; nothing else changes.
       - key: ANTHROPIC_API_KEY
         sync: false
+
+  # ── The cadence tick (D39, D50, #113) ──────────────────────────────────────
+  # Every fifteen minutes: unlock the chapters whose moment has passed and send
+  # each one over WhatsApp. `cadence_tick` exits non-zero when a send fails, so
+  # that run shows red in the dashboard; the grant stays scheduled and the next
+  # run retries it (D40).
+  #
+  # It does NOT need the web service awake. A cron job is its own short-lived
+  # instance, built from this repo, that talks to Postgres and Twilio directly —
+  # no request to sapien-api is involved. So the free web service sleeping (D35)
+  # delays nothing here: the chapter arrives on time, and only the tap that
+  # opens it meets the cold start. That is D35's cost, not the cron's.
+  #
+  # Cron jobs have no free tier. Billed per second of run time, about $1/month
+  # at this schedule (docs/RUNNING.md). Migrations stay the web service's job;
+  # the cron only reads a schema the web service has already migrated.
+  - type: cron
+    name: sapien-cadence
+    runtime: python
+    rootDir: apps/api
+    region: singapore         # with the database — see the region note at the top
+    schedule: "*/15 * * * *"
+
+    # No collectstatic: the cron serves nothing.
+    buildCommand: pip install -r requirements.txt
+    startCommand: python manage.py cadence_tick
+
+    envVars:
+      # Its own entry, not the group's: an env group cannot reference a database.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sapien-db
+          property: connectionString
+      - fromGroup: sapien-shared
