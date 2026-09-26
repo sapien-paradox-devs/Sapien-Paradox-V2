@@ -26,9 +26,17 @@ export type HeaderContents = {
   /** Name + sign out. */
   account: boolean;
   signIn: boolean;
+  /** "Sign up": buying a book is how an account begins (D47), at `/begin` (#205). */
+  signUp: boolean;
 };
 
-const NOTHING: HeaderContents = { hidden: false, library: false, account: false, signIn: false };
+const NOTHING: HeaderContents = {
+  hidden: false,
+  library: false,
+  account: false,
+  signIn: false,
+  signUp: false,
+};
 
 export function headerContents(page: HeaderPage, signedIn: boolean): HeaderContents {
   switch (page) {
@@ -41,7 +49,11 @@ export function headerContents(page: HeaderPage, signedIn: boolean): HeaderConte
     case "library":
       return { ...NOTHING, account: true };
 
+    // A visitor can always find both doors (#205).
     case "landing":
+      return { ...NOTHING, signIn: true, signUp: true };
+
+    // Already the sign-up page: only the way to sign in instead.
     case "begin":
       return { ...NOTHING, signIn: true };
 
@@ -55,7 +67,10 @@ export function headerContents(page: HeaderPage, signedIn: boolean): HeaderConte
     case "admin":
       return { ...NOTHING, account: true };
 
+    // Already the sign-in page: only the way to sign up instead.
     case "login":
+      return { ...NOTHING, signUp: true };
+
     case "reset":
     case "welcome":
     case "adminLogin":

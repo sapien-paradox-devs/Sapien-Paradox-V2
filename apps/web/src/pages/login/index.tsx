@@ -16,7 +16,7 @@ import "./login.css";
 
 export function LoginPage() {
   const [state, send] = useMachine(loginMachine);
-  const { authenticated } = useNavigation();
+  const { authenticated, navigate } = useNavigation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
@@ -143,6 +143,13 @@ export function LoginPage() {
             onClick={() => send({ type: "REQUEST_LINK" })}
           >
             {labels.login.sendLink}
+          </button>
+        </p>
+
+        <p className="login-alt">
+          {labels.login.newHere}{" "}
+          <button type="button" className="linklike" onClick={() => navigate("/begin")}>
+            {labels.login.createAccount}
           </button>
         </p>
       </div>
