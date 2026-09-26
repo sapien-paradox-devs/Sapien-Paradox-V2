@@ -263,6 +263,74 @@ Optional env: `PDF_MAX_MB` (100), `COVER_MAX_MB` (10), `UPLOAD_URL_TTL_SECONDS` 
 **Preview the workspace without an account:** `npm run dev`, then
 `http://localhost:5173/harness.html` (`?v=staged`, `board`, `videos`, `publish`). Sample data, no API.
 
+### The cadence cron — Render, from `render.yaml` (D50)
+
+**What it does.** `sapien-cadence` is a Render Cron Job that runs `python manage.py cadence_tick`
+every fifteen minutes. Each run finds the `scheduled` grants whose `unlock_at` has passed, sends
+each one `UNLOCK` through the reading machine, and so delivers that chapter over WhatsApp. It prints
+one line — `due=… sent=… failed=… refused=…` — and **exits non-zero when any send failed**, so that
+run shows red in the dashboard. A failed grant stays `scheduled` and the next run retries it; a
+`refused` one (a deactivated reader, a row another tick held) is not an error.
+
+**It does not need the web service awake.** The cron is its own short-lived instance built from
+the same repo, talking to Postgres and Twilio directly. The free web service sleeping (D35) delays
+no chapter; only the reader's tap on the link meets the cold start.
+
+**Cost.** Cron jobs have no free tier. They are billed per second of run time on the smallest
+instance; a tick that finds nothing due finishes in seconds, so at 96 runs a day this comes to
+roughly **$1/month**. Its build is `pip install` only — no `collectstatic`, and no migrations,
+which stay the web service's job.
+
+**Environment.** Both services read the `sapien-shared` env group: `DJANGO_SECRET_KEY`,
+`DJANGO_DEBUG`, `DATABASE_SSL_REQUIRE`, `PYTHON_VERSION`, `APP_BASE_URL` and the three `TWILIO_*`.
+That is everything the cron has, plus its own `DATABASE_URL`, because an env group cannot reference
+a database. R2, Razorpay, cookie and companion settings stay on `sapien-api` alone, so secrets the
+tick never uses never reach it. Anything
+cadence-related (`PACE_DELAY_DAYS_*`, `CADENCE_DELIVERY_HOUR`, `GRANT_TTL_DAYS`) goes **in the
+group**, never on one service: the web service computes `unlock_at` at purchase and the cron
+compares against it, so the two must agree.
+
+**Moving the live web service onto the group — once, by hand.** `sapien-api` was created before
+the group existed, so its variables are set on the service itself, and a service-level variable
+overrides the group's. Syncing the Blueprint creates the group but leaves those in place. Until
+they are removed, the two services can silently disagree.
+
+1. Sync the Blueprint. It creates `sapien-shared` and `sapien-cadence` and prompts for the group's
+   `sync: false` values.
+2. Copy into the group the web service's current value for every key the group holds —
+   **including `DJANGO_SECRET_KEY`**. The group generates a fresh key otherwise, and switching to
+   it signs every reader out once.
+3. Delete those same eight keys from `sapien-api` → Environment. Everything else — `DATABASE_URL`,
+   CORS, cookies, R2, Razorpay, Anthropic, cooldowns, `ONBOARDING_ALLOW_PHONE_REUSE` — stays on the
+   service.
+4. Redeploy `sapien-api` and check `/api/health`.
+
+`WHATSAPP_BACKEND` and `WHATSAPP_MAX_ATTEMPTS` are not set anywhere and should stay that way: the
+defaults (Twilio whenever `TWILIO_AUTH_TOKEN` is set, three attempts) are right for both services.
+
+**Running a tick by hand** — from `apps/api` locally, or as `python manage.py cadence_tick` from
+the cron's Shell tab to act on production right now:
+
+```bash
+.venv/bin/python manage.py cadence_tick --dry-run   # list what is due: grant, reader, book, chapter, unlock_at
+.venv/bin/python manage.py cadence_tick             # send it
+```
+
+The dry run never prints a token or a link (D22); the grant's id is enough to find it in the admin.
+Two ticks at once are safe — each row is locked while it is sent.
+
+**Test deployment: watch a book flow in minutes.** Set, in the group:
+
+| Variable | Value | Effect |
+|---|---|---|
+| `PACE_DELAY_DAYS_FAST` | `0.01` | ~14 minutes between chapters on the fast pace |
+| `CADENCE_DELIVERY_HOUR` | *(empty)* | no 08:00 morning anchor; unlocks fall at exact offsets |
+
+Buy a book at the fast pace and each fifteen-minute tick delivers the next chapter. The empty value
+matters: *unset* means the 08:00 default, which would hold every chapter until the next morning.
+The schedule is computed at purchase, so these affect only orders placed after they are set. Remove
+both before a real reader buys.
+
 ### Web — Vercel (D34)
 
 `apps/web/vercel.json` carries the framework, build, output, and the SPA rewrite. **Three settings
