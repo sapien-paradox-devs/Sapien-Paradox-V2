@@ -1,0 +1,263 @@
+  <section>
+    <h2>Why it exists</h2>
+    <p><code>core/models.py</code> is data only. It holds no flow, no access rules and no
+    delivery — those live in services and machines, and a model that started deciding things
+    would give every rule two homes. What the file does carry is a set of constraints chosen
+    so the rest of the code can stay simple: because an order is unique per reader and book,
+    the access check is an existence query rather than a sum.</p>
+    <p>D18 named eight tables. There are ten: <code>ReadingProgress</code> arrived with D70 and
+    <code>AccountChange</code> with D80, each recorded as an amendment rather than smuggled in.
+    Django's own tables — sessions, permissions, admin log — are not designed here.</p>
+  </section>
+
+  <section>
+    <h2>The ten tables</h2>
+    <figure class="svgscroll">
+      <svg viewBox="0 0 800 420" role="img" aria-label="Entity diagram: User and Book meet at Order; Book has Chapters; a Chapter and a User meet at TemporalGrant; MessageLog and ChatUsage hang off the grant; ReadingProgress, PasswordResetToken and AccountChange hang off the User.">
+        <defs>
+          <marker id="f2-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <rect class="box" x="30" y="40" width="140" height="54" rx="6" />
+        <text class="lbl" x="44" y="64">User</text>
+        <text class="sub" x="44" y="82">email · phone unique</text>
+
+        <rect class="box lit" x="250" y="40" width="150" height="54" rx="6" />
+        <text class="lbl" x="264" y="64">Order</text>
+        <text class="sub" x="264" y="82">one per (user, book)</text>
+
+        <rect class="box" x="480" y="40" width="140" height="54" rx="6" />
+        <text class="lbl" x="494" y="64">Book</text>
+        <text class="sub" x="494" y="82">slug · is_published</text>
+
+        <rect class="box" x="480" y="150" width="140" height="54" rx="6" />
+        <text class="lbl" x="494" y="174">Chapter</text>
+        <text class="sub" x="494" y="192">PDF · text · layout</text>
+
+        <rect class="box lit" x="250" y="150" width="150" height="66" rx="6" />
+        <text class="lbl" x="264" y="174">TemporalGrant</text>
+        <text class="sub" x="264" y="191">token unique</text>
+        <text class="sub" x="264" y="207">(user, chapter) is not</text>
+
+        <line class="edge" x1="170" y1="67" x2="244" y2="67" marker-end="url(#f2-head)" />
+        <text class="edgelbl" x="207" y="58" text-anchor="middle">owns</text>
+        <line class="edge" x1="400" y1="67" x2="474" y2="67" marker-end="url(#f2-head)" />
+        <text class="edgelbl" x="437" y="58" text-anchor="middle">of</text>
+        <line class="edge" x1="550" y1="94" x2="550" y2="144" marker-end="url(#f2-head)" />
+        <text class="edgelbl" x="558" y="124">1..n</text>
+        <line class="edge" x1="480" y1="177" x2="406" y2="177" marker-end="url(#f2-head)" />
+        <text class="edgelbl" x="443" y="168" text-anchor="middle">1..n</text>
+        <line class="edge" x1="150" y1="94" x2="256" y2="146" marker-end="url(#f2-head)" />
+        <text class="edgelbl" x="176" y="132">holds</text>
+
+        <rect class="box" x="240" y="264" width="160" height="58" rx="6" />
+        <text class="lbl" x="254" y="288">MessageLog</text>
+        <text class="sub" x="254" y="306">pending → sent | failed</text>
+        <line class="edge" x1="325" y1="216" x2="325" y2="258" marker-end="url(#f2-head)" />
+        <text class="edgelbl" x="333" y="242">logged</text>
+
+        <rect class="box" x="440" y="264" width="150" height="58" rx="6" />
+        <text class="lbl" x="454" y="288">ChatUsage</text>
+        <text class="sub" x="454" y="306">(grant, date)</text>
+        <polyline class="edge" points="400,196 515,196 515,258" marker-end="url(#f2-head)" />
+        <text class="edgelbl" x="523" y="242">metered</text>
+
+        <rect class="box" x="30" y="264" width="170" height="58" rx="6" />
+        <text class="lbl" x="44" y="288">ReadingProgress</text>
+        <text class="sub" x="44" y="306">(user, chapter)</text>
+        <line class="edge" x1="100" y1="94" x2="100" y2="258" marker-end="url(#f2-head)" />
+        <text class="edgelbl" x="108" y="180">place kept</text>
+
+        <rect class="box" x="620" y="264" width="150" height="58" rx="6" />
+        <text class="lbl" x="634" y="288">PasswordReset</text>
+        <text class="sub" x="634" y="306">single use · 1 hour</text>
+        <polyline class="edge dashed" points="100,34 100,18 695,18 695,258" marker-end="url(#f2-head)" />
+        <text class="edgelbl" x="400" y="13" text-anchor="middle">recovery</text>
+
+        <rect class="box" x="30" y="352" width="170" height="58" rx="6" />
+        <text class="lbl" x="44" y="376">AccountChange</text>
+        <text class="sub" x="44" y="394">who did it, and when</text>
+        <polyline class="edge dashed" points="30,381 14,381 14,67 24,67" marker-end="url(#f2-head)" />
+        <text class="edgelbl" x="20" y="240">audited</text>
+      </svg>
+      <figcaption>Two tables carry the product's whole shape: <code>Order</code> is the
+      entitlement and the cadence anchor, and <code>TemporalGrant</code> is one reader's
+      time-bounded access to one chapter. Everything else either describes content or records
+      what happened. <code>ReadingProgress</code> is keyed on the reader and the chapter, not
+      on the grant, so a re-issued link does not lose the reader's place.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What each table is for</h2>
+    <div class="map">
+      <div class="step">
+        <span class="n">01</span>
+        <div>
+          <div class="where">User</div>
+          <div class="what">Email is the login. <code>phone</code> is unique and
+          <em>nullable</em> — a reader with no phone can still pay and read, they just get no
+          WhatsApp. NULL rather than an empty string, or the unique constraint would allow
+          exactly one phoneless reader. No <code>role</code> column: Django's
+          <code>is_staff</code> answers that question already.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <div>
+          <div class="where">Book</div>
+          <div class="what">Title, slug, author, description, cover, price, and two videos —
+          a public sample and an owners-only one. <code>is_published</code> keeps a half-built
+          book with three of eight chapters from being assignable.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <div>
+          <div class="where">Chapter</div>
+          <div class="what">The PDF itself, plus three things filled at upload:
+          <code>text_content</code> (the companion's entire context),
+          <code>page_count</code>, and <code>page_layout</code> (each page's size and rendered
+          image). All three are written by explicit service calls, never by a signal. A
+          chapter with a null layout cannot be opened.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <div>
+          <div class="where">Order</div>
+          <div class="what">The entitlement, unique per reader and book, and the cadence
+          anchor: chapter N unlocks at <code>created_at + (N−1) × interval</code>.
+          <code>pace</code> lives here, so one reader can take one book slowly and another
+          quickly. <code>payment_reference</code> is what makes the webhook idempotent — and
+          it is blank-able, because an admin-created reader has no payment at all.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">05</span>
+        <div>
+          <div class="where">TemporalGrant</div>
+          <div class="what">One reader's access to one chapter: a short token that fits in a
+          WhatsApp message, an <code>expires_at</code>, an <code>unlock_at</code>, the first
+          <code>opened_at</code>, and the reading machine's <code>state</code> —
+          <code>scheduled</code>, <code>live</code>, <code>opened</code>. There is no
+          <code>expired</code> state: expiry is derived from the timestamp.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">06</span>
+        <div>
+          <div class="where">ReadingProgress</div>
+          <div class="what"><code>furthest</code> (0–1, only ever grows) and
+          <code>completed_at</code>. Completion is declared by the reader, never inferred from
+          reaching the last page. Nothing in access, delivery or cadence may read this
+          table — a test holds that line.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">07</span>
+        <div>
+          <div class="where">MessageLog</div>
+          <div class="what">What we tried to send and what happened: template key, the phone
+          as a snapshot, status, attempts, provider id, error. Written <code>pending</code>
+          <em>before</em> the attempt, so a crash mid-send leaves evidence. Never the rendered
+          body — it contains a live token.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">08</span>
+        <div>
+          <div class="where">ChatUsage</div>
+          <div class="what">One row per grant per day: message count and token counts as plain
+          integers, so cost comparison survives a provider swap. It is the rate limiter's
+          counter, since there is no Redis. It never stores message content.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">09</span>
+        <div>
+          <div class="where">PasswordResetToken</div>
+          <div class="what">Single-use, about an hour. Separate from <code>TemporalGrant</code>
+          because the lifecycles differ, and single use matters more here: a reset link sits in
+          WhatsApp history forever, so a reusable one is a permanent account key.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">10</span>
+        <div>
+          <div class="where">AccountChange</div>
+          <div class="what">One row per thing an admin did to a reader: created, updated,
+          deactivated, reactivated, erased — with who did it. It stores no old values, or
+          erasing would not erase.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The constraints, and what each one prevents</h2>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Constraint</th><th>On</th><th>What it prevents</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="mono">one_order_per_user_per_book</td><td>Order</td><td>An admin double-creating an order and silently doubling a reader's grants. It is also what makes <code>can_read</code> an existence check.</td></tr>
+          <tr><td class="mono">unique_chapter_index_per_book</td><td>Chapter</td><td>Two chapter sevens, and therefore an ambiguous cadence schedule.</td></tr>
+          <tr><td class="mono">unique_progress_per_reader_chapter</td><td>ReadingProgress</td><td>Two places for one reader, and a race that loses whichever wrote first.</td></tr>
+          <tr><td class="mono">one_usage_row_per_grant_per_day</td><td>ChatUsage</td><td>A cap that can be walked past by inserting a second row for today.</td></tr>
+          <tr><td class="mono">token</td><td>Grant, reset</td><td>Two readers sharing a link. Unique across the table, not per user.</td></tr>
+          <tr><td class="mono">index (state, unlock_at)</td><td>TemporalGrant</td><td>The cadence tick's one query, run every fifteen minutes, from turning into a table scan.</td></tr>
+          <tr><td class="mono">index (user, chapter)</td><td>TemporalGrant</td><td>Slow mint-or-reuse. Deliberately an index and <em>not</em> unique — see below.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>What V1 had here, and what happened to it</h2>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>V1</th><th>V2</th><th>Why</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>Shard</code> table, 1:1 with chapter</td><td>Gone; the file lives on <code>Chapter</code></td><td>A strictly 1:1 join bought nothing. "Shard" survives as product vocabulary, not as a table.</td></tr>
+          <tr><td><code>max_views = 5</code>, enforced in <code>is_valid()</code></td><td>Removed</td><td>It was in no plan document — it arrived in code. As written, opening a chapter a sixth time locked a reader out of a book they had paid for.</td></tr>
+          <tr><td><code>TemporalGrant.user</code> nullable</td><td>Required</td><td>A leftover from an anonymous-grant era. Nullable FKs breed <code>if grant.user:</code> branches forever.</td></tr>
+          <tr><td><code>role</code> beside <code>is_staff</code></td><td><code>is_staff</code> only</td><td>Two systems answering one question, free to drift.</td></tr>
+          <tr><td><code>stripe_session_id</code>, unique and required</td><td>No payment columns until payments landed</td><td>Unique-and-required made a concierge-created order impossible to save. <code>payment_reference</code> arrived later, blank-able, with the real shape.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gotchas</h2>
+    <ul class="gotchas">
+      <li><b><code>(user, chapter)</code> on a grant is indexed and deliberately not
+      unique.</b> This looks wrong. If it were unique, re-issue would have to extend
+      <code>expires_at</code> in place, and the old token would stay valid — quietly reviving
+      access for anyone holding a forwarded dead link, which is the exact case seven-day expiry
+      exists for. A few extra rows per reader is the cheaper side of that trade.</li>
+      <li><b>Field defaults must be module-level functions.</b> V1 lost a whole ticket to using
+      <code>shortuuid.uuid</code> directly: it is a bound method on a module singleton, so
+      every insert broke at runtime and Django's autodetector then looped, proposing the same
+      migration forever.</li>
+      <li><b>Upload paths carry a UUID.</b> Without it, re-uploading a corrected chapter either
+      overwrites silently — leaving readers with a cached copy of the old file — or picks up a
+      mangled storage suffix.</li>
+      <li><b><code>sent</code> means the provider accepted it, not that it arrived.</b> The
+      column name is the shortest honest one available; the help text carries the rest.</li>
+      <li><b>A grant's <code>__str__</code> never includes the token.</b> D22 forbids putting a
+      token anywhere it might be logged, and <code>__str__</code> ends up in logs, admin and
+      tracebacks.</li>
+      <li><b><code>Order.state</code> does not exist.</b> D64 derives it from the order's
+      grants rather than storing it, so there is no second copy to fall out of step.</li>
+      <li><b>Ten tables, one file.</b> Justified while it is ten; <code>models.py</code> is
+      already 604 lines, and D59 has the move to per-domain apps waiting when it earns
+      its keep.</li>
+    </ul>
+  </section>

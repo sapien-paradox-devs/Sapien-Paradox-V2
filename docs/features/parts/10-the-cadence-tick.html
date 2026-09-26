@@ -1,0 +1,207 @@
+  <section>
+    <h2>Why it exists</h2>
+    <p>"Its chapters unlock on a schedule" is the second clause of the product's own sentence,
+    and for the first ninety-five pull requests it was the one thing that did not exist:
+    <code>unlock_at</code> was written in <code>models.py</code>, read by one guard, and set by
+    nothing. Every chapter was available immediately, which made the pace a label rather than a
+    promise.</p>
+    <p>D50 settled the shape, and it is the cheap one. The schedule is not computed on demand and
+    not held in a queue — it is <strong>rows, minted at purchase</strong>. Every chapter of the
+    book gets a grant with its unlock moment written on it, and a cron job every fifteen minutes
+    asks one indexed question: which of these is due?</p>
+  </section>
+
+  <section>
+    <h2>Minted once, fired later</h2>
+    <figure class="svgscroll">
+      <svg viewBox="0 0 800 340" role="img" aria-label="At purchase, cadence.schedule mints scheduled grants for chapters two to N with unlock_at on each. Every fifteen minutes the Render cron runs cadence_tick, which finds due rows and dispatches UNLOCK to the reading machine; a successful send makes the grant live, a failed one leaves it scheduled for the next tick.">
+        <defs>
+          <marker id="f10-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+          <marker id="f10-head-lit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head lit" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <text class="zonelbl" x="20" y="28">at purchase, inside the transaction</text>
+        <rect class="box warm" x="20" y="40" width="200" height="58" rx="6" />
+        <text class="lbl" x="34" y="64">cadence.schedule(order)</text>
+        <text class="sub" x="34" y="82">bulk_create, sends nothing</text>
+
+        <rect class="box" x="264" y="34" width="216" height="34" rx="5" />
+        <text class="lbl" x="278" y="56">ch 1 · live · delivered now</text>
+        <rect class="box" x="264" y="76" width="216" height="34" rx="5" />
+        <text class="sub" x="278" y="97">ch 2 · scheduled · +3 days</text>
+        <rect class="box" x="264" y="118" width="216" height="34" rx="5" />
+        <text class="sub" x="278" y="139">ch 3 · scheduled · +6 days</text>
+        <line class="edge" x1="220" y1="69" x2="258" y2="60" marker-end="url(#f10-head)" />
+        <line class="edge" x1="220" y1="76" x2="258" y2="120" marker-end="url(#f10-head)" />
+
+        <text class="zonelbl" x="540" y="28">every fifteen minutes</text>
+        <rect class="box" x="540" y="40" width="240" height="58" rx="6" />
+        <text class="lbl" x="554" y="64">Render cron · cadence_tick</text>
+        <text class="sub" x="554" y="82">its own instance, no web service</text>
+
+        <rect class="box lit" x="540" y="122" width="240" height="58" rx="6" />
+        <text class="lbl" x="554" y="146">cadence.due(now)</text>
+        <text class="sub" x="554" y="164">index (state, unlock_at)</text>
+        <line class="edge" x1="660" y1="98" x2="660" y2="116" marker-end="url(#f10-head)" />
+
+        <rect class="box lit" x="400" y="210" width="380" height="58" rx="6" />
+        <text class="lbl" x="414" y="234">dispatch UNLOCK → the reading machine</text>
+        <text class="sub" x="414" y="252">one transaction per row · select_for_update(skip_locked)</text>
+        <polyline class="edge lit" points="660,180 660,196 590,196 590,204" marker-end="url(#f10-head-lit)" />
+
+        <rect class="box cool" x="400" y="286" width="180" height="40" rx="6" />
+        <text class="lbl" x="414" y="311">live · chapter sent</text>
+        <rect class="box hot" x="600" y="286" width="180" height="40" rx="6" />
+        <text class="lbl" x="614" y="311">still scheduled</text>
+        <line class="edge" x1="490" y1="268" x2="490" y2="280" marker-end="url(#f10-head)" />
+        <line class="edge" x1="690" y1="268" x2="690" y2="280" marker-end="url(#f10-head)" />
+        <text class="edgelbl" x="20" y="300">a failed send is not an error state —</text>
+        <text class="edgelbl" x="20" y="316">the next tick finds the row again</text>
+      </svg>
+      <figcaption>Nothing retries, and that is the design. A send that fails leaves the grant
+      <code>scheduled</code>, so the next tick picks it up — which also means catching up after an
+      outage is free: the rows were always there, and the query simply finds more of them. The
+      tick is a trigger and nothing else; the reading machine decides what <code>UNLOCK</code>
+      means.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What each part does</h2>
+    <div class="map">
+      <div class="step">
+        <span class="n">01</span>
+        <div>
+          <div class="where">core/services/cadence.py <em>· unlock_at_for()</em></div>
+          <div class="what">When the chapter at a position unlocks: the anchor plus
+          <code>pace × position</code> days, snapped to <code>CADENCE_DELIVERY_HOUR</code> in
+          <code>CADENCE_TIMEZONE</code> when that anchor is set. Position 0 returns
+          <code>None</code> — chapter one is delivered at purchase and has no unlock
+          moment.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <div>
+          <div class="where">core/services/cadence.py <em>· schedule(order)</em></div>
+          <div class="what">Mints chapters 2…N as <code>scheduled</code> grants in one
+          <code>bulk_create</code>. It writes rows and sends nothing, which is what makes it safe
+          inside <code>create_reader</code>'s transaction. Idempotent: a chapter the reader
+          already holds a grant for is skipped.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <div>
+          <div class="where">core/services/cadence.py <em>· due(now)</em></div>
+          <div class="what">One query, oldest first: <code>state=scheduled</code> and
+          <code>unlock_at &lt;= now</code>. It is the reason <code>TemporalGrant</code> carries an
+          index on exactly that pair.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <div>
+          <div class="where">core/services/cadence.py <em>· tick(now)</em></div>
+          <div class="what">Walks the due ids and, for each, opens its own transaction, re-selects
+          the row <code>select_for_update(skip_locked=True)</code> with the state still
+          <code>scheduled</code>, and dispatches <code>UNLOCK</code>. Returns a
+          <code>TickResult</code>: due, sent, failed, refused.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">05</span>
+        <div>
+          <div class="where">core/services/cadence.py <em>· _deps()</em></div>
+          <div class="what">What the guards and actions get: the tick's own clock,
+          <code>access.owns</code>, <code>whatsapp.send_chapter</code>, and
+          <code>grant_expiry</code> — seven days from <em>delivery</em>, not from minting.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">06</span>
+        <div>
+          <div class="where">core/machines/reading/ <em>· the UNLOCK rows</em></div>
+          <div class="what">Two rows. Due and still owned → go <code>live</code> and deliver;
+          due but the reader was deactivated, erased or refunded → send nothing and stay
+          <code>scheduled</code>, so a reactivated reader picks up where the schedule has
+          reached. Not yet due matches no row at all, which is inert by design.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">07</span>
+        <div>
+          <div class="where">core/management/commands/cadence_tick.py</div>
+          <div class="what">The cron's entry point, plus <code>--dry-run</code>, which lists the
+          due grants by primary key, reader and chapter — never the token or the link. Exits
+          non-zero when a send failed so the run shows red in the dashboard; refusals are not
+          failures.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">08</span>
+        <div>
+          <div class="where">render.yaml <em>· sapien-cadence</em></div>
+          <div class="what">A cron service on <code>*/15 * * * *</code> in the same region as the
+          database, running the same Django project from the shared env group. It never calls the
+          web service, so the free tier's sleeping web instance delays nothing here.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">09</span>
+        <div>
+          <div class="where">core/services/access.py <em>· can_read</em></div>
+          <div class="what">The reader-facing half: a chapter is locked while a
+          <code>scheduled</code> grant for it exists. That is the only place the lock is
+          expressed, and it is why no endpoint had to change when cadence arrived.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The settings that shape a schedule</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Setting</th><th>Default</th><th>Effect</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">PACE_DELAY_DAYS_SLOW / MEDIUM / FAST</td><td>7 / 3 / 1</td><td>Days between chapters. Env-overridable so a test deployment can shrink a book to minutes.</td></tr>
+          <tr><td class="mono">CADENCE_DELIVERY_HOUR</td><td>8</td><td>The local hour a chapter lands. Empty means "exactly at the offset", which is a deliberate, different behaviour rather than a missing value.</td></tr>
+          <tr><td class="mono">CADENCE_TIMEZONE</td><td>Asia/Kolkata</td><td>Which morning that hour belongs to.</td></tr>
+          <tr><td class="mono">GRANT_TTL_DAYS</td><td>7</td><td>How long a link lives, counted from delivery.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gotchas</h2>
+    <ul class="gotchas">
+      <li><b>Expiry has to be re-stamped at unlock, not at minting.</b> A grant minted today for
+      a chapter due next month would be dead on arrival — seven days from <em>delivery</em> is
+      what D8 actually means, so the reading machine restamps <code>expires_at</code> when the row
+      goes live.</li>
+      <li><b>Two ticks must not send twice.</b> Render already serialises runs of one cron job,
+      but the row is re-selected under <code>select_for_update(skip_locked=True)</code> with the
+      state re-checked, so a manual run alongside a scheduled one either skips the locked row or
+      never sees it. On SQLite the lock is a no-op, which is fine locally.</li>
+      <li><b>A red cron run is for a human, not for recovery.</b> The command exits non-zero when
+      a send did not land, and the grant is still <code>scheduled</code> either way. Refused rows
+      — a deactivated reader, a row another tick held — are the system working and are
+      deliberately not counted as failures.</li>
+      <li><b>"Has it unlocked?" is answered by state, not by the clock.</b> Comparing
+      <code>unlock_at</code> to <code>now</code> in the access check would create a second clock
+      that disagrees with the tick for up to fifteen minutes at every boundary.</li>
+      <li><b>Readers from before cadence hold no scheduled rows,</b> so the whole feature is
+      invisible to them and nothing needed backfilling.</li>
+      <li><b>Cron has no free tier.</b> About a dollar a month at this schedule — the one paid
+      line item while everything else sits on free plans.</li>
+      <li><b>Home still shows nothing about it.</b> Locked chapters with their unlock dates are
+      not built, so a reader can be on a schedule they cannot see. That is the reader-facing half
+      of this feature and it is the next thing it needs.</li>
+    </ul>
+  </section>

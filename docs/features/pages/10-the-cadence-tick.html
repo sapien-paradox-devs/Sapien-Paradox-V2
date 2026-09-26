@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Cadence Tick</title>
+</head>
+<body>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,400&family=Inter:wght@400;500;600&display=swap");
+
+/* Jewel (D81) — the product's own tokens, light first. */
+:root {
+  color-scheme: light;
+
+  --ink: #1f1b16;
+  --ink-soft: #5d554a;
+  --ink-faint: #6b6358;
+
+  --paper: #f5f6f2;
+  --paper-raised: #fbfcfa;
+  --paper-sunk: #eceee8;
+
+  --rule: #d9ded7;
+  --rule-soft: #e6e9e3;
+
+  --accent: #2952e3;
+  --accent-text: #2952e3;
+  --accent-wash: #e8edfd;
+  --on-accent: #fff;
+
+  --saffron: #f5a623;
+  --saffron-text: #9a5b00;
+  --saffron-wash: #fdf1dc;
+  --coral: #ff6b57;
+  --coral-text: #c23a28;
+  --coral-wash: #ffeae6;
+  --teal: #14b8a6;
+  --teal-text: #0a7266;
+  --teal-wash: #e0f5f2;
+
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --radius: 6px;
+  --measure: 68ch;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ink: #ece4d6;
+    --ink-soft: #b9ae9d;
+    --ink-faint: #9a9083;
+    --paper: #16130f;
+    --paper-raised: #1f1b16;
+    --paper-sunk: #100e0b;
+    --rule: #352e26;
+    --rule-soft: #28231d;
+    --accent: #8fa8ff;
+    --accent-text: #8fa8ff;
+    --accent-wash: #1c2240;
+    --on-accent: #16130f;
+    --saffron: #ffc152;
+    --saffron-text: #ffc152;
+    --saffron-wash: #2e2410;
+    --coral: #ff8a7a;
+    --coral-text: #ff8a7a;
+    --coral-wash: #2e1a16;
+    --teal: #3dd6c3;
+    --teal-text: #3dd6c3;
+    --teal-wash: #102b28;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #ece4d6;
+  --ink-soft: #b9ae9d;
+  --ink-faint: #9a9083;
+  --paper: #16130f;
+  --paper-raised: #1f1b16;
+  --paper-sunk: #100e0b;
+  --rule: #352e26;
+  --rule-soft: #28231d;
+  --accent: #8fa8ff;
+  --accent-text: #8fa8ff;
+  --accent-wash: #1c2240;
+  --on-accent: #16130f;
+  --saffron: #ffc152;
+  --saffron-text: #ffc152;
+  --saffron-wash: #2e2410;
+  --coral: #ff8a7a;
+  --coral-text: #ff8a7a;
+  --coral-wash: #2e1a16;
+  --teal: #3dd6c3;
+  --teal-text: #3dd6c3;
+  --teal-wash: #102b28;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- the spine ---------------------------------------------------- */
+
+.topbar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.6rem 16px;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.topbar .num {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--accent-text);
+}
+
+.topbar .set { margin-left: auto; letter-spacing: 0.06em; }
+
+.wrap {
+  max-width: 78ch;
+  margin: 0 auto;
+  padding: 16px 16px 5rem;
+}
+
+/* ---- masthead ----------------------------------------------------- */
+
+header.masthead { padding-block: 2rem 1.25rem; }
+
+h1 {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 48;
+  font-weight: 500;
+  font-size: clamp(2rem, 6vw, 2.9rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.6rem;
+  text-wrap: balance;
+}
+
+.lede {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 20;
+  font-size: 1.16rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: var(--measure);
+  margin: 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 1.25rem;
+}
+
+.chip {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+}
+
+.chip.cap { background: var(--accent-wash); border-color: transparent; color: var(--accent-text); }
+.chip.built { background: var(--teal-wash); border-color: transparent; color: var(--teal-text); }
+.chip.partial { background: var(--saffron-wash); border-color: transparent; color: var(--saffron-text); }
+.chip.missing { background: var(--coral-wash); border-color: transparent; color: var(--coral-text); }
+
+/* ---- sections ----------------------------------------------------- */
+
+section { margin-top: 2.75rem; }
+
+h2 {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0.9rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+h3 {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 24;
+  font-weight: 600;
+  font-size: 1.12rem;
+  margin: 1.75rem 0 0.4rem;
+}
+
+p { max-width: var(--measure); margin: 0 0 0.9rem; }
+p:last-child { margin-bottom: 0; }
+
+a { color: var(--accent-text); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+strong { font-weight: 600; }
+
+code, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.855em;
+  background: var(--paper-sunk);
+  padding: 0.08em 0.32em;
+  border-radius: 3px;
+  overflow-wrap: anywhere;
+}
+
+ul, ol { max-width: var(--measure); padding-left: 1.15rem; margin: 0 0 0.9rem; }
+li { margin-bottom: 0.35rem; }
+
+/* ---- code map (what each part does) -------------------------------- */
+
+.map { display: flex; flex-direction: column; gap: 0; margin-top: 0.25rem; }
+
+.step {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.step:first-child { border-top: 1px solid var(--rule-soft); }
+
+.step .n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  padding-top: 0.22rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.step .where {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--ink);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.step .where em { font-style: normal; color: var(--ink-faint); font-weight: 400; }
+
+.step .what { color: var(--ink-soft); font-size: 14px; margin-top: 0.12rem; max-width: var(--measure); }
+.step .what code { background: transparent; padding: 0; color: var(--ink); }
+
+/* ---- tables -------------------------------------------------------- */
+
+.tablewrap { overflow-x: auto; margin-bottom: 1rem; }
+
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td {
+  text-align: left;
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+  vertical-align: top;
+}
+th {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 600;
+  white-space: nowrap;
+}
+td.mono, td code { font-family: var(--font-mono); font-size: 12.5px; }
+td.mono { background: none; white-space: nowrap; }
+
+/* ---- figures ------------------------------------------------------- */
+
+figure { margin: 0 0 1rem; }
+
+figure svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  color: var(--ink);
+}
+
+.svgscroll { overflow-x: auto; }
+.svgscroll svg { min-width: 520px; }
+
+figcaption {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  margin-top: 0.6rem;
+  max-width: var(--measure);
+  line-height: 1.5;
+}
+
+/* the SVG vocabulary every diagram in this set uses */
+svg .box { fill: var(--paper-raised); stroke: var(--rule); stroke-width: 1; }
+svg .box.lit { fill: var(--accent-wash); stroke: var(--accent); }
+svg .box.warm { fill: var(--saffron-wash); stroke: var(--saffron); }
+svg .box.cool { fill: var(--teal-wash); stroke: var(--teal); }
+svg .box.hot { fill: var(--coral-wash); stroke: var(--coral); }
+svg .box.ghost { fill: none; stroke: var(--rule); stroke-dasharray: 3 3; }
+svg .lbl { fill: var(--ink); font-family: var(--font-body); font-size: 12px; font-weight: 500; }
+svg .sub { fill: var(--ink-faint); font-family: var(--font-mono); font-size: 10px; }
+svg .edge { stroke: var(--ink-faint); stroke-width: 1.2; fill: none; }
+svg .edge.lit { stroke: var(--accent); stroke-width: 1.6; }
+svg .edge.dashed { stroke-dasharray: 4 3; }
+svg .edgelbl { fill: var(--ink-faint); font-family: var(--font-body); font-size: 10.5px; }
+svg .head { fill: var(--ink-faint); }
+svg .head.lit { fill: var(--accent); }
+svg .zone { fill: var(--paper-sunk); stroke: none; }
+svg .zonelbl { fill: var(--ink-faint); font-family: var(--font-body); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* ---- pull-outs ----------------------------------------------------- */
+
+.seam {
+  border-left: 2px solid var(--accent);
+  background: var(--accent-wash);
+  padding: 0.85rem 1rem;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin: 0 0 1rem;
+  max-width: var(--measure);
+  font-size: 14px;
+}
+.seam p { margin-bottom: 0.5rem; }
+.seam p:last-child { margin-bottom: 0; }
+.seam .tag {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.gotchas { list-style: none; padding: 0; margin: 0; max-width: var(--measure); }
+.gotchas > li {
+  padding: 0.85rem 0 0.85rem 1.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+  position: relative;
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.gotchas > li:first-child { border-top: 1px solid var(--rule-soft); }
+.gotchas > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1.35rem;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--coral);
+}
+.gotchas b { color: var(--ink); font-weight: 600; }
+
+.states { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1rem; align-items: center; }
+.state {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 0.22rem 0.55rem;
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+}
+.state.term { background: var(--paper-sunk); color: var(--ink-faint); }
+.states .to { color: var(--ink-faint); font-size: 12px; }
+
+footer.end {
+  margin-top: 3.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+footer.end .nav { font-family: var(--font-mono); }
+
+@media (max-width: 560px) {
+  body { font-size: 14.5px; }
+  .topbar .set { display: none; }
+  .step { grid-template-columns: 1.3rem minmax(0, 1fr); gap: 0.5rem; }
+}
+</style>
+
+<div class="topbar">
+  <span class="num">10</span>
+  <span>The Cadence Tick</span>
+  <span class="set">Sapien Paradox V2 &middot; feature 10 of 21</span>
+</div>
+
+<div class="wrap">
+  <header class="masthead">
+    <h1>The Cadence Tick</h1>
+    <p class="lede">The product's first sentence: the schedule is rows minted at purchase, and a cron job fires whatever is due.</p>
+    <div class="chips"><span class="chip cap">Cadence</span><span class="chip">D17</span><span class="chip">D39</span><span class="chip">D50</span><span class="chip">D89</span><span class="chip built">built</span></div>
+  </header>
+
+  <section>
+    <h2>Why it exists</h2>
+    <p>"Its chapters unlock on a schedule" is the second clause of the product's own sentence,
+    and for the first ninety-five pull requests it was the one thing that did not exist:
+    <code>unlock_at</code> was written in <code>models.py</code>, read by one guard, and set by
+    nothing. Every chapter was available immediately, which made the pace a label rather than a
+    promise.</p>
+    <p>D50 settled the shape, and it is the cheap one. The schedule is not computed on demand and
+    not held in a queue — it is <strong>rows, minted at purchase</strong>. Every chapter of the
+    book gets a grant with its unlock moment written on it, and a cron job every fifteen minutes
+    asks one indexed question: which of these is due?</p>
+  </section>
+
+  <section>
+    <h2>Minted once, fired later</h2>
+    <figure class="svgscroll">
+      <svg viewBox="0 0 800 340" role="img" aria-label="At purchase, cadence.schedule mints scheduled grants for chapters two to N with unlock_at on each. Every fifteen minutes the Render cron runs cadence_tick, which finds due rows and dispatches UNLOCK to the reading machine; a successful send makes the grant live, a failed one leaves it scheduled for the next tick.">
+        <defs>
+          <marker id="f10-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+          <marker id="f10-head-lit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head lit" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <text class="zonelbl" x="20" y="28">at purchase, inside the transaction</text>
+        <rect class="box warm" x="20" y="40" width="200" height="58" rx="6" />
+        <text class="lbl" x="34" y="64">cadence.schedule(order)</text>
+        <text class="sub" x="34" y="82">bulk_create, sends nothing</text>
+
+        <rect class="box" x="264" y="34" width="216" height="34" rx="5" />
+        <text class="lbl" x="278" y="56">ch 1 · live · delivered now</text>
+        <rect class="box" x="264" y="76" width="216" height="34" rx="5" />
+        <text class="sub" x="278" y="97">ch 2 · scheduled · +3 days</text>
+        <rect class="box" x="264" y="118" width="216" height="34" rx="5" />
+        <text class="sub" x="278" y="139">ch 3 · scheduled · +6 days</text>
+        <line class="edge" x1="220" y1="69" x2="258" y2="60" marker-end="url(#f10-head)" />
+        <line class="edge" x1="220" y1="76" x2="258" y2="120" marker-end="url(#f10-head)" />
+
+        <text class="zonelbl" x="540" y="28">every fifteen minutes</text>
+        <rect class="box" x="540" y="40" width="240" height="58" rx="6" />
+        <text class="lbl" x="554" y="64">Render cron · cadence_tick</text>
+        <text class="sub" x="554" y="82">its own instance, no web service</text>
+
+        <rect class="box lit" x="540" y="122" width="240" height="58" rx="6" />
+        <text class="lbl" x="554" y="146">cadence.due(now)</text>
+        <text class="sub" x="554" y="164">index (state, unlock_at)</text>
+        <line class="edge" x1="660" y1="98" x2="660" y2="116" marker-end="url(#f10-head)" />
+
+        <rect class="box lit" x="400" y="210" width="380" height="58" rx="6" />
+        <text class="lbl" x="414" y="234">dispatch UNLOCK → the reading machine</text>
+        <text class="sub" x="414" y="252">one transaction per row · select_for_update(skip_locked)</text>
+        <polyline class="edge lit" points="660,180 660,196 590,196 590,204" marker-end="url(#f10-head-lit)" />
+
+        <rect class="box cool" x="400" y="286" width="180" height="40" rx="6" />
+        <text class="lbl" x="414" y="311">live · chapter sent</text>
+        <rect class="box hot" x="600" y="286" width="180" height="40" rx="6" />
+        <text class="lbl" x="614" y="311">still scheduled</text>
+        <line class="edge" x1="490" y1="268" x2="490" y2="280" marker-end="url(#f10-head)" />
+        <line class="edge" x1="690" y1="268" x2="690" y2="280" marker-end="url(#f10-head)" />
+        <text class="edgelbl" x="20" y="300">a failed send is not an error state —</text>
+        <text class="edgelbl" x="20" y="316">the next tick finds the row again</text>
+      </svg>
+      <figcaption>Nothing retries, and that is the design. A send that fails leaves the grant
+      <code>scheduled</code>, so the next tick picks it up — which also means catching up after an
+      outage is free: the rows were always there, and the query simply finds more of them. The
+      tick is a trigger and nothing else; the reading machine decides what <code>UNLOCK</code>
+      means.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What each part does</h2>
+    <div class="map">
+      <div class="step">
+        <span class="n">01</span>
+        <div>
+          <div class="where">core/services/cadence.py <em>· unlock_at_for()</em></div>
+          <div class="what">When the chapter at a position unlocks: the anchor plus
+          <code>pace × position</code> days, snapped to <code>CADENCE_DELIVERY_HOUR</code> in
+          <code>CADENCE_TIMEZONE</code> when that anchor is set. Position 0 returns
+          <code>None</code> — chapter one is delivered at purchase and has no unlock
+          moment.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <div>
+          <div class="where">core/services/cadence.py <em>· schedule(order)</em></div>
+          <div class="what">Mints chapters 2…N as <code>scheduled</code> grants in one
+          <code>bulk_create</code>. It writes rows and sends nothing, which is what makes it safe
+          inside <code>create_reader</code>'s transaction. Idempotent: a chapter the reader
+          already holds a grant for is skipped.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <div>
+          <div class="where">core/services/cadence.py <em>· due(now)</em></div>
+          <div class="what">One query, oldest first: <code>state=scheduled</code> and
+          <code>unlock_at &lt;= now</code>. It is the reason <code>TemporalGrant</code> carries an
+          index on exactly that pair.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <div>
+          <div class="where">core/services/cadence.py <em>· tick(now)</em></div>
+          <div class="what">Walks the due ids and, for each, opens its own transaction, re-selects
+          the row <code>select_for_update(skip_locked=True)</code> with the state still
+          <code>scheduled</code>, and dispatches <code>UNLOCK</code>. Returns a
+          <code>TickResult</code>: due, sent, failed, refused.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">05</span>
+        <div>
+          <div class="where">core/services/cadence.py <em>· _deps()</em></div>
+          <div class="what">What the guards and actions get: the tick's own clock,
+          <code>access.owns</code>, <code>whatsapp.send_chapter</code>, and
+          <code>grant_expiry</code> — seven days from <em>delivery</em>, not from minting.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">06</span>
+        <div>
+          <div class="where">core/machines/reading/ <em>· the UNLOCK rows</em></div>
+          <div class="what">Two rows. Due and still owned → go <code>live</code> and deliver;
+          due but the reader was deactivated, erased or refunded → send nothing and stay
+          <code>scheduled</code>, so a reactivated reader picks up where the schedule has
+          reached. Not yet due matches no row at all, which is inert by design.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">07</span>
+        <div>
+          <div class="where">core/management/commands/cadence_tick.py</div>
+          <div class="what">The cron's entry point, plus <code>--dry-run</code>, which lists the
+          due grants by primary key, reader and chapter — never the token or the link. Exits
+          non-zero when a send failed so the run shows red in the dashboard; refusals are not
+          failures.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">08</span>
+        <div>
+          <div class="where">render.yaml <em>· sapien-cadence</em></div>
+          <div class="what">A cron service on <code>*/15 * * * *</code> in the same region as the
+          database, running the same Django project from the shared env group. It never calls the
+          web service, so the free tier's sleeping web instance delays nothing here.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">09</span>
+        <div>
+          <div class="where">core/services/access.py <em>· can_read</em></div>
+          <div class="what">The reader-facing half: a chapter is locked while a
+          <code>scheduled</code> grant for it exists. That is the only place the lock is
+          expressed, and it is why no endpoint had to change when cadence arrived.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The settings that shape a schedule</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Setting</th><th>Default</th><th>Effect</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">PACE_DELAY_DAYS_SLOW / MEDIUM / FAST</td><td>7 / 3 / 1</td><td>Days between chapters. Env-overridable so a test deployment can shrink a book to minutes.</td></tr>
+          <tr><td class="mono">CADENCE_DELIVERY_HOUR</td><td>8</td><td>The local hour a chapter lands. Empty means "exactly at the offset", which is a deliberate, different behaviour rather than a missing value.</td></tr>
+          <tr><td class="mono">CADENCE_TIMEZONE</td><td>Asia/Kolkata</td><td>Which morning that hour belongs to.</td></tr>
+          <tr><td class="mono">GRANT_TTL_DAYS</td><td>7</td><td>How long a link lives, counted from delivery.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gotchas</h2>
+    <ul class="gotchas">
+      <li><b>Expiry has to be re-stamped at unlock, not at minting.</b> A grant minted today for
+      a chapter due next month would be dead on arrival — seven days from <em>delivery</em> is
+      what D8 actually means, so the reading machine restamps <code>expires_at</code> when the row
+      goes live.</li>
+      <li><b>Two ticks must not send twice.</b> Render already serialises runs of one cron job,
+      but the row is re-selected under <code>select_for_update(skip_locked=True)</code> with the
+      state re-checked, so a manual run alongside a scheduled one either skips the locked row or
+      never sees it. On SQLite the lock is a no-op, which is fine locally.</li>
+      <li><b>A red cron run is for a human, not for recovery.</b> The command exits non-zero when
+      a send did not land, and the grant is still <code>scheduled</code> either way. Refused rows
+      — a deactivated reader, a row another tick held — are the system working and are
+      deliberately not counted as failures.</li>
+      <li><b>"Has it unlocked?" is answered by state, not by the clock.</b> Comparing
+      <code>unlock_at</code> to <code>now</code> in the access check would create a second clock
+      that disagrees with the tick for up to fifteen minutes at every boundary.</li>
+      <li><b>Readers from before cadence hold no scheduled rows,</b> so the whole feature is
+      invisible to them and nothing needed backfilling.</li>
+      <li><b>Cron has no free tier.</b> About a dollar a month at this schedule — the one paid
+      line item while everything else sits on free plans.</li>
+      <li><b>Home still shows nothing about it.</b> Locked chapters with their unlock dates are
+      not built, so a reader can be on a schedule they cannot see. That is the reader-facing half
+      of this feature and it is the next thing it needs.</li>
+    </ul>
+  </section>
+
+  <footer class="end">
+    <p><a href="index.html">All features</a> &middot; 10 of 21 &middot; source at
+    <span class="mono">docs/features/parts/10-the-cadence-tick.html</span></p>
+    <p class="nav">&larr; 09 &middot; 11 &rarr;</p>
+  </footer>
+</div>
+</body>
+</html>

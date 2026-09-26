@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Covers And Video</title>
+</head>
+<body>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,400&family=Inter:wght@400;500;600&display=swap");
+
+/* Jewel (D81) — the product's own tokens, light first. */
+:root {
+  color-scheme: light;
+
+  --ink: #1f1b16;
+  --ink-soft: #5d554a;
+  --ink-faint: #6b6358;
+
+  --paper: #f5f6f2;
+  --paper-raised: #fbfcfa;
+  --paper-sunk: #eceee8;
+
+  --rule: #d9ded7;
+  --rule-soft: #e6e9e3;
+
+  --accent: #2952e3;
+  --accent-text: #2952e3;
+  --accent-wash: #e8edfd;
+  --on-accent: #fff;
+
+  --saffron: #f5a623;
+  --saffron-text: #9a5b00;
+  --saffron-wash: #fdf1dc;
+  --coral: #ff6b57;
+  --coral-text: #c23a28;
+  --coral-wash: #ffeae6;
+  --teal: #14b8a6;
+  --teal-text: #0a7266;
+  --teal-wash: #e0f5f2;
+
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --radius: 6px;
+  --measure: 68ch;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ink: #ece4d6;
+    --ink-soft: #b9ae9d;
+    --ink-faint: #9a9083;
+    --paper: #16130f;
+    --paper-raised: #1f1b16;
+    --paper-sunk: #100e0b;
+    --rule: #352e26;
+    --rule-soft: #28231d;
+    --accent: #8fa8ff;
+    --accent-text: #8fa8ff;
+    --accent-wash: #1c2240;
+    --on-accent: #16130f;
+    --saffron: #ffc152;
+    --saffron-text: #ffc152;
+    --saffron-wash: #2e2410;
+    --coral: #ff8a7a;
+    --coral-text: #ff8a7a;
+    --coral-wash: #2e1a16;
+    --teal: #3dd6c3;
+    --teal-text: #3dd6c3;
+    --teal-wash: #102b28;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #ece4d6;
+  --ink-soft: #b9ae9d;
+  --ink-faint: #9a9083;
+  --paper: #16130f;
+  --paper-raised: #1f1b16;
+  --paper-sunk: #100e0b;
+  --rule: #352e26;
+  --rule-soft: #28231d;
+  --accent: #8fa8ff;
+  --accent-text: #8fa8ff;
+  --accent-wash: #1c2240;
+  --on-accent: #16130f;
+  --saffron: #ffc152;
+  --saffron-text: #ffc152;
+  --saffron-wash: #2e2410;
+  --coral: #ff8a7a;
+  --coral-text: #ff8a7a;
+  --coral-wash: #2e1a16;
+  --teal: #3dd6c3;
+  --teal-text: #3dd6c3;
+  --teal-wash: #102b28;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- the spine ---------------------------------------------------- */
+
+.topbar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.6rem 16px;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.topbar .num {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--accent-text);
+}
+
+.topbar .set { margin-left: auto; letter-spacing: 0.06em; }
+
+.wrap {
+  max-width: 78ch;
+  margin: 0 auto;
+  padding: 16px 16px 5rem;
+}
+
+/* ---- masthead ----------------------------------------------------- */
+
+header.masthead { padding-block: 2rem 1.25rem; }
+
+h1 {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 48;
+  font-weight: 500;
+  font-size: clamp(2rem, 6vw, 2.9rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.6rem;
+  text-wrap: balance;
+}
+
+.lede {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 20;
+  font-size: 1.16rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: var(--measure);
+  margin: 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 1.25rem;
+}
+
+.chip {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+}
+
+.chip.cap { background: var(--accent-wash); border-color: transparent; color: var(--accent-text); }
+.chip.built { background: var(--teal-wash); border-color: transparent; color: var(--teal-text); }
+.chip.partial { background: var(--saffron-wash); border-color: transparent; color: var(--saffron-text); }
+.chip.missing { background: var(--coral-wash); border-color: transparent; color: var(--coral-text); }
+
+/* ---- sections ----------------------------------------------------- */
+
+section { margin-top: 2.75rem; }
+
+h2 {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0.9rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+h3 {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 24;
+  font-weight: 600;
+  font-size: 1.12rem;
+  margin: 1.75rem 0 0.4rem;
+}
+
+p { max-width: var(--measure); margin: 0 0 0.9rem; }
+p:last-child { margin-bottom: 0; }
+
+a { color: var(--accent-text); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+strong { font-weight: 600; }
+
+code, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.855em;
+  background: var(--paper-sunk);
+  padding: 0.08em 0.32em;
+  border-radius: 3px;
+  overflow-wrap: anywhere;
+}
+
+ul, ol { max-width: var(--measure); padding-left: 1.15rem; margin: 0 0 0.9rem; }
+li { margin-bottom: 0.35rem; }
+
+/* ---- code map (what each part does) -------------------------------- */
+
+.map { display: flex; flex-direction: column; gap: 0; margin-top: 0.25rem; }
+
+.step {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.step:first-child { border-top: 1px solid var(--rule-soft); }
+
+.step .n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  padding-top: 0.22rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.step .where {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--ink);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.step .where em { font-style: normal; color: var(--ink-faint); font-weight: 400; }
+
+.step .what { color: var(--ink-soft); font-size: 14px; margin-top: 0.12rem; max-width: var(--measure); }
+.step .what code { background: transparent; padding: 0; color: var(--ink); }
+
+/* ---- tables -------------------------------------------------------- */
+
+.tablewrap { overflow-x: auto; margin-bottom: 1rem; }
+
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td {
+  text-align: left;
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+  vertical-align: top;
+}
+th {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 600;
+  white-space: nowrap;
+}
+td.mono, td code { font-family: var(--font-mono); font-size: 12.5px; }
+td.mono { background: none; white-space: nowrap; }
+
+/* ---- figures ------------------------------------------------------- */
+
+figure { margin: 0 0 1rem; }
+
+figure svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  color: var(--ink);
+}
+
+.svgscroll { overflow-x: auto; }
+.svgscroll svg { min-width: 520px; }
+
+figcaption {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  margin-top: 0.6rem;
+  max-width: var(--measure);
+  line-height: 1.5;
+}
+
+/* the SVG vocabulary every diagram in this set uses */
+svg .box { fill: var(--paper-raised); stroke: var(--rule); stroke-width: 1; }
+svg .box.lit { fill: var(--accent-wash); stroke: var(--accent); }
+svg .box.warm { fill: var(--saffron-wash); stroke: var(--saffron); }
+svg .box.cool { fill: var(--teal-wash); stroke: var(--teal); }
+svg .box.hot { fill: var(--coral-wash); stroke: var(--coral); }
+svg .box.ghost { fill: none; stroke: var(--rule); stroke-dasharray: 3 3; }
+svg .lbl { fill: var(--ink); font-family: var(--font-body); font-size: 12px; font-weight: 500; }
+svg .sub { fill: var(--ink-faint); font-family: var(--font-mono); font-size: 10px; }
+svg .edge { stroke: var(--ink-faint); stroke-width: 1.2; fill: none; }
+svg .edge.lit { stroke: var(--accent); stroke-width: 1.6; }
+svg .edge.dashed { stroke-dasharray: 4 3; }
+svg .edgelbl { fill: var(--ink-faint); font-family: var(--font-body); font-size: 10.5px; }
+svg .head { fill: var(--ink-faint); }
+svg .head.lit { fill: var(--accent); }
+svg .zone { fill: var(--paper-sunk); stroke: none; }
+svg .zonelbl { fill: var(--ink-faint); font-family: var(--font-body); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* ---- pull-outs ----------------------------------------------------- */
+
+.seam {
+  border-left: 2px solid var(--accent);
+  background: var(--accent-wash);
+  padding: 0.85rem 1rem;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin: 0 0 1rem;
+  max-width: var(--measure);
+  font-size: 14px;
+}
+.seam p { margin-bottom: 0.5rem; }
+.seam p:last-child { margin-bottom: 0; }
+.seam .tag {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.gotchas { list-style: none; padding: 0; margin: 0; max-width: var(--measure); }
+.gotchas > li {
+  padding: 0.85rem 0 0.85rem 1.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+  position: relative;
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.gotchas > li:first-child { border-top: 1px solid var(--rule-soft); }
+.gotchas > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1.35rem;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--coral);
+}
+.gotchas b { color: var(--ink); font-weight: 600; }
+
+.states { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1rem; align-items: center; }
+.state {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 0.22rem 0.55rem;
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+}
+.state.term { background: var(--paper-sunk); color: var(--ink-faint); }
+.states .to { color: var(--ink-faint); font-size: 12px; }
+
+footer.end {
+  margin-top: 3.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+footer.end .nav { font-family: var(--font-mono); }
+
+@media (max-width: 560px) {
+  body { font-size: 14.5px; }
+  .topbar .set { display: none; }
+  .step { grid-template-columns: 1.3rem minmax(0, 1fr); gap: 0.5rem; }
+}
+</style>
+
+<div class="topbar">
+  <span class="num">19</span>
+  <span>Covers And Video</span>
+  <span class="set">Sapien Paradox V2 &middot; feature 19 of 21</span>
+</div>
+
+<div class="wrap">
+  <header class="masthead">
+    <h1>Covers And Video</h1>
+    <p class="lede">Cover bytes are proxied like everything else. Video is the one exception, and it is bounded on purpose.</p>
+    <div class="chips"><span class="chip cap">Stewardship</span><span class="chip">D76</span><span class="chip">D77</span><span class="chip">D83</span><span class="chip built">built</span></div>
+  </header>
+
+  <section>
+    <h2>Why it exists</h2>
+    <p>Mandate 3 says never expose a storage URL: bytes are proxied through the API, which is what
+    makes grant tokens and expiry meaningful and keeps the object store swappable. Video is the one
+    exception in the whole product, and it is a deliberate one (D77).</p>
+    <p>The arithmetic is the argument. Streaming a video through Django holds a worker for as long as
+    someone watches; on a free instance with two workers, a handful of viewers would starve every
+    other request — including the request that serves a chapter. So a video plays from a short-lived
+    signed URL instead. What the mandate protects still holds: nothing permanent is exposed, the
+    bucket stays private, and one module knows how a URL is made.</p>
+  </section>
+
+  <section>
+    <h2>Proxied, except for one thing</h2>
+    <figure class="svgscroll">
+      <svg viewBox="0 0 800 320" role="img" aria-label="Cover images are read server-side and streamed through the API with an hour of cache. Videos take the exception: the reading machine's WATCH row gates a chapter video, the public sample needs no gate, and both return a short-lived presigned URL that the browser plays directly from R2.">
+        <defs>
+          <marker id="f19-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+          <marker id="f19-head-lit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head lit" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <rect class="box" x="640" y="120" width="140" height="70" rx="6" />
+        <text class="lbl" x="654" y="148">R2</text>
+        <text class="sub" x="654" y="166">private bucket</text>
+        <text class="sub" x="654" y="182">no public URL</text>
+
+        <text class="zonelbl" x="20" y="28">the rule</text>
+        <rect class="box" x="20" y="40" width="200" height="56" rx="6" />
+        <text class="lbl" x="34" y="64">GET /books/{slug}/cover</text>
+        <text class="sub" x="34" y="82">and every chapter page</text>
+        <rect class="box cool" x="280" y="40" width="300" height="56" rx="6" />
+        <text class="lbl" x="294" y="64">bytes read server-side, streamed back</text>
+        <text class="sub" x="294" y="82">cover: public, cached an hour · page: no-store</text>
+        <line class="edge" x1="220" y1="68" x2="274" y2="68" marker-end="url(#f19-head)" />
+        <polyline class="edge" points="580,68 610,68 610,124" marker-end="url(#f19-head)" />
+
+        <line class="edge dashed" x1="20" y1="118" x2="600" y2="118" />
+
+        <text class="zonelbl" x="20" y="146">the one exception (D77)</text>
+        <rect class="box" x="20" y="158" width="200" height="52" rx="6" />
+        <text class="lbl" x="34" y="180">GET /grants/{t}/video</text>
+        <text class="sub" x="34" y="198">WATCH: live token, owns book</text>
+        <rect class="box" x="20" y="226" width="200" height="52" rx="6" />
+        <text class="lbl" x="34" y="248">GET /books/{slug}/sample</text>
+        <text class="sub" x="34" y="266">public — it sells the book</text>
+
+        <rect class="box lit" x="280" y="186" width="300" height="62" rx="6" />
+        <text class="lbl" x="294" y="210">media.signed_url(field_file)</text>
+        <text class="sub" x="294" y="228">presigned GET · VIDEO_URL_TTL_SECONDS</text>
+        <text class="sub" x="294" y="244">no bucket? an absolute /media/ URL instead</text>
+        <line class="edge" x1="220" y1="184" x2="274" y2="202" marker-end="url(#f19-head)" />
+        <line class="edge" x1="220" y1="252" x2="274" y2="234" marker-end="url(#f19-head)" />
+
+        <polyline class="edge lit" points="580,216 610,216 610,194" marker-end="url(#f19-head-lit)" />
+        <text class="edgelbl" x="430" y="284" text-anchor="middle">the browser plays straight from R2 — no worker held</text>
+      </svg>
+      <figcaption>Both video endpoints end in the same function, and the difference between them is
+      only the gate in front: the chapter video goes through the reading machine's
+      <code>WATCH</code> row, which checks the token is live and the book still owned, while the
+      sample needs no gate because it is what sells the book. "Public" still never means a public
+      bucket — anyone may ask for a URL, and the URL expires.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What each part does</h2>
+    <div class="map">
+      <div class="step">
+        <span class="n">01</span>
+        <div>
+          <div class="where">core/services/media.py <em>· signed_url</em></div>
+          <div class="what">The only function that knows how a playable URL is made. With R2 it is a
+          presigned GET expiring after <code>VIDEO_URL_TTL_SECONDS</code>; with local storage, which
+          cannot sign, it is an absolute <code>/media/</code> URL — the development fallback that
+          keeps a fresh clone working.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <div>
+          <div class="where">core/services/media.py <em>· chapter_video_url · sample_video_url</em></div>
+          <div class="what">Two named wrappers, so the gating is visible at the call site: one is
+          reached only through <code>WATCH</code>, the other is openly public.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <div>
+          <div class="where">core/services/media.py <em>· cover_bytes</em></div>
+          <div class="what">Reads the cover server-side and returns it with its content type. Covers
+          stay proxied: they are small, and a cover is not worth a second exception.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <div>
+          <div class="where">core/machines/reading/ <em>· the WATCH rows</em></div>
+          <div class="what">Four rows, in this order: live and owned and has a video → sign it; past
+          expiry → <code>expired</code>; owned but no video → <code>no_video</code>; anything else →
+          <code>not_owner</code>. The video check sits <em>after</em> ownership on purpose, so a
+          stranger learns nothing about which chapters have videos.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">05</span>
+        <div>
+          <div class="where">core/api/grants.py <em>· GET /grants/{token}/video</em></div>
+          <div class="what">Dispatches <code>WATCH</code> and returns whatever the action produced.
+          The one place in the product where a storage URL reaches a client, and it is behind the
+          same gate as the pages.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">06</span>
+        <div>
+          <div class="where">core/api/books.py <em>· cover · sample</em></div>
+          <div class="what">Both resolve the book through a helper that filters on
+          <code>is_published</code>, so an unfinished book's media cannot be fetched by guessing its
+          slug. The cover response carries an hour of public cache and
+          <code>nosniff</code>.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">07</span>
+        <div>
+          <div class="where">core/models.py <em>· the three video fields</em></div>
+          <div class="what"><code>Chapter.video</code> (gated with its chapter),
+          <code>Book.sample_video</code> (public), and <code>Book.video</code> (owners only, D83).
+          All MP4-only with an env-driven size cap, and each on an upload path carrying a UUID.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">08</span>
+        <div>
+          <div class="where">pages/reader/ChapterVideo.tsx</div>
+          <div class="what">A quiet link under the chapter title. The player opens only when asked
+          and never starts on its own — nothing moves while the reader is reading — and the URL is
+          held by the machine only while the player is open.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">09</span>
+        <div>
+          <div class="where">pages/reader/machine/ <em>· the video region</em></div>
+          <div class="what">A parallel region, so fetching a URL and opening the player never
+          interrupts the pages: <code>idle</code> → <code>fetching</code> →
+          <code>playing</code>, with <code>failed</code> beside them.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">10</span>
+        <div>
+          <div class="where">pages/admin/books/Cover.tsx <em>· admin/book/Videos.tsx</em></div>
+          <div class="what">The other end: a cover on each card in the admin list, and the panel that
+          assigns dropped videos to chapters, the book or the sample slot.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gotchas</h2>
+    <ul class="gotchas">
+      <li><b>A signed URL is a credential for as long as it lives, so it is never logged.</b> That
+      includes error paths: a log line with a playable URL outlives the request that made it.</li>
+      <li><b>The TTL is a trade, not a formality.</b> Long enough that a reader can watch without the
+      URL dying mid-play, short enough that a copied link is useless by the time it is shared. It is
+      env-driven for exactly that reason.</li>
+      <li><b>Local storage cannot sign.</b> Without the absolute-URL fallback, video would be the one
+      feature that breaks on a fresh clone — which is the situation mandate 6 exists to
+      prevent.</li>
+      <li><b>Ownership is checked before the video's existence.</b> Reversing those two rows turns
+      the endpoint into a probe for which chapters have videos.</li>
+      <li><b>Covers were nearly the second exception.</b> They are on the same object store and the
+      same argument applies in miniature — but they are small, they cache for an hour, and each
+      re-upload gets a new name, so proxying costs nothing and keeps the rule intact.</li>
+      <li><b>Nothing transcodes.</b> An MP4 is served exactly as uploaded, capped by size, so a
+      badly-encoded file is a badly-playing video and the only fix is to upload a better one.</li>
+    </ul>
+  </section>
+
+  <footer class="end">
+    <p><a href="index.html">All features</a> &middot; 19 of 21 &middot; source at
+    <span class="mono">docs/features/parts/19-covers-and-video.html</span></p>
+    <p class="nav">&larr; 18 &middot; 20 &rarr;</p>
+  </footer>
+</div>
+</body>
+</html>

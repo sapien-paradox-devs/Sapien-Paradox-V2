@@ -1,0 +1,205 @@
+  <section>
+    <h2>Why it exists</h2>
+    <p>V1 shipped without session persistence and filed it as a future note: a refresh signed
+    you out. V2 boots by asking <code>GET /api/auth/me</code> and rehydrating from the answer,
+    which is also why the root machine starts in <code>checking</code> rather than assuming
+    anonymous — a token link opened on a cold phone must never be bounced to
+    <code>/login</code> by a pending auth check.</p>
+    <p>The structural decision underneath is that there are exactly two ways to be recognised,
+    and <strong>no endpoint accepts both</strong>. A session cookie is ambient authority: the
+    browser attaches it to any request to our origin, including one a third-party page provoked.
+    A grant token is not — it has to be in the URL. So CSRF is enforced on one lane and off on
+    the other, and neither file has to decide which identity wins.</p>
+  </section>
+
+  <section>
+    <h2>Two lanes, never crossed</h2>
+    <figure class="svgscroll">
+      <svg viewBox="0 0 800 330" role="img" aria-label="Two identity lanes. The cookie lane: the SPA posts to auth/login, receives a session cookie and a CSRF token header, and reaches SessionAuth endpoints, with StaffAuth extending it. The token lane: a WhatsApp link resolves through GrantAuth to the grant endpoints, CSRF exempt.">
+        <defs>
+          <marker id="f7-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+          <marker id="f7-head-lit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head lit" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <rect class="zone" x="20" y="26" width="760" height="124" rx="8" />
+        <text class="zonelbl" x="36" y="46">identity one — a cookie</text>
+
+        <rect class="box" x="40" y="58" width="140" height="56" rx="6" />
+        <text class="lbl" x="54" y="82">the SPA</text>
+        <text class="sub" x="54" y="100">app.&lt;domain&gt;</text>
+
+        <rect class="box" x="220" y="58" width="180" height="56" rx="6" />
+        <text class="lbl" x="234" y="82">POST /auth/login</text>
+        <text class="sub" x="234" y="100">one 401 for both failures</text>
+
+        <rect class="box lit" x="440" y="58" width="150" height="56" rx="6" />
+        <text class="lbl" x="454" y="82">SessionAuth</text>
+        <text class="sub" x="454" y="100">CSRF checked here</text>
+
+        <rect class="box" x="630" y="58" width="130" height="56" rx="6" />
+        <text class="lbl" x="644" y="82">StaffAuth</text>
+        <text class="sub" x="644" y="100">+ is_staff</text>
+
+        <line class="edge" x1="180" y1="86" x2="214" y2="86" marker-end="url(#f7-head)" />
+        <line class="edge lit" x1="400" y1="86" x2="434" y2="86" marker-end="url(#f7-head-lit)" />
+        <text class="edgelbl" x="417" y="132" text-anchor="middle">cookie + X-CSRFToken</text>
+        <line class="edge dashed" x1="590" y1="86" x2="624" y2="86" marker-end="url(#f7-head)" />
+
+        <text class="zonelbl" x="400" y="174" text-anchor="middle">no endpoint declares both</text>
+
+        <rect class="zone" x="20" y="188" width="760" height="120" rx="8" />
+        <text class="zonelbl" x="36" y="208">identity two — a token</text>
+
+        <rect class="box" x="40" y="220" width="140" height="56" rx="6" />
+        <text class="lbl" x="54" y="244">a WhatsApp link</text>
+        <text class="sub" x="54" y="262">no cookie at all</text>
+
+        <rect class="box lit" x="220" y="220" width="180" height="56" rx="6" />
+        <text class="lbl" x="234" y="244">GrantAuth</text>
+        <text class="sub" x="234" y="262">returns the grant, not the user</text>
+
+        <rect class="box" x="440" y="220" width="320" height="56" rx="6" />
+        <text class="lbl" x="454" y="244">/api/grants/… · /api/chat</text>
+        <text class="sub" x="454" y="262">CSRF exempt · expiry decided later, not here</text>
+
+        <line class="edge" x1="180" y1="248" x2="214" y2="248" marker-end="url(#f7-head)" />
+        <line class="edge lit" x1="400" y1="248" x2="434" y2="248" marker-end="url(#f7-head-lit)" />
+      </svg>
+      <figcaption><code>GrantAuth</code> answers only "who is this", and deliberately does not
+      check expiry. Refusing an expired token at the auth layer would collapse it into a 401
+      beside tokens that were never real, and the chamber could no longer tell "this link has
+      rested", which has a button, from "no such link", which does not.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What each part does</h2>
+    <div class="map">
+      <div class="step">
+        <span class="n">01</span>
+        <div>
+          <div class="where">core/api/auth.py <em>· POST /auth/login</em></div>
+          <div class="what">Email and password for a session cookie. The same 401 for a bad
+          password and an unknown email — distinguishing them makes an account-enumeration
+          oracle, and a reader who mistyped either is helped by neither. Login rotates the CSRF
+          token, so the new one is handed back in a header.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <div>
+          <div class="where">core/api/auth.py <em>· GET /auth/me · POST /auth/logout</em></div>
+          <div class="what"><code>me</code> is what the SPA boots from, and where a reload gets
+          its CSRF token back; it answers 401 when anonymous, which is exactly what the root
+          machine expects. <code>logout</code> clears the session.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <div>
+          <div class="where">core/auth/__init__.py</div>
+          <div class="what">The three auth classes. <code>SessionAuth</code> checks CSRF itself
+          on unsafe methods; <code>StaffAuth</code> extends it with the staff test;
+          <code>GrantAuth</code> reads the token off the path — or, for
+          <code>POST /api/chat</code>, out of the JSON body — and resolves it to a grant.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <div>
+          <div class="where">config/settings.py <em>· the cookie block</em></div>
+          <div class="what"><code>COOKIE_DOMAIN</code> scopes the session cookie to the parent
+          domain so both origins share it; <code>SameSite</code> is env-driven and
+          <code>None</code> while the two hosts are unrelated; CORS allows credentials and
+          exposes <code>X-CSRFToken</code>.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">05</span>
+        <div>
+          <div class="where">pages/machine/machine.ts <em>· the session region</em></div>
+          <div class="what"><code>checking</code> → <code>authenticated</code> |
+          <code>anonymous</code>, plus <code>loggingOut</code>, which clears the local session
+          either way so a failed logout call cannot strand someone in an authenticated-looking
+          UI. Signing in while signed in is allowed: that is a reader switching to their staff
+          account.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">06</span>
+        <div>
+          <div class="where">pages/machine/sync.ts</div>
+          <div class="what">URL → machine, and the only sender of <code>ROUTE</code>.
+          Navigation is unidirectional: a page asks for a URL, the URL is pushed, and the change
+          arrives back here — so there is no machine-to-URL loop to guard. It is also where the
+          page transition starts.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">07</span>
+        <div>
+          <div class="where">pages/login/machine/machine.ts</div>
+          <div class="what"><code>idle</code> → <code>submitting</code>, and a second path:
+          <code>linkForm</code> → <code>sendingLink</code> → <code>linkSent</code>, for a reader
+          who has never had a password. Only the outcome travels up, as
+          <code>AUTHENTICATED</code>; the form's own lifecycle never reaches the root.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">08</span>
+        <div>
+          <div class="where">pages/admin-login/</div>
+          <div class="what">The staff door, its own page at <code>/admin/login</code> (D82),
+          matched before <code>isAdminPath</code> in the route table so it is not swallowed by
+          the admin.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">09</span>
+        <div>
+          <div class="where">pages/BootSkeleton.tsx</div>
+          <div class="what">What shows while <code>checking</code> is in flight. A skeleton
+          rather than the word "Loading", because the first frame after a tap should look like
+          the page that is arriving.</div>
+        </div>
+      </div>
+    </div>
+    <div class="seam">
+      <span class="tag">D62 — the machine that was retired</span>
+      <p>There was going to be a dedicated <code>auth</code> machine. There isn't: the session
+      is a region of the root machine and the form is the login page's own machine, which is
+      where those states belong. The decision records the removal rather than leaving a
+      third home for the same question.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gotchas</h2>
+    <ul class="gotchas">
+      <li><b>CSRF had never actually been enforced.</b> Ninja checks it only for its own cookie
+      auth classes, and <code>SessionAuth</code> is a plain callable — so it got no check at all
+      until it started asking for one explicitly. Every session endpoint depended on a
+      protection that was not running.</li>
+      <li><b>Sign-in appeared to hang.</b> <code>ROUTE</code> was handled on the root, so every
+      navigation re-entered the parallel machine, dropped the <code>AUTHENTICATED</code> event
+      reported meanwhile, and sent the session back to <code>checking</code>. Moving the handler
+      onto the page region fixed it.</li>
+      <li><b>The SPA cannot read the API's CSRF cookie across unrelated hosts.</b> Hence the
+      header hand-over on login and on <code>/me</code>, the CORS exposure, and the in-memory
+      copy in <code>fetcher.ts</code>. When both sit under one parent domain the cookie becomes
+      readable and the same code still works.</li>
+      <li><b>Staff who are not staff get a 401, not a 403.</b> Ninja's auth classes have no
+      "authenticated but not allowed", and the admin screens only run for staff, so the
+      distinction would help nobody.</li>
+      <li><b>Admin sign-in had to accept a username.</b> The first staff account was created
+      with <code>createsuperuser</code>, which asks for a username — and the form demanded an
+      email, so the owner could not get in.</li>
+      <li><b>Safari is still unverified.</b> <code>DESIGN.md</code> calls the cross-subdomain
+      cookie the most likely quiet failure in the product, ITP is what would break it, and
+      localhost can never reveal it. It is the one open item on this feature.</li>
+    </ul>
+  </section>

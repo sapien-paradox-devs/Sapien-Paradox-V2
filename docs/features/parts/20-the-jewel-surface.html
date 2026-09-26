@@ -1,0 +1,201 @@
+  <section>
+    <h2>Why it exists</h2>
+    <p>The first surface was warm cream paper, a soft display serif and a burnt-sienna accent. The
+    owner's verdict was that it looked like Claude's own design — and a product wearing someone
+    else's look is harder to remember as its own. D74 replaced the palette and the type; D81 replaced
+    the palette again the same day, on a clearer brief: bring back the warm near-black, use bright
+    colours, and use more than two.</p>
+    <p>What survived both changes is the direction underneath: depth over velocity, a book serif for
+    anything you read at length, and <strong>nothing glows</strong>. A reader spends an hour in
+    here.</p>
+  </section>
+
+  <section>
+    <h2>Four colours, two shades each</h2>
+    <figure class="svgscroll">
+      <svg viewBox="0 0 800 290" role="img" aria-label="The Jewel palette: cobalt leads for buttons, links and focus; saffron for highlights and progress; coral for covers and chapter numerals; teal for done and new marks. Each has a bright shade for fills and a deep shade for text on paper, and bright shades are never used as small text.">
+        <defs>
+          <marker id="f20-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <text class="zonelbl" x="20" y="26">bright — fills, covers, badges</text>
+        <rect x="20" y="38" width="180" height="46" rx="6" fill="#2952e3" />
+        <text x="34" y="60" fill="#ffffff" font-family="Inter, sans-serif" font-size="12" font-weight="600">cobalt · #2952E3</text>
+        <text x="34" y="76" fill="#ffffff" font-family="ui-monospace, monospace" font-size="10">buttons · links · focus</text>
+        <rect x="210" y="38" width="180" height="46" rx="6" fill="#f5a623" />
+        <text x="224" y="60" fill="#1f1b16" font-family="Inter, sans-serif" font-size="12" font-weight="600">saffron · #F5A623</text>
+        <text x="224" y="76" fill="#1f1b16" font-family="ui-monospace, monospace" font-size="10">highlights · progress</text>
+        <rect x="400" y="38" width="180" height="46" rx="6" fill="#ff6b57" />
+        <text x="414" y="60" fill="#1f1b16" font-family="Inter, sans-serif" font-size="12" font-weight="600">coral · #FF6B57</text>
+        <text x="414" y="76" fill="#1f1b16" font-family="ui-monospace, monospace" font-size="10">covers · numerals</text>
+        <rect x="590" y="38" width="190" height="46" rx="6" fill="#14b8a6" />
+        <text x="604" y="60" fill="#1f1b16" font-family="Inter, sans-serif" font-size="12" font-weight="600">teal · #14B8A6</text>
+        <text x="604" y="76" fill="#1f1b16" font-family="ui-monospace, monospace" font-size="10">done · new · companion</text>
+
+        <text class="zonelbl" x="20" y="124">deep — the same roles as text on paper</text>
+        <rect class="box" x="20" y="136" width="180" height="42" rx="6" />
+        <text x="34" y="163" fill="#2952e3" font-family="Inter, sans-serif" font-size="12" font-weight="600">#2952E3 link text</text>
+        <rect class="box" x="210" y="136" width="180" height="42" rx="6" />
+        <text x="224" y="163" fill="#9a5b00" font-family="Inter, sans-serif" font-size="12" font-weight="600">#9A5B00 deep saffron</text>
+        <rect class="box" x="400" y="136" width="180" height="42" rx="6" />
+        <text x="414" y="163" fill="#c23a28" font-family="Inter, sans-serif" font-size="12" font-weight="600">#C23A28 deep coral</text>
+        <rect class="box" x="590" y="136" width="190" height="42" rx="6" />
+        <text x="604" y="163" fill="#0a7266" font-family="Inter, sans-serif" font-size="12" font-weight="600">#0A7266 deep teal</text>
+
+        <rect class="box hot" x="20" y="206" width="370" height="64" rx="6" />
+        <text class="lbl" x="34" y="230">the trap a bright palette sets</text>
+        <text class="sub" x="34" y="248">a bright shade as small text on paper fails contrast</text>
+        <text class="sub" x="34" y="264">so labels on bright fills use the ink, never white</text>
+
+        <rect class="box" x="410" y="206" width="370" height="64" rx="6" />
+        <text class="lbl" x="424" y="230">coral stays off buttons and alerts</text>
+        <text class="sub" x="424" y="248">its deep shade sits close to --danger, so a coral</text>
+        <text class="sub" x="424" y="264">button would read as a warning</text>
+      </svg>
+      <figcaption>Every text-and-ground pair clears WCAG AA in both themes, checked against all three
+      paper tokens; the lowest are deep coral at 4.57 and deep saffron at 4.64. The near-black on the
+      bright saffron, coral and teal fills runs from 6.1 to 8.5, which is why a badge's label is ink
+      rather than white.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What each part does</h2>
+    <div class="map">
+      <div class="step">
+        <span class="n">01</span>
+        <div>
+          <div class="where">apps/web/src/styles/global.css</div>
+          <div class="what">The only source of truth: ink, three papers, rules, the four colours with
+          their washes, the two typefaces, radii, shadows, the paper grain, and the motion tokens.
+          Vanilla CSS, no framework; component styles live beside their component.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <div>
+          <div class="where">global.css <em>· the dark block</em></div>
+          <div class="what">A second set of the same tokens, including a night grain of faint pale
+          specks instead of dark ones. The CSS keys on <code>data-theme</code> alone, so no component
+          needs a copy of the palette under a media query.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <div>
+          <div class="where">lib/theme.ts</div>
+          <div class="what">Three preferences — system, light, dark — resolved to two painted themes.
+          It stamps <code>data-theme</code> on the root, remembers the choice, and updates the browser
+          bar colour, which is one of the copies of the palette that cannot read CSS.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <div>
+          <div class="where">index.html <em>· the pre-paint script</em></div>
+          <div class="what">Resolves the theme before first paint, so nobody sees a white flash on the
+          way to dark. It cannot import <code>theme.ts</code>, so it mirrors the storage key and the
+          resolve — and a test reads <code>index.html</code> to keep the two in step.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">05</span>
+        <div>
+          <div class="where">lib/motion.ts</div>
+          <div class="what">The one place a view transition starts. It decides <em>whether</em> one
+          runs and sets <code>data-transition</code> for its duration; what it looks like is the
+          <code>::view-transition-*</code> rules in CSS. React is flushed inside the callback, because
+          the browser snapshots the moment it returns.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">06</span>
+        <div>
+          <div class="where">global.css <em>· the transition rules</em></div>
+          <div class="what">A page change gets a small rise; a theme change is a plain
+          crossfade — the whole page moving eight pixels because the colours changed would be wrong.
+          Reduced motion keeps the fade and drops the movement, which is gentler than a hard
+          cut.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">07</span>
+        <div>
+          <div class="where">components/SiteHeader/contents.ts</div>
+          <div class="what">What the header shows, as data: one answer per page per session state,
+          kept apart from the component so the table is tested without a DOM. Twelve pages, including
+          the two halves of <code>/</code> — the library and the landing page.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">08</span>
+        <div>
+          <div class="where">components/ThemeToggle/ <em>· Skeleton/ · Spinner/</em></div>
+          <div class="what">The toggle cycles the three preferences. Skeletons replaced the word
+          "Loading" everywhere it appeared, so the first frame after a tap looks like the page that is
+          arriving.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">09</span>
+        <div>
+          <div class="where">components/Button/ <em>· TextField/ · ErrorNotice/ · Avatar/</em></div>
+          <div class="what">The shared set every page was migrated onto, so a button, a field and a
+          refusal look the same on the landing page, in the admin and in the chamber.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">10</span>
+        <div>
+          <div class="where">lib/labels.ts</div>
+          <div class="what">Twenty sections, one per surface. Mandate 1 in practice: changing a word
+          is never a change to a component.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The rules motion follows</h2>
+    <ul>
+      <li><strong>Native first.</strong> CSS, the View Transitions API, scroll-linked animations. No
+      animation library, and WebGL was rejected outright — too heavy for the phone every WhatsApp link
+      opens on, and it breaks "nothing glows".</li>
+      <li><strong>Only position, scale and opacity,</strong> so it holds 60fps on a mid-range Android
+      phone.</li>
+      <li><strong>Nothing moves while the reader is reading.</strong></li>
+      <li><strong>Dates, never countdowns.</strong></li>
+      <li><strong>Any sequence of steps is states in a machine,</strong> never a chain of timers — which
+      is why the threshold ceremony is four states.</li>
+      <li><strong>Reduced motion keeps fades and drops movement.</strong></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Gotchas</h2>
+    <ul class="gotchas">
+      <li><b>The palette has copies that cannot read CSS.</b> The browser-bar colours in
+      <code>theme.ts</code>, the pre-paint script and <code>theme-color</code> in
+      <code>index.html</code>, the web manifest, the brand sources, and the watermark ink in
+      <code>services/pages.py</code>. They change in the same pull request as
+      <code>global.css</code> or they are simply wrong.</li>
+      <li><b><code>data-theme</code> is always resolved to one of two values.</b> "System" is a
+      preference, not a theme — keeping the third state out of the attribute is what stops every
+      component needing a media-query copy of its colours.</li>
+      <li><b>React has to be flushed inside the transition callback.</b> The browser snapshots the new
+      state the moment the callback returns, so a render still queued at that point is captured
+      half-done.</li>
+      <li><b>A back-swipe is already animated by the browser.</b> Running a second transition on top
+      of <code>hasUAVisualTransition</code> reads as a stutter, so that case is skipped.</li>
+      <li><b>Reduced motion does not skip the transition.</b> It becomes a short crossfade — a hard
+      cut between two screens is harsher than the thing the setting was asking to avoid.</li>
+      <li><b>The surface stack is unmerged work.</b> Header, link preview, dark mode, motion
+      foundation and the opening ceremony were a five-PR stack whose Vercel previews all failed for an
+      account reason rather than a code one, and the ordering matters: they conflict out of
+      order.</li>
+      <li><b>Legal pages and a real 404 are still missing.</b> Razorpay's KYC checks for the first,
+      and today any unmatched route falls through to the library.</li>
+    </ul>
+  </section>

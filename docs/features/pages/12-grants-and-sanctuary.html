@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Grants And Sanctuary</title>
+</head>
+<body>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,400&family=Inter:wght@400;500;600&display=swap");
+
+/* Jewel (D81) — the product's own tokens, light first. */
+:root {
+  color-scheme: light;
+
+  --ink: #1f1b16;
+  --ink-soft: #5d554a;
+  --ink-faint: #6b6358;
+
+  --paper: #f5f6f2;
+  --paper-raised: #fbfcfa;
+  --paper-sunk: #eceee8;
+
+  --rule: #d9ded7;
+  --rule-soft: #e6e9e3;
+
+  --accent: #2952e3;
+  --accent-text: #2952e3;
+  --accent-wash: #e8edfd;
+  --on-accent: #fff;
+
+  --saffron: #f5a623;
+  --saffron-text: #9a5b00;
+  --saffron-wash: #fdf1dc;
+  --coral: #ff6b57;
+  --coral-text: #c23a28;
+  --coral-wash: #ffeae6;
+  --teal: #14b8a6;
+  --teal-text: #0a7266;
+  --teal-wash: #e0f5f2;
+
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --radius: 6px;
+  --measure: 68ch;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ink: #ece4d6;
+    --ink-soft: #b9ae9d;
+    --ink-faint: #9a9083;
+    --paper: #16130f;
+    --paper-raised: #1f1b16;
+    --paper-sunk: #100e0b;
+    --rule: #352e26;
+    --rule-soft: #28231d;
+    --accent: #8fa8ff;
+    --accent-text: #8fa8ff;
+    --accent-wash: #1c2240;
+    --on-accent: #16130f;
+    --saffron: #ffc152;
+    --saffron-text: #ffc152;
+    --saffron-wash: #2e2410;
+    --coral: #ff8a7a;
+    --coral-text: #ff8a7a;
+    --coral-wash: #2e1a16;
+    --teal: #3dd6c3;
+    --teal-text: #3dd6c3;
+    --teal-wash: #102b28;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #ece4d6;
+  --ink-soft: #b9ae9d;
+  --ink-faint: #9a9083;
+  --paper: #16130f;
+  --paper-raised: #1f1b16;
+  --paper-sunk: #100e0b;
+  --rule: #352e26;
+  --rule-soft: #28231d;
+  --accent: #8fa8ff;
+  --accent-text: #8fa8ff;
+  --accent-wash: #1c2240;
+  --on-accent: #16130f;
+  --saffron: #ffc152;
+  --saffron-text: #ffc152;
+  --saffron-wash: #2e2410;
+  --coral: #ff8a7a;
+  --coral-text: #ff8a7a;
+  --coral-wash: #2e1a16;
+  --teal: #3dd6c3;
+  --teal-text: #3dd6c3;
+  --teal-wash: #102b28;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- the spine ---------------------------------------------------- */
+
+.topbar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.6rem 16px;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.topbar .num {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--accent-text);
+}
+
+.topbar .set { margin-left: auto; letter-spacing: 0.06em; }
+
+.wrap {
+  max-width: 78ch;
+  margin: 0 auto;
+  padding: 16px 16px 5rem;
+}
+
+/* ---- masthead ----------------------------------------------------- */
+
+header.masthead { padding-block: 2rem 1.25rem; }
+
+h1 {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 48;
+  font-weight: 500;
+  font-size: clamp(2rem, 6vw, 2.9rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.6rem;
+  text-wrap: balance;
+}
+
+.lede {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 20;
+  font-size: 1.16rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: var(--measure);
+  margin: 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 1.25rem;
+}
+
+.chip {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+}
+
+.chip.cap { background: var(--accent-wash); border-color: transparent; color: var(--accent-text); }
+.chip.built { background: var(--teal-wash); border-color: transparent; color: var(--teal-text); }
+.chip.partial { background: var(--saffron-wash); border-color: transparent; color: var(--saffron-text); }
+.chip.missing { background: var(--coral-wash); border-color: transparent; color: var(--coral-text); }
+
+/* ---- sections ----------------------------------------------------- */
+
+section { margin-top: 2.75rem; }
+
+h2 {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0.9rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+h3 {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 24;
+  font-weight: 600;
+  font-size: 1.12rem;
+  margin: 1.75rem 0 0.4rem;
+}
+
+p { max-width: var(--measure); margin: 0 0 0.9rem; }
+p:last-child { margin-bottom: 0; }
+
+a { color: var(--accent-text); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+strong { font-weight: 600; }
+
+code, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.855em;
+  background: var(--paper-sunk);
+  padding: 0.08em 0.32em;
+  border-radius: 3px;
+  overflow-wrap: anywhere;
+}
+
+ul, ol { max-width: var(--measure); padding-left: 1.15rem; margin: 0 0 0.9rem; }
+li { margin-bottom: 0.35rem; }
+
+/* ---- code map (what each part does) -------------------------------- */
+
+.map { display: flex; flex-direction: column; gap: 0; margin-top: 0.25rem; }
+
+.step {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.step:first-child { border-top: 1px solid var(--rule-soft); }
+
+.step .n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  padding-top: 0.22rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.step .where {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--ink);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.step .where em { font-style: normal; color: var(--ink-faint); font-weight: 400; }
+
+.step .what { color: var(--ink-soft); font-size: 14px; margin-top: 0.12rem; max-width: var(--measure); }
+.step .what code { background: transparent; padding: 0; color: var(--ink); }
+
+/* ---- tables -------------------------------------------------------- */
+
+.tablewrap { overflow-x: auto; margin-bottom: 1rem; }
+
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td {
+  text-align: left;
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+  vertical-align: top;
+}
+th {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 600;
+  white-space: nowrap;
+}
+td.mono, td code { font-family: var(--font-mono); font-size: 12.5px; }
+td.mono { background: none; white-space: nowrap; }
+
+/* ---- figures ------------------------------------------------------- */
+
+figure { margin: 0 0 1rem; }
+
+figure svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  color: var(--ink);
+}
+
+.svgscroll { overflow-x: auto; }
+.svgscroll svg { min-width: 520px; }
+
+figcaption {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  margin-top: 0.6rem;
+  max-width: var(--measure);
+  line-height: 1.5;
+}
+
+/* the SVG vocabulary every diagram in this set uses */
+svg .box { fill: var(--paper-raised); stroke: var(--rule); stroke-width: 1; }
+svg .box.lit { fill: var(--accent-wash); stroke: var(--accent); }
+svg .box.warm { fill: var(--saffron-wash); stroke: var(--saffron); }
+svg .box.cool { fill: var(--teal-wash); stroke: var(--teal); }
+svg .box.hot { fill: var(--coral-wash); stroke: var(--coral); }
+svg .box.ghost { fill: none; stroke: var(--rule); stroke-dasharray: 3 3; }
+svg .lbl { fill: var(--ink); font-family: var(--font-body); font-size: 12px; font-weight: 500; }
+svg .sub { fill: var(--ink-faint); font-family: var(--font-mono); font-size: 10px; }
+svg .edge { stroke: var(--ink-faint); stroke-width: 1.2; fill: none; }
+svg .edge.lit { stroke: var(--accent); stroke-width: 1.6; }
+svg .edge.dashed { stroke-dasharray: 4 3; }
+svg .edgelbl { fill: var(--ink-faint); font-family: var(--font-body); font-size: 10.5px; }
+svg .head { fill: var(--ink-faint); }
+svg .head.lit { fill: var(--accent); }
+svg .zone { fill: var(--paper-sunk); stroke: none; }
+svg .zonelbl { fill: var(--ink-faint); font-family: var(--font-body); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* ---- pull-outs ----------------------------------------------------- */
+
+.seam {
+  border-left: 2px solid var(--accent);
+  background: var(--accent-wash);
+  padding: 0.85rem 1rem;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin: 0 0 1rem;
+  max-width: var(--measure);
+  font-size: 14px;
+}
+.seam p { margin-bottom: 0.5rem; }
+.seam p:last-child { margin-bottom: 0; }
+.seam .tag {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.gotchas { list-style: none; padding: 0; margin: 0; max-width: var(--measure); }
+.gotchas > li {
+  padding: 0.85rem 0 0.85rem 1.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+  position: relative;
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.gotchas > li:first-child { border-top: 1px solid var(--rule-soft); }
+.gotchas > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1.35rem;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--coral);
+}
+.gotchas b { color: var(--ink); font-weight: 600; }
+
+.states { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1rem; align-items: center; }
+.state {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 0.22rem 0.55rem;
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+}
+.state.term { background: var(--paper-sunk); color: var(--ink-faint); }
+.states .to { color: var(--ink-faint); font-size: 12px; }
+
+footer.end {
+  margin-top: 3.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+footer.end .nav { font-family: var(--font-mono); }
+
+@media (max-width: 560px) {
+  body { font-size: 14.5px; }
+  .topbar .set { display: none; }
+  .step { grid-template-columns: 1.3rem minmax(0, 1fr); gap: 0.5rem; }
+}
+</style>
+
+<div class="topbar">
+  <span class="num">12</span>
+  <span>Grants And Sanctuary</span>
+  <span class="set">Sapien Paradox V2 &middot; feature 12 of 21</span>
+</div>
+
+<div class="wrap">
+  <header class="masthead">
+    <h1>Grants And Sanctuary</h1>
+    <p class="lede">A link that authenticates by itself, dies after seven days, and lands a week-late reader somewhere kind.</p>
+    <div class="chips"><span class="chip cap">Reading</span><span class="chip">D8</span><span class="chip">D9</span><span class="chip">D32</span><span class="chip">D44</span><span class="chip built">built</span></div>
+  </header>
+
+  <section>
+    <h2>Why it exists</h2>
+    <p>The product's main path is a tap on a WhatsApp message, usually on a phone, often inside
+    WhatsApp's own browser with its own cookie jar. There is no session there and there never will
+    be, so <strong>the token is the whole credential</strong>. Everything else about this feature
+    follows from that, including the parts that look like over-engineering.</p>
+    <p>Links expire after seven days (D8), which means the week-late reader is not an edge case —
+    they are a normal visitor, arriving on a dead link with no way to sign in. Sanctuary is the
+    screen for them, and it has one button that sends a fresh link to the phone on the
+    account (D9).</p>
+  </section>
+
+  <section>
+    <h2>Two ways in, and what happens to a dead link</h2>
+    <figure class="svgscroll">
+      <svg viewBox="0 0 800 360" role="img" aria-label="From Home, GET /api/read/:chapterId mints or reuses a grant and redirects to /r/:token. From WhatsApp the reader arrives at /r/:token directly. GrantAuth resolves the token without judging expiry; the reading machine then refuses with expired, which becomes a 410 and the sanctuary screen, whose one tap mints a new grant and sends it to the owner's phone.">
+        <defs>
+          <marker id="f12-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+          <marker id="f12-head-lit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head lit" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <rect class="box" x="20" y="34" width="180" height="52" rx="6" />
+        <text class="lbl" x="34" y="56">Home, signed in</text>
+        <text class="sub" x="34" y="74">a cookie, no token</text>
+        <rect class="box" x="20" y="150" width="180" height="52" rx="6" />
+        <text class="lbl" x="34" y="172">a WhatsApp link</text>
+        <text class="sub" x="34" y="190">a token, no cookie</text>
+
+        <rect class="box" x="244" y="34" width="216" height="52" rx="6" />
+        <text class="lbl" x="258" y="56">GET /api/read/{id}</text>
+        <text class="sub" x="258" y="74">mint_or_reuse · idempotent</text>
+        <line class="edge" x1="200" y1="60" x2="238" y2="60" marker-end="url(#f12-head)" />
+
+        <rect class="box lit" x="244" y="150" width="216" height="52" rx="6" />
+        <text class="lbl" x="258" y="172">/r/:token</text>
+        <text class="sub" x="258" y="190">GrantAuth resolves, judges nothing</text>
+        <line class="edge" x1="200" y1="176" x2="238" y2="176" marker-end="url(#f12-head-lit)" />
+        <polyline class="edge" points="352,86 352,118 352,144" marker-end="url(#f12-head)" />
+        <text class="edgelbl" x="360" y="114">redirect</text>
+
+        <rect class="box" x="510" y="122" width="270" height="52" rx="6" />
+        <text class="lbl" x="524" y="144">reading machine · OPEN</text>
+        <text class="sub" x="524" y="162">is_live · owns_book</text>
+        <line class="edge lit" x1="460" y1="170" x2="504" y2="155" marker-end="url(#f12-head-lit)" />
+
+        <rect class="box cool" x="510" y="42" width="270" height="52" rx="6" />
+        <text class="lbl" x="524" y="64">the chamber</text>
+        <text class="sub" x="524" y="82">opened_at stamped once</text>
+        <line class="edge" x1="645" y1="122" x2="645" y2="100" marker-end="url(#f12-head)" />
+
+        <rect class="box hot" x="510" y="206" width="270" height="52" rx="6" />
+        <text class="lbl" x="524" y="228">410 expired → sanctuary</text>
+        <text class="sub" x="524" y="246">not 404: this one has a button</text>
+        <line class="edge" x1="645" y1="174" x2="645" y2="200" marker-end="url(#f12-head)" />
+
+        <rect class="box" x="510" y="286" width="270" height="56" rx="6" />
+        <text class="lbl" x="524" y="308">POST /grants/{token}/reissue</text>
+        <text class="sub" x="524" y="326">a NEW row · sent to the owner's phone</text>
+        <line class="edge" x1="645" y1="258" x2="645" y2="280" marker-end="url(#f12-head)" />
+        <text class="edgelbl" x="20" y="300">the old token stays dead —</text>
+        <text class="edgelbl" x="20" y="316">that is why reissue mints</text>
+        <text class="edgelbl" x="20" y="332">rather than extending</text>
+      </svg>
+      <figcaption>Home's link and WhatsApp's link end at the same place, but they are minted
+      differently on purpose: Home reuses a live grant, so pressing the button twice does not leave
+      two live links, while sanctuary mints a fresh one, so the forwarded dead link stays dead. That
+      choice belongs to the caller, which is why these are two functions rather than one with a
+      flag.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What each part does</h2>
+    <div class="map">
+      <div class="step">
+        <span class="n">01</span>
+        <div>
+          <div class="where">core/services/grants.py <em>· mint_or_reuse</em></div>
+          <div class="what">The newest unexpired grant for this reader and chapter, or a new one —
+          excluding <code>scheduled</code> rows, which hold tokens nobody has been sent yet. This
+          is what makes <code>GET /api/read/{id}</code> honest as a GET.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <div>
+          <div class="where">core/services/grants.py <em>· find vs validate</em></div>
+          <div class="what">Two lookups on purpose. <code>validate</code> collapses expired into
+          <code>None</code>, which is right for a caller that only wants a usable grant.
+          <code>find</code> returns the row either way, because the API layer needs to tell "this
+          link has rested" from "no such link".</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <div>
+          <div class="where">core/services/grants.py <em>· reissue</em></div>
+          <div class="what">Creates a new row rather than extending <code>expires_at</code>.
+          Extending would silently revive every forwarded copy of the old link — and
+          <code>(user, chapter)</code> is deliberately non-unique so that this is possible.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <div>
+          <div class="where">core/auth/__init__.py <em>· GrantAuth</em></div>
+          <div class="what">Reads the token out of the path — or, for the chat endpoint, out of the
+          JSON body — and returns the <em>grant</em>, so the endpoint reaches the reader and the
+          chapter without a second query. It does not judge expiry.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">05</span>
+        <div>
+          <div class="where">core/api/grants.py <em>· _dispatch_or_refuse</em></div>
+          <div class="what">The one place refusal codes become HTTP: <code>expired</code> → 410,
+          <code>not_owner</code> → 403, <code>no_video</code> → 404. No layer below knows what a
+          status code is.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">06</span>
+        <div>
+          <div class="where">core/api/grants.py <em>· GET /api/grants/{token}</em></div>
+          <div class="what">What the chamber needs to render: book title, chapter number and
+          title, the reader's place, whether it is complete, whether there is a video — and
+          <code>firstOpen</code>, read <em>before</em> <code>OPEN</code> stamps
+          <code>opened_at</code>, so the ceremony can play exactly once.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">07</span>
+        <div>
+          <div class="where">core/api/read.py <em>· GET /api/read/{chapter_id}</em></div>
+          <div class="what">Exchanges a chapter for a token and redirects. A GET, and idempotent:
+          making it a POST would put an interstitial screen on the one path that should never have
+          one.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">08</span>
+        <div>
+          <div class="where">core/api/read.py <em>· POST /chapters/{id}/send · /reissue</em></div>
+          <div class="what">Send-to-my-WhatsApp from Home, cooled down and reusing the live grant;
+          and sanctuary's tap, which works on an expired token and sends to the owner's phone.
+          Both answer 429 when a message went out recently.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">09</span>
+        <div>
+          <div class="where">pages/opening/machine/machine.ts</div>
+          <div class="what">The invisible page behind <code>/read/:chapterId</code>: it starts in
+          <code>waiting</code>, moves on <code>SESSION_SETTLED</code>, swaps the chapter for a
+          token and redirects.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">10</span>
+        <div>
+          <div class="where">pages/reader/Sanctuary.tsx</div>
+          <div class="what">The screen for a rested link: no alarm, one tap, and the
+          <code>reissue</code> region of the reader machine keeps the request in flight without
+          blanking what the reader is looking at.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gotchas</h2>
+    <ul class="gotchas">
+      <li><b><code>waiting</code> prevents a bug that only appears on reload.</b> On a hard
+      refresh the session region is still <code>checking</code>, and treating "not yet
+      authenticated" as "anonymous" bounces a signed-in reader to <code>/login</code> — invisible
+      in development, where the session check resolves instantly.</li>
+      <li><b>410, not 404, for an expired token.</b> The status is what tells the chamber to show
+      sanctuary, which has a button, rather than the dead end an unowned chapter gets. Collapsing
+      the two would make the recovery path unreachable.</li>
+      <li><b>Expiry must not be checked during authentication.</b> It would turn a rested link
+      into a 401 beside tokens that were never real, and the distinction the product needs would
+      be gone before any endpoint saw it.</li>
+      <li><b>A live token is never sufficient on its own.</b> Ownership is re-checked on every
+      grant request, so a refund or a deactivation takes effect on the next tap rather than
+      whenever the token happens to lapse.</li>
+      <li><b><code>firstOpen</code> has to be read before dispatching.</b> <code>OPEN</code>
+      stamps <code>opened_at</code>, so asking afterwards always answers "no" and the ceremony
+      never plays.</li>
+      <li><b>Re-issue sends to the account's phone, never to whoever tapped.</b> That is what
+      makes the endpoint safe to expose on an expired token: a stranger holding a forwarded link
+      can cause the owner to receive a message, and can receive nothing themselves.</li>
+      <li><b>Home mints no tokens in its payload.</b> Five credentials in a response that gets
+      cached, logged and screenshotted would undo expiry entirely — so the link is minted when the
+      reader asks for one.</li>
+    </ul>
+  </section>
+
+  <footer class="end">
+    <p><a href="index.html">All features</a> &middot; 12 of 21 &middot; source at
+    <span class="mono">docs/features/parts/12-grants-and-sanctuary.html</span></p>
+    <p class="nav">&larr; 11 &middot; 13 &rarr;</p>
+  </footer>
+</div>
+</body>
+</html>

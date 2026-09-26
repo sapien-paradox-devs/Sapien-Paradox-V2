@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reader Stewardship</title>
+</head>
+<body>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,400&family=Inter:wght@400;500;600&display=swap");
+
+/* Jewel (D81) — the product's own tokens, light first. */
+:root {
+  color-scheme: light;
+
+  --ink: #1f1b16;
+  --ink-soft: #5d554a;
+  --ink-faint: #6b6358;
+
+  --paper: #f5f6f2;
+  --paper-raised: #fbfcfa;
+  --paper-sunk: #eceee8;
+
+  --rule: #d9ded7;
+  --rule-soft: #e6e9e3;
+
+  --accent: #2952e3;
+  --accent-text: #2952e3;
+  --accent-wash: #e8edfd;
+  --on-accent: #fff;
+
+  --saffron: #f5a623;
+  --saffron-text: #9a5b00;
+  --saffron-wash: #fdf1dc;
+  --coral: #ff6b57;
+  --coral-text: #c23a28;
+  --coral-wash: #ffeae6;
+  --teal: #14b8a6;
+  --teal-text: #0a7266;
+  --teal-wash: #e0f5f2;
+
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --radius: 6px;
+  --measure: 68ch;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ink: #ece4d6;
+    --ink-soft: #b9ae9d;
+    --ink-faint: #9a9083;
+    --paper: #16130f;
+    --paper-raised: #1f1b16;
+    --paper-sunk: #100e0b;
+    --rule: #352e26;
+    --rule-soft: #28231d;
+    --accent: #8fa8ff;
+    --accent-text: #8fa8ff;
+    --accent-wash: #1c2240;
+    --on-accent: #16130f;
+    --saffron: #ffc152;
+    --saffron-text: #ffc152;
+    --saffron-wash: #2e2410;
+    --coral: #ff8a7a;
+    --coral-text: #ff8a7a;
+    --coral-wash: #2e1a16;
+    --teal: #3dd6c3;
+    --teal-text: #3dd6c3;
+    --teal-wash: #102b28;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #ece4d6;
+  --ink-soft: #b9ae9d;
+  --ink-faint: #9a9083;
+  --paper: #16130f;
+  --paper-raised: #1f1b16;
+  --paper-sunk: #100e0b;
+  --rule: #352e26;
+  --rule-soft: #28231d;
+  --accent: #8fa8ff;
+  --accent-text: #8fa8ff;
+  --accent-wash: #1c2240;
+  --on-accent: #16130f;
+  --saffron: #ffc152;
+  --saffron-text: #ffc152;
+  --saffron-wash: #2e2410;
+  --coral: #ff8a7a;
+  --coral-text: #ff8a7a;
+  --coral-wash: #2e1a16;
+  --teal: #3dd6c3;
+  --teal-text: #3dd6c3;
+  --teal-wash: #102b28;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- the spine ---------------------------------------------------- */
+
+.topbar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.6rem 16px;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.topbar .num {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--accent-text);
+}
+
+.topbar .set { margin-left: auto; letter-spacing: 0.06em; }
+
+.wrap {
+  max-width: 78ch;
+  margin: 0 auto;
+  padding: 16px 16px 5rem;
+}
+
+/* ---- masthead ----------------------------------------------------- */
+
+header.masthead { padding-block: 2rem 1.25rem; }
+
+h1 {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 48;
+  font-weight: 500;
+  font-size: clamp(2rem, 6vw, 2.9rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.6rem;
+  text-wrap: balance;
+}
+
+.lede {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 20;
+  font-size: 1.16rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: var(--measure);
+  margin: 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 1.25rem;
+}
+
+.chip {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+}
+
+.chip.cap { background: var(--accent-wash); border-color: transparent; color: var(--accent-text); }
+.chip.built { background: var(--teal-wash); border-color: transparent; color: var(--teal-text); }
+.chip.partial { background: var(--saffron-wash); border-color: transparent; color: var(--saffron-text); }
+.chip.missing { background: var(--coral-wash); border-color: transparent; color: var(--coral-text); }
+
+/* ---- sections ----------------------------------------------------- */
+
+section { margin-top: 2.75rem; }
+
+h2 {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0.9rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+h3 {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 24;
+  font-weight: 600;
+  font-size: 1.12rem;
+  margin: 1.75rem 0 0.4rem;
+}
+
+p { max-width: var(--measure); margin: 0 0 0.9rem; }
+p:last-child { margin-bottom: 0; }
+
+a { color: var(--accent-text); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+strong { font-weight: 600; }
+
+code, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.855em;
+  background: var(--paper-sunk);
+  padding: 0.08em 0.32em;
+  border-radius: 3px;
+  overflow-wrap: anywhere;
+}
+
+ul, ol { max-width: var(--measure); padding-left: 1.15rem; margin: 0 0 0.9rem; }
+li { margin-bottom: 0.35rem; }
+
+/* ---- code map (what each part does) -------------------------------- */
+
+.map { display: flex; flex-direction: column; gap: 0; margin-top: 0.25rem; }
+
+.step {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.step:first-child { border-top: 1px solid var(--rule-soft); }
+
+.step .n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  padding-top: 0.22rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.step .where {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--ink);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.step .where em { font-style: normal; color: var(--ink-faint); font-weight: 400; }
+
+.step .what { color: var(--ink-soft); font-size: 14px; margin-top: 0.12rem; max-width: var(--measure); }
+.step .what code { background: transparent; padding: 0; color: var(--ink); }
+
+/* ---- tables -------------------------------------------------------- */
+
+.tablewrap { overflow-x: auto; margin-bottom: 1rem; }
+
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td {
+  text-align: left;
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+  vertical-align: top;
+}
+th {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 600;
+  white-space: nowrap;
+}
+td.mono, td code { font-family: var(--font-mono); font-size: 12.5px; }
+td.mono { background: none; white-space: nowrap; }
+
+/* ---- figures ------------------------------------------------------- */
+
+figure { margin: 0 0 1rem; }
+
+figure svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  color: var(--ink);
+}
+
+.svgscroll { overflow-x: auto; }
+.svgscroll svg { min-width: 520px; }
+
+figcaption {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  margin-top: 0.6rem;
+  max-width: var(--measure);
+  line-height: 1.5;
+}
+
+/* the SVG vocabulary every diagram in this set uses */
+svg .box { fill: var(--paper-raised); stroke: var(--rule); stroke-width: 1; }
+svg .box.lit { fill: var(--accent-wash); stroke: var(--accent); }
+svg .box.warm { fill: var(--saffron-wash); stroke: var(--saffron); }
+svg .box.cool { fill: var(--teal-wash); stroke: var(--teal); }
+svg .box.hot { fill: var(--coral-wash); stroke: var(--coral); }
+svg .box.ghost { fill: none; stroke: var(--rule); stroke-dasharray: 3 3; }
+svg .lbl { fill: var(--ink); font-family: var(--font-body); font-size: 12px; font-weight: 500; }
+svg .sub { fill: var(--ink-faint); font-family: var(--font-mono); font-size: 10px; }
+svg .edge { stroke: var(--ink-faint); stroke-width: 1.2; fill: none; }
+svg .edge.lit { stroke: var(--accent); stroke-width: 1.6; }
+svg .edge.dashed { stroke-dasharray: 4 3; }
+svg .edgelbl { fill: var(--ink-faint); font-family: var(--font-body); font-size: 10.5px; }
+svg .head { fill: var(--ink-faint); }
+svg .head.lit { fill: var(--accent); }
+svg .zone { fill: var(--paper-sunk); stroke: none; }
+svg .zonelbl { fill: var(--ink-faint); font-family: var(--font-body); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* ---- pull-outs ----------------------------------------------------- */
+
+.seam {
+  border-left: 2px solid var(--accent);
+  background: var(--accent-wash);
+  padding: 0.85rem 1rem;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin: 0 0 1rem;
+  max-width: var(--measure);
+  font-size: 14px;
+}
+.seam p { margin-bottom: 0.5rem; }
+.seam p:last-child { margin-bottom: 0; }
+.seam .tag {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.gotchas { list-style: none; padding: 0; margin: 0; max-width: var(--measure); }
+.gotchas > li {
+  padding: 0.85rem 0 0.85rem 1.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+  position: relative;
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.gotchas > li:first-child { border-top: 1px solid var(--rule-soft); }
+.gotchas > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1.35rem;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--coral);
+}
+.gotchas b { color: var(--ink); font-weight: 600; }
+
+.states { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1rem; align-items: center; }
+.state {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 0.22rem 0.55rem;
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+}
+.state.term { background: var(--paper-sunk); color: var(--ink-faint); }
+.states .to { color: var(--ink-faint); font-size: 12px; }
+
+footer.end {
+  margin-top: 3.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+footer.end .nav { font-family: var(--font-mono); }
+
+@media (max-width: 560px) {
+  body { font-size: 14.5px; }
+  .topbar .set { display: none; }
+  .step { grid-template-columns: 1.3rem minmax(0, 1fr); gap: 0.5rem; }
+}
+</style>
+
+<div class="topbar">
+  <span class="num">17</span>
+  <span>Reader Stewardship</span>
+  <span class="set">Sapien Paradox V2 &middot; feature 17 of 21</span>
+</div>
+
+<div class="wrap">
+  <header class="masthead">
+    <h1>Reader Stewardship</h1>
+    <p class="lede">The owner's side of a reader: create, correct, deactivate, erase — and why removing is not deleting.</p>
+    <div class="chips"><span class="chip cap">Stewardship</span><span class="chip">D75</span><span class="chip">D80</span><span class="chip">D82</span><span class="chip built">built</span></div>
+  </header>
+
+  <section>
+    <h2>Why it exists</h2>
+    <p>D75 said the admin would be an upgraded Django admin. D82 replaced that: the admin lives in
+    the app at <code>/admin</code>, with its own sign-in page, because the owner's work — find a
+    reader, fix a typo, send a chapter again, take someone off the list — is a product surface, not
+    a database browser.</p>
+    <p>The rule that keeps it honest is that <strong>adding a reader goes through the acquisition
+    machine</strong>, exactly like a payment. The four identity cases of D26 apply to an admin typing
+    a name as much as to Razorpay's webhook, so there is no second, looser way for a reader to come
+    into existence.</p>
+  </section>
+
+  <section>
+    <h2>Removing is not deleting</h2>
+    <figure class="svgscroll">
+      <svg viewBox="0 0 800 330" role="img" aria-label="Deactivating a reader sets is_active false, which makes the access check refuse, so every link they hold stops working; it is reversible. Erasing replaces name, email and phone with placeholders, blanks the phone in message logs and spends unused reset tokens, while orders, grants and payment references remain as anonymised rows. Both leave an AccountChange row.">
+        <defs>
+          <marker id="f17-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+          <marker id="f17-head-lit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head lit" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <rect class="box" x="20" y="126" width="150" height="56" rx="6" />
+        <text class="lbl" x="34" y="150">a reader</text>
+        <text class="sub" x="34" y="168">is_active · orders · grants</text>
+
+        <rect class="box warm" x="230" y="40" width="230" height="56" rx="6" />
+        <text class="lbl" x="244" y="64">deactivate — reversible</text>
+        <text class="sub" x="244" y="82">is_active = False, nothing deleted</text>
+        <rect class="box hot" x="230" y="212" width="230" height="56" rx="6" />
+        <text class="lbl" x="244" y="236">erase — irreversible</text>
+        <text class="sub" x="244" y="254">the answer to a deletion request</text>
+        <line class="edge" x1="170" y1="140" x2="224" y2="80" marker-end="url(#f17-head)" />
+        <line class="edge" x1="170" y1="168" x2="224" y2="232" marker-end="url(#f17-head)" />
+
+        <rect class="box lit" x="510" y="40" width="270" height="56" rx="6" />
+        <text class="lbl" x="524" y="64">access.can_read refuses</text>
+        <text class="sub" x="524" y="82">every held link dies on its next request</text>
+        <line class="edge lit" x1="460" y1="68" x2="504" y2="68" marker-end="url(#f17-head-lit)" />
+
+        <rect class="box" x="510" y="192" width="270" height="34" rx="5" />
+        <text class="sub" x="524" y="213">name, email, phone → placeholders</text>
+        <rect class="box" x="510" y="232" width="270" height="34" rx="5" />
+        <text class="sub" x="524" y="253">MessageLog.to_phone blanked</text>
+        <rect class="box" x="510" y="272" width="270" height="34" rx="5" />
+        <text class="sub" x="524" y="293">unused reset tokens spent</text>
+        <line class="edge" x1="460" y1="230" x2="504" y2="212" marker-end="url(#f17-head)" />
+        <line class="edge" x1="460" y1="240" x2="504" y2="249" marker-end="url(#f17-head)" />
+        <line class="edge" x1="460" y1="252" x2="504" y2="286" marker-end="url(#f17-head)" />
+
+        <rect class="box cool" x="230" y="126" width="230" height="56" rx="6" />
+        <text class="lbl" x="244" y="150">AccountChange row</text>
+        <text class="sub" x="244" y="168">which action, by whom, when</text>
+        <line class="edge dashed" x1="345" y1="96" x2="345" y2="120" marker-end="url(#f17-head)" />
+        <line class="edge dashed" x1="345" y1="212" x2="345" y2="188" marker-end="url(#f17-head)" />
+        <text class="edgelbl" x="20" y="216">orders, grants and payment</text>
+        <text class="edgelbl" x="20" y="232">references stay, anonymised —</text>
+        <text class="edgelbl" x="20" y="248">accounting and Razorpay</text>
+        <text class="edgelbl" x="20" y="264">reconciliation read them</text>
+      </svg>
+      <figcaption>Deactivation works because <code>is_active</code> is checked inside the single
+      access question, not at sign-in — so it reaches token links sitting in WhatsApp as well as
+      sessions, and it stops the cadence tick sending the rest of the book. Erasure keeps the
+      financial rows and destroys the personal ones, which is why it writes an audit row that
+      records who did it: the details themselves are gone.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What each part does</h2>
+    <div class="map">
+      <div class="step">
+        <span class="n">01</span>
+        <div>
+          <div class="where">core/auth/__init__.py <em>· StaffAuth</em></div>
+          <div class="what">A session, and the account is staff. CSRF is checked first, by
+          <code>SessionAuth</code> — a staff session is the most valuable ambient authority the
+          product has.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <div>
+          <div class="where">core/selectors.py <em>· readers · reader · orders_of · is_erased</em></div>
+          <div class="what">Every read the admin needs: the list with a book count per reader,
+          search across name, email and phone, a status filter, and the books one reader owns. Staff
+          accounts are included, because an owner who is also a reader should be findable.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <div>
+          <div class="where">core/api/admin.py <em>· list · detail</em></div>
+          <div class="what">Two reads, capped at 200 rows, mapping selectors to typed schemas.
+          No ORM calls of its own.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <div>
+          <div class="where">core/api/admin.py <em>· POST /admin/readers</em></div>
+          <div class="what">Builds a <code>PurchaseAttempt</code> and dispatches
+          <code>PAID</code> to the acquisition machine with the same deps checkout uses. A refusal
+          comes back as a 409 with the code <em>and the form field it belongs to</em>, so the screen
+          can put the message where the admin is looking.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">05</span>
+        <div>
+          <div class="where">core/services/onboarding.py <em>· update_reader</em></div>
+          <div class="what">Name, email or phone, each refused on a clash with another reader. The
+          phone is normalised first, for the same reason as at signup: two spellings of one number
+          would otherwise be two accounts.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">06</span>
+        <div>
+          <div class="where">core/services/onboarding.py <em>· deactivate · reactivate</em></div>
+          <div class="what">Reversible removal. Reactivating an <em>erased</em> reader is refused —
+          there is nothing left to restore.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">07</span>
+        <div>
+          <div class="where">core/services/onboarding.py <em>· erase_reader</em></div>
+          <div class="what">Placeholders that still satisfy the unique constraints, an unusable
+          password, <code>MessageLog.to_phone</code> blanked, unused reset tokens spent so none can
+          be redeemed — and the orders left standing.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">08</span>
+        <div>
+          <div class="where">pages/admin-login/ <em>· pages/admin/useAdminPath.ts</em></div>
+          <div class="what">The staff door and the admin's own internal routing, kept out of the root
+          machine: the root knows only that <code>admin</code> and <code>adminLogin</code> are
+          pages.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">09</span>
+        <div>
+          <div class="where">pages/admin/readers/ <em>· reader/ · reader-new/</em></div>
+          <div class="what">The list with search and status filter, one reader's detail with their
+          books and the four actions, and the add-a-reader form — each its own machine, each mapping
+          a 409's <code>field</code> onto the input it belongs to.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">10</span>
+        <div>
+          <div class="where">pages/admin/refusal.ts</div>
+          <div class="what">One place that turns a refusal code into a sentence, so the same code
+          reads the same way on every admin screen.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gotchas</h2>
+    <ul class="gotchas">
+      <li><b>An admin cannot create a reader more loosely than a payment can.</b> Routing the form
+      through the acquisition machine is what guarantees it, and it is why the admin gets the same
+      "these two fields name two different readers" refusal that a webhook does.</li>
+      <li><b>Erased placeholders must still satisfy unique constraints.</b> Hence
+      <code>erased-&lt;pk&gt;@erased.invalid</code> and a synthetic phone: blanking the fields
+      outright would collide the moment a second reader was erased.</li>
+      <li><b>Erasure has to spend unused reset tokens.</b> Otherwise a link already in WhatsApp
+      could still set a password on the emptied account.</li>
+      <li><b>The audit row stores no old values.</b> That is not an oversight — recording what was
+      erased would mean it had not been erased.</li>
+      <li><b>Deactivation is checked in the access seam, not at login.</b> Checking it at sign-in
+      would leave every WhatsApp link the reader holds working perfectly.</li>
+      <li><b>Django admin is still mounted.</b> <code>/django-admin</code> remains for the eight
+      model screens and the resend action, so nothing was lost while the in-app admin was built —
+      but two admins mean two places a change can be made, and only one of them writes an
+      <code>AccountChange</code> row.</li>
+    </ul>
+  </section>
+
+  <footer class="end">
+    <p><a href="index.html">All features</a> &middot; 17 of 21 &middot; source at
+    <span class="mono">docs/features/parts/17-reader-stewardship.html</span></p>
+    <p class="nav">&larr; 16 &middot; 18 &rarr;</p>
+  </footer>
+</div>
+</body>
+</html>

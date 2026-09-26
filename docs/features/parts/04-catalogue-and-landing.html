@@ -1,0 +1,180 @@
+  <section>
+    <h2>Why it exists</h2>
+    <p>D10 said readers would be created by concierge onboarding, so <code>/</code> was going to
+    redirect to <code>/login</code> and a stranger would see nothing. D47 reversed that: payments
+    lead onboarding, so the product needs a front door that explains itself. The landing page is
+    that door, and it leads with the idea of reading this way rather than with a form.</p>
+    <p>Everything reachable without a session lives behind one filter —
+    <code>is_published</code> — so a half-built book with three of its eight chapters uploaded is
+    not for sale, and its cover cannot be fetched by guessing the slug.</p>
+  </section>
+
+  <section>
+    <h2>What a stranger can touch</h2>
+    <figure class="svgscroll">
+      <svg viewBox="0 0 800 300" role="img" aria-label="An anonymous visitor reaches the landing page, which reads three public endpoints — the published book list, a proxied cover and a signed sample URL — and offers one action, Begin a book, which goes to the /begin page.">
+        <defs>
+          <marker id="f4-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+          <marker id="f4-head-lit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head lit" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <rect class="box" x="20" y="112" width="150" height="56" rx="6" />
+        <text class="lbl" x="34" y="136">a stranger</text>
+        <text class="sub" x="34" y="154">no session, no token</text>
+
+        <rect class="box" x="222" y="46" width="208" height="86" rx="6" />
+        <text class="lbl" x="236" y="70">pages/landing</text>
+        <text class="sub" x="236" y="88">Hero · Idea · HowItWorks</text>
+        <text class="sub" x="236" y="104">CompanionSample · Faq</text>
+        <text class="sub" x="236" y="122">no machine: no async work</text>
+
+        <line class="edge" x1="170" y1="130" x2="216" y2="92" marker-end="url(#f4-head)" />
+
+        <rect class="box" x="490" y="36" width="290" height="44" rx="6" />
+        <text class="lbl" x="504" y="56">GET /api/books</text>
+        <text class="sub" x="504" y="72">published only · price in minor units</text>
+        <rect class="box" x="490" y="96" width="290" height="44" rx="6" />
+        <text class="lbl" x="504" y="116">GET /api/books/{slug}/cover</text>
+        <text class="sub" x="504" y="132">bytes proxied · cached an hour · nosniff</text>
+        <rect class="box" x="490" y="156" width="290" height="44" rx="6" />
+        <text class="lbl" x="504" y="176">GET /api/books/{slug}/sample</text>
+        <text class="sub" x="504" y="192">short-lived signed URL, not a public path</text>
+
+        <line class="edge" x1="430" y1="70" x2="484" y2="58" marker-end="url(#f4-head)" />
+        <line class="edge" x1="430" y1="88" x2="484" y2="112" marker-end="url(#f4-head)" />
+        <line class="edge" x1="430" y1="104" x2="484" y2="172" marker-end="url(#f4-head)" />
+
+        <rect class="box lit" x="222" y="196" width="208" height="60" rx="6" />
+        <text class="lbl" x="236" y="220">/begin?pace=…</text>
+        <text class="sub" x="236" y="238">the page's one ask</text>
+        <line class="edge lit" x1="326" y1="132" x2="326" y2="190" marker-end="url(#f4-head-lit)" />
+        <text class="edgelbl" x="334" y="168">Begin a book</text>
+        <line class="edge dashed" x1="430" y1="226" x2="600" y2="226" marker-end="url(#f4-head)" />
+        <text class="edgelbl" x="610" y="230">checkout — feature 05</text>
+      </svg>
+      <figcaption>The pace chosen on the landing page's arrival strip travels to
+      <code>/begin</code> in the query string, so the visitor does not pick it twice. Nothing on
+      this page needs a session, a token or a machine — the only state it keeps is which pace is
+      selected.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What each part does</h2>
+    <div class="map">
+      <div class="step">
+        <span class="n">01</span>
+        <div>
+          <div class="where">core/api/checkout.py <em>· GET /api/books</em></div>
+          <div class="what">What is for sale: slug, title, price in minor units, chapter count,
+          ordered by title, <code>is_published</code> only. It lives in the checkout router
+          because buying is the only thing the list is for.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <div>
+          <div class="where">core/api/books.py</div>
+          <div class="what">A book's public media. <code>/cover</code> streams the image
+          through the API with an hour of cache and <code>nosniff</code>;
+          <code>/sample</code> returns a short-lived signed URL for the sample video. Both
+          resolve the book through one helper that filters on <code>is_published</code>.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <div>
+          <div class="where">core/services/media.py</div>
+          <div class="what">Where the bytes and the URLs actually come from — the only module
+          that knows how a storage URL is made, so the bucket stays swappable. Covered in
+          feature 19.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <div>
+          <div class="where">pages/landing/index.tsx</div>
+          <div class="what">Composes the five sections, holds the selected pace in
+          <code>useState</code>, and navigates to <code>/begin?pace=…</code>. Deliberately has
+          no machine: the convention requires one for async work, waiting or retrying, and this
+          page does none.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">05</span>
+        <div>
+          <div class="where">pages/landing/Hero.tsx <em>· Idea.tsx</em></div>
+          <div class="what">The idea before the product: no form in the hero, then the three
+          principles as a numbered list — numbered because they are read in order, not for
+          decoration.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">06</span>
+        <div>
+          <div class="where">pages/landing/HowItWorks.tsx</div>
+          <div class="what">The four steps, plus the strip that shows <em>when</em> the first
+          five chapters would arrive at each pace. Real dates, never a countdown (D11).</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">07</span>
+        <div>
+          <div class="where">pages/landing/CompanionSample.tsx <em>· Faq.tsx</em></div>
+          <div class="what">A short transcript showing the companion's tone — showing it does
+          more than describing it — and the questions a stranger has before paying, as native
+          <code>&lt;details&gt;</code> with no JavaScript.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">08</span>
+        <div>
+          <div class="where">lib/labels.ts <em>· landing section</em></div>
+          <div class="what">Every word on the page, including the FAQ pairs and the sample
+          transcript. The longest section in the file, and the one most likely to be edited by
+          someone who is not editing code.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What is not built yet</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Missing</th><th>What it needs</th></tr></thead>
+        <tbody>
+          <tr><td>Book detail page — sample chapter, table of contents</td><td>A route and an endpoint; the data is already on <code>Book</code> and <code>Chapter</code>.</td></tr>
+          <tr><td>The catalogue as a cover grid (D79)</td><td>One <code>BookCard</code> shared by the public catalogue and the Home shelf. Covers exist; the grid does not.</td></tr>
+          <tr><td>More than one book on sale at once</td><td><code>GET /api/books</code> already returns a list and <code>Order</code> is per book. The landing page is written for one.</td></tr>
+          <tr><td>A 404 page that is not the landing page</td><td>Today any unmatched route falls through to <code>home</code> in the root machine's route table.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gotchas</h2>
+    <ul class="gotchas">
+      <li><b>The published filter has to be on the media endpoints too.</b> Filtering only the
+      list would leave an unfinished book's cover and sample reachable by guessing its slug —
+      which is exactly the thing <code>is_published</code> was added to prevent.</li>
+      <li><b>"Public sample" does not mean a public bucket.</b> Anyone may ask for the URL; the
+      URL itself expires. The bucket stays private, and nothing in the codebase ever hands out
+      a permanent storage path.</li>
+      <li><b>The pace intervals are declared twice.</b> The backend owns the real schedule and
+      it is env-overridable, so a test deployment can shrink it; the landing strip needs numbers
+      at build time and carries its own <code>PACE_INTERVAL_DAYS</code> for display. Two places
+      that can drift — the fix is moving the value into <code>shared/constants.json</code>.</li>
+      <li><b>A cover gets a new storage name on every upload.</b> That is what makes an hour of
+      browser cache safe: a corrected cover is a different URL, so nobody is served the old one
+      from cache.</li>
+      <li><b>The landing page does the pace selection, the begin page does the buying.</b> They
+      were one page, and asking for money before explaining anything is what that page was
+      replaced for.</li>
+    </ul>
+  </section>

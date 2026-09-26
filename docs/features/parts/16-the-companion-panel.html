@@ -1,0 +1,224 @@
+  <section>
+    <h2>Why it exists</h2>
+    <p>The companion is a discussion partner for one chapter, and the thing that makes it unusual is
+    what it is not: not a tutor, not a quiz, not a summariser. It asks <em>you</em> questions — that
+    is exploratory rather than evaluative (D13) — and it <strong>never interrupts</strong> (D14). It
+    is silent until the reader opens it, and once opened it speaks first, with a question.</p>
+    <p>There is no retrieval and no chunking. The whole chapter goes into the system prompt, which
+    is a cost decision as much as a quality one: input dominates, so prompt caching with a one-hour
+    TTL is the lever that matters rather than an optimisation. Gaps between a reader's questions
+    routinely exceed the default five minutes.</p>
+  </section>
+
+  <section>
+    <h2>From a tap to an answer</h2>
+    <figure class="svgscroll">
+      <svg viewBox="0 0 800 360" role="img" aria-label="The panel opens and requests an opening question; later it sends a question with trimmed history. The endpoint checks expiry, ownership and extracted text, then the service checks caps before spending a token, calls one vendor-aware function, and records usage with F expressions.">
+        <defs>
+          <marker id="f16-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+          <marker id="f16-head-lit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head lit" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <rect class="box" x="20" y="34" width="180" height="34" rx="5" />
+        <text class="lbl" x="34" y="56">closed</text>
+        <rect class="box lit" x="20" y="78" width="180" height="34" rx="5" />
+        <text class="lbl" x="34" y="100">opening — it speaks first</text>
+        <rect class="box" x="20" y="122" width="180" height="34" rx="5" />
+        <text class="lbl" x="34" y="144">idle → asking</text>
+        <rect class="box warm" x="20" y="166" width="180" height="34" rx="5" />
+        <text class="lbl" x="34" y="188">paused — capped out</text>
+        <line class="edge lit" x1="110" y1="68" x2="110" y2="74" marker-end="url(#f16-head-lit)" />
+        <line class="edge" x1="110" y1="112" x2="110" y2="118" marker-end="url(#f16-head)" />
+        <text class="edgelbl" x="20" y="218">history lives client-side</text>
+        <text class="edgelbl" x="20" y="234">and travels with each turn</text>
+
+        <rect class="box" x="250" y="60" width="230" height="74" rx="6" />
+        <text class="lbl" x="264" y="84">POST /api/chat</text>
+        <text class="sub" x="264" y="102">token in the body → GrantAuth</text>
+        <text class="sub" x="264" y="120">expired? owned? text extracted?</text>
+        <line class="edge lit" x1="200" y1="97" x2="244" y2="97" marker-end="url(#f16-head-lit)" />
+
+        <rect class="box lit" x="250" y="166" width="230" height="74" rx="6" />
+        <text class="lbl" x="264" y="190">companion.check_caps</text>
+        <text class="sub" x="264" y="208">length · per-grant/day · global/day</text>
+        <text class="sub" x="264" y="226">before a token is spent</text>
+        <line class="edge" x1="365" y1="134" x2="365" y2="160" marker-end="url(#f16-head)" />
+
+        <rect class="box" x="250" y="272" width="230" height="62" rx="6" />
+        <text class="lbl" x="264" y="296">refusal → status</text>
+        <text class="sub" x="264" y="314">422 · 429 · 429 · mapped at the edge</text>
+        <line class="edge" x1="365" y1="240" x2="365" y2="266" marker-end="url(#f16-head)" />
+
+        <rect class="box cool" x="540" y="60" width="240" height="74" rx="6" />
+        <text class="lbl" x="554" y="84">_complete()</text>
+        <text class="sub" x="554" y="102">the only vendor-aware function</text>
+        <text class="sub" x="554" y="120">model name picks Claude or Gemini</text>
+        <line class="edge" x1="480" y1="196" x2="520" y2="196" marker-end="url(#f16-head)" />
+        <polyline class="edge" points="520,196 660,196 660,140" marker-end="url(#f16-head)" />
+
+        <rect class="box warm" x="540" y="152" width="240" height="34" rx="5" />
+        <text class="sub" x="554" y="174">system prompt = the whole chapter, cached 1h</text>
+
+        <rect class="box" x="540" y="228" width="240" height="62" rx="6" />
+        <text class="lbl" x="554" y="252">ChatUsage row, F() increments</text>
+        <text class="sub" x="554" y="270">one per grant per day · no content</text>
+        <line class="edge" x1="660" y1="134" x2="660" y2="146" marker-end="url(#f16-head)" />
+        <polyline class="edge" points="700,186 700,222" marker-end="url(#f16-head)" />
+      </svg>
+      <figcaption>Caps are checked in the service, before any token is spent, and they are two:
+      per grant per day, and a global daily ceiling. The per-grant cap bounds one reader; only the
+      global one bounds a hundred readers on the same day, which is the number that protects the
+      bill.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What each part does</h2>
+    <div class="map">
+      <div class="step">
+        <span class="n">01</span>
+        <div>
+          <div class="where">core/services/extraction.py</div>
+          <div class="what">PDF → <code>text_content</code> and <code>page_count</code>, called
+          explicitly from the admin save, <code>seed_dev</code> and the upload path — never from a
+          signal. A file it cannot parse returns <code>ok=False</code> rather than raising: a chapter
+          with no extracted text still reads perfectly, and only the companion is
+          diminished.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <div>
+          <div class="where">core/content/companion_prompt.md <em>· companion_opening.md</em></div>
+          <div class="what">The prompt and the opening cue as content files, editable without
+          touching logic — the same rule as <code>labels.ts</code>. The prompt carries
+          <code>{chapter_title}</code> and <code>{chapter_text}</code> placeholders.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <div>
+          <div class="where">core/services/companion.py <em>· system_prompt</em></div>
+          <div class="what">Fills the template with the chapter's title and full text. No
+          retrieval, no chunking — which is what makes input dominate and caching the thing that
+          matters.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <div>
+          <div class="where">core/services/companion.py <em>· check_caps</em></div>
+          <div class="what">Every reason to refuse, before spending anything: the message is too
+          long, this grant has had its messages for today, or the whole day's global ceiling is
+          reached. Returns a <code>Refusal</code> code — it does not know what a 429 is.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">05</span>
+        <div>
+          <div class="where">core/services/companion.py <em>· conversation</em></div>
+          <div class="what">Turns the panel's thread into provider messages, keeping the most recent
+          within a turn cap and a character budget. When the kept thread starts with the companion —
+          which spoke first — the opening cue is put in front of it, because providers want the first
+          message to be the reader's and that cue is what the companion was answering.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">06</span>
+        <div>
+          <div class="where">core/services/companion.py <em>· _complete · _anthropic · _gemini</em></div>
+          <div class="what">The only vendor-aware code in the repo, selected by the model name in
+          env. Claude is the intended production provider; Gemini runs during the testing phase (D46).
+          Swapping providers is this function body, because nothing above it knows a vendor
+          type.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">07</span>
+        <div>
+          <div class="where">core/services/companion.py <em>· record_usage</em></div>
+          <div class="what">One <code>ChatUsage</code> row per grant per day, incremented with
+          <code>F()</code> expressions. Two messages arriving together would otherwise each read the
+          same count and write the same value — and a cap that undercounts is not a cap.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">08</span>
+        <div>
+          <div class="where">core/api/chat.py</div>
+          <div class="what">Checks expiry, re-checks ownership, refuses plainly when the chapter has
+          no extracted text, chooses between the opening cue and a real question, and maps refusal
+          codes to 422 and 429. It owns no caps and no prompt.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">09</span>
+        <div>
+          <div class="where">components/Companion/machine/</div>
+          <div class="what"><code>closed</code> → <code>opening</code> → <code>idle</code> →
+          <code>asking</code>, with <code>openingFailed</code>, <code>error</code> and
+          <code>paused</code>. Re-opening an existing conversation goes straight to
+          <code>idle</code>; <code>paused</code> covers the cap, an unavailable provider and a chapter
+          that is not ready.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">10</span>
+        <div>
+          <div class="where">components/Companion/index.tsx</div>
+          <div class="what">A quiet launcher, then a side panel on a wide screen or a sheet on a
+          phone (D88). It holds the thread in its own context and sends it with each turn — there is
+          no server-side transcript.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The caps, and the cost model</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Setting</th><th>Guards against</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">COMPANION_MAX_INPUT_CHARS</td><td>A pasted essay as a "question".</td></tr>
+          <tr><td class="mono">COMPANION_DAILY_MESSAGES_PER_GRANT</td><td>One reader on one chapter for a whole afternoon.</td></tr>
+          <tr><td class="mono">COMPANION_DAILY_MESSAGES_GLOBAL</td><td>The bill, on a day when many readers arrive at once.</td></tr>
+          <tr><td class="mono">COMPANION_HISTORY_TURNS / _CHARS</td><td>A thread that grows until every turn costs more than the last.</td></tr>
+          <tr><td class="mono">COMPANION_CACHE_TTL</td><td>Re-sending the whole chapter at full price on every question. One hour, not the five-minute default.</td></tr>
+          <tr><td class="mono">COMPANION_MODEL</td><td>A hardcoded vendor. The name decides which client is used.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gotchas</h2>
+    <ul class="gotchas">
+      <li><b>There is no console fallback.</b> Every other external has one; this one refuses. A
+      fake companion is worse than an absent one, because the reader would believe they had talked to
+      something.</li>
+      <li><b>The token travels in the body, not the path.</b> The panel is open inside a page that
+      already has it, and a POST body reaches neither a referrer header nor an access log — the same
+      reason the token is kept out of query strings. <code>GrantAuth</code> resolves it in both
+      places so there is still one lookup.</li>
+      <li><b>A capped-out companion is a normal state.</b> It renders as <code>paused</code> with the
+      reason, not as an error — the reader did nothing wrong, and an error screen would suggest
+      otherwise.</li>
+      <li><b>Read-modify-write would break the cap.</b> Two simultaneous messages each read the same
+      count and write the same value, losing one, which is why the increments are
+      <code>F()</code>.</li>
+      <li><b>A chapter with no extracted text is refused plainly.</b> Letting the model improvise
+      about a chapter it cannot see is the worst available outcome, so it answers 409 instead.</li>
+      <li><b>No transcript is stored.</b> <code>ChatUsage</code> holds counts and never content,
+      deliberately — but it also means a conversation cannot be resumed on a second device, and the
+      owner cannot see what the companion said. That is a structural question rather than a bug, and
+      it should be settled before the prompt is finalised.</li>
+      <li><b>The voice is still missing.</b> The plumbing is finished and tested; the prompt itself,
+      the way it opens with a question and how it declines an off-topic turn, is deferred to its own
+      session. Until then the companion works and does not yet sound like anything.</li>
+    </ul>
+  </section>

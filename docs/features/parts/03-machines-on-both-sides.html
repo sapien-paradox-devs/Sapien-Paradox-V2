@@ -1,0 +1,267 @@
+  <section>
+    <h2>Why it exists</h2>
+    <p>In V1 the flow was wherever it had been written: an <code>if</code> in an endpoint, a
+    <code>raise</code> in a service, a <code>useState</code> in a component. Nobody could answer
+    "what can happen to a grant?" without reading everything. D36 makes the answer a file: a
+    machine is a list of states and a transition table, and the table is plain data.</p>
+    <p>The rule on both sides is the same. Any act on a subject that has a machine is an
+    <strong>event dispatched to that machine</strong>. Guards decide, actions call services
+    through <code>ctx.deps</code>, and the endpoint only maps the result to a status code. An
+    endpoint never performs a flow step itself, and never dispatches one event to borrow its
+    checks for another.</p>
+  </section>
+
+  <section>
+    <h2>One dispatch, end to end</h2>
+    <figure class="svgscroll">
+      <svg viewBox="0 0 800 340" role="img" aria-label="A request reaches an endpoint, which dispatches an event to a machine; the transition table's first matching row runs its guards, then its actions, which call services through ctx.deps; dispatch persists the state and returns a result whose refusal code becomes a status.">
+        <defs>
+          <marker id="f3-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+          <marker id="f3-head-lit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head lit" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <rect class="box" x="20" y="40" width="170" height="56" rx="6" />
+        <text class="lbl" x="34" y="64">core/api/grants.py</text>
+        <text class="sub" x="34" y="82">HTTP only</text>
+
+        <rect class="box lit" x="250" y="40" width="180" height="56" rx="6" />
+        <text class="lbl" x="264" y="64">dispatch(…, "OPEN")</text>
+        <text class="sub" x="264" y="82">machines/__init__.py</text>
+
+        <rect class="box warm" x="490" y="40" width="290" height="56" rx="6" />
+        <text class="lbl" x="504" y="64">TRANSITIONS</text>
+        <text class="sub" x="504" y="82">read top to bottom · first match fires</text>
+
+        <line class="edge lit" x1="190" y1="68" x2="244" y2="68" marker-end="url(#f3-head-lit)" />
+        <line class="edge lit" x1="430" y1="68" x2="484" y2="68" marker-end="url(#f3-head-lit)" />
+
+        <polyline class="edge dashed" points="300,96 300,126 120,126 120,102" marker-end="url(#f3-head)" />
+        <text class="edgelbl" x="212" y="142" text-anchor="middle">TransitionResult — a refusal code becomes the status</text>
+
+        <rect class="box" x="490" y="176" width="130" height="52" rx="6" />
+        <text class="lbl" x="504" y="198">guards</text>
+        <text class="sub" x="504" y="216">is_live · owns_book</text>
+        <rect class="box" x="650" y="176" width="130" height="52" rx="6" />
+        <text class="lbl" x="664" y="198">actions</text>
+        <text class="sub" x="664" y="216">stamp_opened</text>
+        <line class="edge" x1="555" y1="96" x2="555" y2="170" marker-end="url(#f3-head)" />
+        <text class="edgelbl" x="563" y="140">conditions</text>
+        <line class="edge" x1="620" y1="202" x2="644" y2="202" marker-end="url(#f3-head)" />
+
+        <rect class="box" x="470" y="262" width="150" height="56" rx="6" />
+        <text class="lbl" x="484" y="286">binding.save_state</text>
+        <text class="sub" x="484" y="304">state + touched fields</text>
+        <rect class="box cool" x="650" y="262" width="130" height="56" rx="6" />
+        <text class="lbl" x="664" y="286">ctx.deps</text>
+        <text class="sub" x="664" y="304">the seams</text>
+        <line class="edge" x1="715" y1="228" x2="715" y2="256" marker-end="url(#f3-head)" />
+        <polyline class="edge dashed" points="340,96 340,290 464,290" marker-end="url(#f3-head)" />
+        <text class="edgelbl" x="348" y="282">persist, only on success</text>
+      </svg>
+      <figcaption>The endpoint contributes two lines: dispatch, and map the result. Guards can
+      only read; actions reach the outside world through injected callables, which is why every
+      machine could be tested against fakes before the services existed. Nothing under the API
+      layer knows what a 403 is — it returns the code <code>expired</code> and the edge decides
+      that means 410.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What each part does — the server</h2>
+    <div class="map">
+      <div class="step">
+        <span class="n">01</span>
+        <div>
+          <div class="where">core/machines/__init__.py</div>
+          <div class="what">The whole framework, in one file: <code>Spec</code> (name, initial,
+          states, transitions — pure data), <code>Ctx</code> (deps, payload, and
+          <code>refuse()</code> / <code>produce()</code>), <code>TransitionResult</code>
+          (<code>ok</code>, <code>state</code>, <code>refusal</code>, <code>data</code>), and
+          <code>dispatch</code>. Also the two adapters that let a guard and an action be
+          written with the same signature.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <div>
+          <div class="where">core/machines/binding.py</div>
+          <div class="what">The <em>only</em> Django-aware module in the layer.
+          <code>dispatch_model</code> saves the subject when a transition succeeds;
+          <code>save_state</code> writes the state column plus whatever
+          <code>touched()</code> marked, so one transition cannot clobber a column another
+          instance changed.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <div>
+          <div class="where">core/machines/&lt;name&gt;/machine.py</div>
+          <div class="what">The transition table, and nothing else. Each row is a trigger, a
+          source, a destination, its conditions and its actions, with the reason for the row in
+          a comment above it. <code>dest: None</code> is an internal transition — it runs its
+          action without moving, which is what every refusal wants.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <div>
+          <div class="where">core/machines/&lt;name&gt;/guards.py</div>
+          <div class="what">Predicates over the subject and <code>ctx</code>. They read; they
+          never write. <code>owns_book</code> asks the access seam, so ownership has exactly
+          one definition in the codebase.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">05</span>
+        <div>
+          <div class="where">core/machines/&lt;name&gt;/actions.py</div>
+          <div class="what">Effects, each through <code>ctx.deps</code>: stamp a timestamp,
+          send a chapter, record progress, mint a fresh grant, sign a video URL — or record a
+          refusal code with <code>ctx.refuse("expired")</code>.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">06</span>
+        <div>
+          <div class="where">core/machines/registry.py <em>· diagram.py</em></div>
+          <div class="what">Every machine in one list, for the tools that must enumerate them.
+          <code>manage.py machine_diagram</code> generates Mermaid straight from the tables, so
+          the picture cannot drift from the code.</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>The three server machines</h3>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Machine</th><th>Subject</th><th>States</th><th>Events</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>reading</td><td><code>TemporalGrant</code></td><td>scheduled → live → opened</td><td>UNLOCK · OPEN · RECORD_PROGRESS · COMPLETE · WATCH · REISSUE</td></tr>
+          <tr><td>delivery</td><td><code>MessageLog</code></td><td>pending → sent | failed</td><td>SEND · RETRY</td></tr>
+          <tr><td>acquisition</td><td>a purchase attempt</td><td>the four identity cases</td><td>FULFIL</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="seam">
+      <span class="tag">The row order is the logic</span>
+      <p>The reading machine's <code>OPEN</code> rows read: live and owned → open it; already
+      opened → idempotent, don't restamp; past expiry → refuse <code>expired</code>; anything
+      else → refuse <code>not_owner</code>. Move the expiry row below the catch-all and a dead
+      link starts reporting "not yours", which sends the reader to the wrong screen. The
+      auth-and-onboarding table caught exactly this bug during the build.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>What each part does — the browser</h2>
+    <p>Eighteen machines: one root, fifteen pages, two components. Each is a directory with the
+    same five files plus <code>types.ts</code>, in the same order, with no exceptions and never
+    a seventh file.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>File</th><th>Holds</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">types.ts</td><td>Context and the event union. Nothing else imports a shape from a sibling.</td></tr>
+          <tr><td class="mono">machine.ts</td><td>Declarative config only — states, transitions, guard and action <em>names</em>.</td></tr>
+          <tr><td class="mono">actions.ts</td><td>Plain functions. <code>assign</code> is applied in <code>index.ts</code>, not here.</td></tr>
+          <tr><td class="mono">actors.ts</td><td><code>fromPromise</code> actors calling <code>mappedFetcher</code>. Omitted when a machine has no async work.</td></tr>
+          <tr><td class="mono">guards.ts</td><td>Named exports, imported as <code>import * as guards</code>.</td></tr>
+          <tr><td class="mono">index.ts</td><td>Composition: <code>setup()</code> wires the three sibling files into the config.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <figure class="svgscroll">
+      <svg viewBox="0 0 800 270" role="img" aria-label="The root machine has two parallel regions: session with checking, authenticated, anonymous and loggingOut; and page with eleven page states. Neither region waits for the other, so session.checking together with page.reader is a valid state.">
+        <defs>
+          <marker id="f3b-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <rect class="box ghost" x="20" y="34" width="350" height="186" rx="8" />
+        <text class="zonelbl" x="36" y="54">region: session</text>
+        <rect class="box lit" x="40" y="72" width="120" height="32" rx="6" />
+        <text class="lbl" x="54" y="93">checking</text>
+        <rect class="box" x="220" y="72" width="130" height="32" rx="6" />
+        <text class="lbl" x="234" y="93">authenticated</text>
+        <rect class="box" x="40" y="132" width="120" height="32" rx="6" />
+        <text class="lbl" x="54" y="153">anonymous</text>
+        <rect class="box" x="220" y="132" width="130" height="32" rx="6" />
+        <text class="lbl" x="234" y="153">loggingOut</text>
+        <line class="edge" x1="160" y1="88" x2="214" y2="88" marker-end="url(#f3b-head)" />
+        <text class="edgelbl" x="187" y="80" text-anchor="middle">/me</text>
+        <line class="edge" x1="100" y1="104" x2="100" y2="126" marker-end="url(#f3b-head)" />
+        <text class="edgelbl" x="108" y="120">401</text>
+        <line class="edge" x1="220" y1="148" x2="166" y2="148" marker-end="url(#f3b-head)" />
+
+        <rect class="box ghost" x="430" y="34" width="350" height="186" rx="8" />
+        <text class="zonelbl" x="446" y="54">region: page</text>
+        <rect class="box" x="450" y="66" width="100" height="26" rx="5" />
+        <text class="lbl" x="462" y="84">home</text>
+        <rect class="box" x="560" y="66" width="100" height="26" rx="5" />
+        <text class="lbl" x="572" y="84">login</text>
+        <rect class="box" x="670" y="66" width="100" height="26" rx="5" />
+        <text class="lbl" x="682" y="84">begin</text>
+        <rect class="box" x="450" y="102" width="100" height="26" rx="5" />
+        <text class="lbl" x="462" y="120">welcome</text>
+        <rect class="box" x="560" y="102" width="100" height="26" rx="5" />
+        <text class="lbl" x="572" y="120">opening</text>
+        <rect class="box lit" x="670" y="102" width="100" height="26" rx="5" />
+        <text class="lbl" x="682" y="120">reader</text>
+        <rect class="box" x="450" y="138" width="100" height="26" rx="5" />
+        <text class="lbl" x="462" y="156">reset</text>
+        <rect class="box" x="560" y="138" width="100" height="26" rx="5" />
+        <text class="lbl" x="572" y="156">profile</text>
+        <rect class="box" x="670" y="138" width="100" height="26" rx="5" />
+        <text class="lbl" x="682" y="156">admin</text>
+        <rect class="box" x="450" y="174" width="100" height="26" rx="5" />
+        <text class="lbl" x="462" y="192">adminLogin</text>
+        <rect class="box" x="560" y="174" width="100" height="26" rx="5" />
+        <text class="lbl" x="572" y="192">unknown</text>
+
+        <line class="edge dashed" x1="400" y1="40" x2="400" y2="214" />
+        <text class="edgelbl" x="400" y="244" text-anchor="middle">parallel — neither region waits for the other</text>
+      </svg>
+      <figcaption>The two highlighted states hold at the same time, and that combination is the
+      product's most common arrival: someone tapping a WhatsApp link on a phone with no cookie.
+      Because the page region never waits on the session region, a token link can never be
+      bounced to <code>/login</code> by a pending auth check.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Gotchas</h2>
+    <ul class="gotchas">
+      <li><b><code>ROUTE</code> belongs to the page region, not the root.</b> Handled on the
+      root, every route change re-entered the whole parallel machine: the session fell back to
+      <code>checking</code>, a sign-in reported meanwhile was dropped, and sign-in appeared to
+      hang. Changing page must not touch the session region.</li>
+      <li><b><code>machine.provide()</code> does not typecheck when implementations live in
+      sibling files.</b> Under XState v5, <code>assign</code> widens the event to
+      <code>EventObject</code> while <code>provide</code> wants the union. The split survives by
+      using <code>setup()</code> instead, which is why <code>assign</code> is applied in
+      <code>index.ts</code> and <code>actions.ts</code> holds plain functions.</li>
+      <li><b>Expiry is not a state.</b> The design review had <code>expired</code> as a fourth
+      terminal state; building it showed expiry is derived from <code>expires_at</code>, and
+      storing it as well would need a sweeper to keep the two agreeing.</li>
+      <li><b>The <code>transitions</code> library is loud.</b> It logs every callback at INFO
+      and every ignored trigger at WARNING — and an ignored trigger is normal here, since an
+      event with no matching row is inert by design. Its logger is pinned to ERROR.</li>
+      <li><b>Written is not wired.</b> For three weeks the tables existed and only the reading
+      machine had a production caller; the same flow lived twice, once as a table and once as
+      <code>if</code>/<code>raise</code> inside an endpoint. Wiring acquisition and delivery
+      removed the duplicates — and the delivery table had already drifted on its retry cap,
+      which nobody noticed while nothing called it.</li>
+      <li><b>One event, one question.</b> Dispatching <code>OPEN</code> to borrow its guards
+      before doing something else is the tempting shortcut and it is banned: the guards would
+      pass, <code>opened_at</code> would be stamped, and the grant would move state as a side
+      effect of an unrelated request.</li>
+    </ul>
+  </section>

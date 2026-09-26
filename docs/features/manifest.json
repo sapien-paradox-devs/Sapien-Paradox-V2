@@ -1,0 +1,365 @@
+{
+  "_comment": "One entry per feature artifact. `slug` matches parts/<slug>.html and pages/<slug>.html. `url` is filled in after the first publish so a rebuild redeploys to the same artifact.",
+  "features": [
+    {
+      "slug": "01-platform-foundations",
+      "n": 1,
+      "title": "Platform Foundations",
+      "lede": "One repo, two deployable apps, nine shared values, and a clone that runs with zero credentials.",
+      "description": "How the monorepo, split settings, shared constants, the single fetch funnel and the two deploys hold the rest of the product up.",
+      "icon": "foundation",
+      "capability": "Foundations",
+      "decisions": [
+        "D5",
+        "D6",
+        "D20",
+        "D23",
+        "D34",
+        "D35",
+        "D66"
+      ],
+      "status": "built",
+      "url": "https://claude.ai/artifact/LmjfugZTYag7rYE4fHHwk3"
+    },
+    {
+      "slug": "02-the-ten-tables",
+      "n": 2,
+      "title": "The Ten Tables",
+      "lede": "Every row the product keeps, what it is the only place to learn, and the four columns V1 had that V2 refused.",
+      "description": "The data model: ten tables, their keys and constraints, and why each departure from V1 was made.",
+      "icon": "database",
+      "capability": "Foundations",
+      "decisions": [
+        "D4",
+        "D18",
+        "D19",
+        "D21",
+        "D63",
+        "D64",
+        "D70"
+      ],
+      "status": "built",
+      "url": "https://claude.ai/artifact/Sp5g25WvaohhTcsddAZ2Dq"
+    },
+    {
+      "slug": "03-machines-on-both-sides",
+      "n": 3,
+      "title": "Machines On Both Sides",
+      "lede": "The flow lives in transition tables &mdash; three on the server, eighteen in the browser &mdash; and nothing else decides.",
+      "description": "The orchestration layer: dispatch, guards, actions through deps, and the frontend's five-file split.",
+      "icon": "diagram",
+      "capability": "Foundations",
+      "decisions": [
+        "D15",
+        "D36",
+        "D37",
+        "D38",
+        "D40",
+        "D41",
+        "D42"
+      ],
+      "status": "built",
+      "url": "https://claude.ai/artifact/Vv611nygP5KWqU8GZk71Yq"
+    },
+    {
+      "slug": "04-catalogue-and-landing",
+      "n": 4,
+      "title": "Catalogue And Landing",
+      "lede": "The public face: what an anonymous visitor is served, and where the book's own bytes come from.",
+      "description": "GET /api/books, cover and sample endpoints, and the landing page that leads with the idea of reading this way.",
+      "icon": "storefront",
+      "capability": "Acquisition",
+      "decisions": [
+        "D47",
+        "D76",
+        "D79"
+      ],
+      "status": "partial",
+      "url": "https://claude.ai/artifact/35725VGGyjHR1dxxDtKmwJ"
+    },
+    {
+      "slug": "05-razorpay-checkout",
+      "n": 5,
+      "title": "Razorpay Checkout",
+      "lede": "Money arrives twice \u2014 once on the redirect, once on the webhook \u2014 and exactly one reader comes out.",
+      "description": "Standard Checkout, the two fulfilment legs, and the idempotency that keeps a double signal from making a second reader.",
+      "icon": "payment",
+      "capability": "Acquisition",
+      "decisions": [
+        "D28",
+        "D47",
+        "D48"
+      ],
+      "status": "built",
+      "url": "https://claude.ai/artifact/3HM3Vq3wg3xEPZLD7c7BQi"
+    },
+    {
+      "slug": "06-onboarding-and-entitlement",
+      "n": 6,
+      "title": "Onboarding And Entitlement",
+      "lede": "One door a reader comes through, one question about whether they may read, and four identity cases decided in advance.",
+      "description": "create_reader and can_read: the two seams that make payments and cadence drop-ins rather than second implementations.",
+      "icon": "key",
+      "capability": "Acquisition",
+      "decisions": [
+        "D25",
+        "D26",
+        "D50",
+        "D64"
+      ],
+      "status": "built",
+      "url": "https://claude.ai/artifact/WVFXb2CakNXzzoa7oinX1J"
+    },
+    {
+      "slug": "07-login-and-session",
+      "n": 7,
+      "title": "Login And Session",
+      "lede": "A cookie on the parent domain, rehydrated on boot, and the failure that localhost can never show you.",
+      "description": "Session endpoints, SessionAuth, CSRF policy, and the root machine region that decides who is looking.",
+      "icon": "lock",
+      "capability": "Identity",
+      "decisions": [
+        "D6",
+        "D7",
+        "D30",
+        "D62"
+      ],
+      "status": "built",
+      "url": ""
+    },
+    {
+      "slug": "08-credentials-and-recovery",
+      "n": 8,
+      "title": "Credentials And Recovery",
+      "lede": "No email provider, so a password is set and recovered over WhatsApp \u2014 single-use, cooled down, and mute about who exists.",
+      "description": "Set-a-password, reset over WhatsApp, single-use tokens and the row-counted cooldown.",
+      "icon": "key",
+      "capability": "Identity",
+      "decisions": [
+        "D16",
+        "D21",
+        "D31"
+      ],
+      "status": "built",
+      "url": ""
+    },
+    {
+      "slug": "09-profile-and-account",
+      "n": 9,
+      "title": "Profile And Account",
+      "lede": "The reader's own page: what they may change, what that costs elsewhere, and the row every change leaves behind.",
+      "description": "GET/PATCH /api/profile, password change, the AccountChange audit row, and the identicon in the header.",
+      "icon": "profile",
+      "capability": "Identity",
+      "decisions": [
+        "D19",
+        "D63",
+        "D70",
+        "D80"
+      ],
+      "status": "built",
+      "url": ""
+    },
+    {
+      "slug": "10-the-cadence-tick",
+      "n": 10,
+      "title": "The Cadence Tick",
+      "lede": "The product's first sentence: the schedule is rows minted at purchase, and a cron job fires whatever is due.",
+      "description": "cadence.schedule, cadence.tick, the Render cron job, and why a double tick delivers once.",
+      "icon": "clock",
+      "capability": "Cadence",
+      "decisions": [
+        "D17",
+        "D39",
+        "D50",
+        "D89"
+      ],
+      "status": "built",
+      "url": ""
+    },
+    {
+      "slug": "11-whatsapp-delivery",
+      "n": 11,
+      "title": "WhatsApp Delivery",
+      "lede": "One mechanism, named wrappers, and a send that returns rather than raises \u2014 because a hiccup at Twilio is not a refund.",
+      "description": "whatsapp.send_chapter, the template config, MessageLog's lifecycle, bounded retry and the console backend.",
+      "icon": "message",
+      "capability": "Delivery",
+      "decisions": [
+        "D12",
+        "D17",
+        "D22",
+        "D27"
+      ],
+      "status": "partial",
+      "url": ""
+    },
+    {
+      "slug": "12-grants-and-sanctuary",
+      "n": 12,
+      "title": "Grants And Sanctuary",
+      "lede": "A link that authenticates by itself, dies after seven days, and lands a week-late reader somewhere kind.",
+      "description": "Mint-or-reuse, GrantAuth, derived expiry, the opening page, and one-tap reissue from sanctuary.",
+      "icon": "ticket",
+      "capability": "Reading",
+      "decisions": [
+        "D8",
+        "D9",
+        "D32",
+        "D44"
+      ],
+      "status": "built",
+      "url": ""
+    },
+    {
+      "slug": "13-the-reading-chamber",
+      "n": 13,
+      "title": "The Reading Chamber",
+      "lede": "The PDF never reaches the browser. Pages are rendered once, watermarked on every request, and served as images.",
+      "description": "services/pages.py, the page_layout record, the per-request watermark, and the chamber that renders it.",
+      "icon": "book",
+      "capability": "Reading",
+      "decisions": [
+        "D43",
+        "D73",
+        "D87"
+      ],
+      "status": "built",
+      "url": ""
+    },
+    {
+      "slug": "14-reading-progress",
+      "n": 14,
+      "title": "Reading Progress",
+      "lede": "Where the reader is, kept quietly, and deliberately wired to nothing that decides access.",
+      "description": "ReadingProgress, the two idempotent writes, and the line that keeps unlocks schedule-driven.",
+      "icon": "progress",
+      "capability": "Reading",
+      "decisions": [
+        "D11",
+        "D70"
+      ],
+      "status": "built",
+      "url": ""
+    },
+    {
+      "slug": "15-the-home-shelf",
+      "n": 15,
+      "title": "The Home Shelf",
+      "lede": "The reader's own library: no tokens in the payload, dates instead of countdowns, and a link that mints on demand.",
+      "description": "GET /api/home, the selectors behind it, and the home page machine's two parallel regions.",
+      "icon": "shelf",
+      "capability": "Reading",
+      "decisions": [
+        "D11",
+        "D42",
+        "D70",
+        "D79"
+      ],
+      "status": "built",
+      "url": ""
+    },
+    {
+      "slug": "16-the-companion-panel",
+      "n": 16,
+      "title": "The Companion Panel",
+      "lede": "A chapter-scoped discussion partner that asks you questions, holds the whole chapter in its prompt, and never interrupts.",
+      "description": "Extraction, the capped service, ChatUsage as the counter, the provider switch, and the panel that speaks first.",
+      "icon": "chat",
+      "capability": "Companionship",
+      "decisions": [
+        "D13",
+        "D14",
+        "D24",
+        "D33",
+        "D45",
+        "D46",
+        "D88"
+      ],
+      "status": "built",
+      "url": ""
+    },
+    {
+      "slug": "17-reader-stewardship",
+      "n": 17,
+      "title": "Reader Stewardship",
+      "lede": "The owner's side of a reader: create, correct, deactivate, erase \u2014 and why removing is not deleting.",
+      "description": "StaffAuth, the admin reader API, and the in-app admin screens that replaced Django admin.",
+      "icon": "roster",
+      "capability": "Stewardship",
+      "decisions": [
+        "D75",
+        "D80",
+        "D82"
+      ],
+      "status": "built",
+      "url": ""
+    },
+    {
+      "slug": "18-the-book-workspace",
+      "n": 18,
+      "title": "The Book Workspace",
+      "lede": "Drop a folder of PDFs and watch them become chapters: signed uploads straight to R2, auto-matched, fixed by drag.",
+      "description": "catalog.py and uploads.py, the three-step upload, chapter auto-matching, and the rules that protect readers of a published book.",
+      "icon": "upload",
+      "capability": "Stewardship",
+      "decisions": [
+        "D78",
+        "D82",
+        "D84",
+        "D85",
+        "D86"
+      ],
+      "status": "built",
+      "url": ""
+    },
+    {
+      "slug": "19-covers-and-video",
+      "n": 19,
+      "title": "Covers And Video",
+      "lede": "Cover bytes are proxied like everything else. Video is the one exception, and it is bounded on purpose.",
+      "description": "services/media.py: proxied covers, short-lived signed video URLs, and the free-tier arithmetic behind the exception.",
+      "icon": "video",
+      "capability": "Stewardship",
+      "decisions": [
+        "D76",
+        "D77",
+        "D83"
+      ],
+      "status": "built",
+      "url": ""
+    },
+    {
+      "slug": "20-the-jewel-surface",
+      "n": 20,
+      "title": "The Jewel Surface",
+      "lede": "One stylesheet is the source of truth, four colours with two shades each, and nothing glows.",
+      "description": "The palette and type tokens, the theme script, motion rules, skeletons and the site header.",
+      "icon": "palette",
+      "capability": "Surface",
+      "decisions": [
+        "D54",
+        "D74",
+        "D81"
+      ],
+      "status": "partial",
+      "url": ""
+    },
+    {
+      "slug": "21-commands-and-operations",
+      "n": 21,
+      "title": "Commands And Operations",
+      "lede": "Everything a human can do, a function does \u2014 and every function has a command that calls it.",
+      "description": "seed_dev, send_chapter, cadence_tick, render_chapters, machine_diagram, and where the logs go.",
+      "icon": "terminal",
+      "capability": "Stewardship",
+      "decisions": [
+        "D5",
+        "D22",
+        "D63"
+      ],
+      "status": "built",
+      "url": ""
+    }
+  ]
+}

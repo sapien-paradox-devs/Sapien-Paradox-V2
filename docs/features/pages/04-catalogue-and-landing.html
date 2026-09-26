@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Catalogue And Landing</title>
+</head>
+<body>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,400&family=Inter:wght@400;500;600&display=swap");
+
+/* Jewel (D81) — the product's own tokens, light first. */
+:root {
+  color-scheme: light;
+
+  --ink: #1f1b16;
+  --ink-soft: #5d554a;
+  --ink-faint: #6b6358;
+
+  --paper: #f5f6f2;
+  --paper-raised: #fbfcfa;
+  --paper-sunk: #eceee8;
+
+  --rule: #d9ded7;
+  --rule-soft: #e6e9e3;
+
+  --accent: #2952e3;
+  --accent-text: #2952e3;
+  --accent-wash: #e8edfd;
+  --on-accent: #fff;
+
+  --saffron: #f5a623;
+  --saffron-text: #9a5b00;
+  --saffron-wash: #fdf1dc;
+  --coral: #ff6b57;
+  --coral-text: #c23a28;
+  --coral-wash: #ffeae6;
+  --teal: #14b8a6;
+  --teal-text: #0a7266;
+  --teal-wash: #e0f5f2;
+
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --radius: 6px;
+  --measure: 68ch;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ink: #ece4d6;
+    --ink-soft: #b9ae9d;
+    --ink-faint: #9a9083;
+    --paper: #16130f;
+    --paper-raised: #1f1b16;
+    --paper-sunk: #100e0b;
+    --rule: #352e26;
+    --rule-soft: #28231d;
+    --accent: #8fa8ff;
+    --accent-text: #8fa8ff;
+    --accent-wash: #1c2240;
+    --on-accent: #16130f;
+    --saffron: #ffc152;
+    --saffron-text: #ffc152;
+    --saffron-wash: #2e2410;
+    --coral: #ff8a7a;
+    --coral-text: #ff8a7a;
+    --coral-wash: #2e1a16;
+    --teal: #3dd6c3;
+    --teal-text: #3dd6c3;
+    --teal-wash: #102b28;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #ece4d6;
+  --ink-soft: #b9ae9d;
+  --ink-faint: #9a9083;
+  --paper: #16130f;
+  --paper-raised: #1f1b16;
+  --paper-sunk: #100e0b;
+  --rule: #352e26;
+  --rule-soft: #28231d;
+  --accent: #8fa8ff;
+  --accent-text: #8fa8ff;
+  --accent-wash: #1c2240;
+  --on-accent: #16130f;
+  --saffron: #ffc152;
+  --saffron-text: #ffc152;
+  --saffron-wash: #2e2410;
+  --coral: #ff8a7a;
+  --coral-text: #ff8a7a;
+  --coral-wash: #2e1a16;
+  --teal: #3dd6c3;
+  --teal-text: #3dd6c3;
+  --teal-wash: #102b28;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- the spine ---------------------------------------------------- */
+
+.topbar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.6rem 16px;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.topbar .num {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--accent-text);
+}
+
+.topbar .set { margin-left: auto; letter-spacing: 0.06em; }
+
+.wrap {
+  max-width: 78ch;
+  margin: 0 auto;
+  padding: 16px 16px 5rem;
+}
+
+/* ---- masthead ----------------------------------------------------- */
+
+header.masthead { padding-block: 2rem 1.25rem; }
+
+h1 {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 48;
+  font-weight: 500;
+  font-size: clamp(2rem, 6vw, 2.9rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.6rem;
+  text-wrap: balance;
+}
+
+.lede {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 20;
+  font-size: 1.16rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: var(--measure);
+  margin: 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 1.25rem;
+}
+
+.chip {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+}
+
+.chip.cap { background: var(--accent-wash); border-color: transparent; color: var(--accent-text); }
+.chip.built { background: var(--teal-wash); border-color: transparent; color: var(--teal-text); }
+.chip.partial { background: var(--saffron-wash); border-color: transparent; color: var(--saffron-text); }
+.chip.missing { background: var(--coral-wash); border-color: transparent; color: var(--coral-text); }
+
+/* ---- sections ----------------------------------------------------- */
+
+section { margin-top: 2.75rem; }
+
+h2 {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0.9rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+h3 {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 24;
+  font-weight: 600;
+  font-size: 1.12rem;
+  margin: 1.75rem 0 0.4rem;
+}
+
+p { max-width: var(--measure); margin: 0 0 0.9rem; }
+p:last-child { margin-bottom: 0; }
+
+a { color: var(--accent-text); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+strong { font-weight: 600; }
+
+code, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.855em;
+  background: var(--paper-sunk);
+  padding: 0.08em 0.32em;
+  border-radius: 3px;
+  overflow-wrap: anywhere;
+}
+
+ul, ol { max-width: var(--measure); padding-left: 1.15rem; margin: 0 0 0.9rem; }
+li { margin-bottom: 0.35rem; }
+
+/* ---- code map (what each part does) -------------------------------- */
+
+.map { display: flex; flex-direction: column; gap: 0; margin-top: 0.25rem; }
+
+.step {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.step:first-child { border-top: 1px solid var(--rule-soft); }
+
+.step .n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  padding-top: 0.22rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.step .where {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--ink);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.step .where em { font-style: normal; color: var(--ink-faint); font-weight: 400; }
+
+.step .what { color: var(--ink-soft); font-size: 14px; margin-top: 0.12rem; max-width: var(--measure); }
+.step .what code { background: transparent; padding: 0; color: var(--ink); }
+
+/* ---- tables -------------------------------------------------------- */
+
+.tablewrap { overflow-x: auto; margin-bottom: 1rem; }
+
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td {
+  text-align: left;
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+  vertical-align: top;
+}
+th {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 600;
+  white-space: nowrap;
+}
+td.mono, td code { font-family: var(--font-mono); font-size: 12.5px; }
+td.mono { background: none; white-space: nowrap; }
+
+/* ---- figures ------------------------------------------------------- */
+
+figure { margin: 0 0 1rem; }
+
+figure svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  color: var(--ink);
+}
+
+.svgscroll { overflow-x: auto; }
+.svgscroll svg { min-width: 520px; }
+
+figcaption {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  margin-top: 0.6rem;
+  max-width: var(--measure);
+  line-height: 1.5;
+}
+
+/* the SVG vocabulary every diagram in this set uses */
+svg .box { fill: var(--paper-raised); stroke: var(--rule); stroke-width: 1; }
+svg .box.lit { fill: var(--accent-wash); stroke: var(--accent); }
+svg .box.warm { fill: var(--saffron-wash); stroke: var(--saffron); }
+svg .box.cool { fill: var(--teal-wash); stroke: var(--teal); }
+svg .box.hot { fill: var(--coral-wash); stroke: var(--coral); }
+svg .box.ghost { fill: none; stroke: var(--rule); stroke-dasharray: 3 3; }
+svg .lbl { fill: var(--ink); font-family: var(--font-body); font-size: 12px; font-weight: 500; }
+svg .sub { fill: var(--ink-faint); font-family: var(--font-mono); font-size: 10px; }
+svg .edge { stroke: var(--ink-faint); stroke-width: 1.2; fill: none; }
+svg .edge.lit { stroke: var(--accent); stroke-width: 1.6; }
+svg .edge.dashed { stroke-dasharray: 4 3; }
+svg .edgelbl { fill: var(--ink-faint); font-family: var(--font-body); font-size: 10.5px; }
+svg .head { fill: var(--ink-faint); }
+svg .head.lit { fill: var(--accent); }
+svg .zone { fill: var(--paper-sunk); stroke: none; }
+svg .zonelbl { fill: var(--ink-faint); font-family: var(--font-body); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* ---- pull-outs ----------------------------------------------------- */
+
+.seam {
+  border-left: 2px solid var(--accent);
+  background: var(--accent-wash);
+  padding: 0.85rem 1rem;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin: 0 0 1rem;
+  max-width: var(--measure);
+  font-size: 14px;
+}
+.seam p { margin-bottom: 0.5rem; }
+.seam p:last-child { margin-bottom: 0; }
+.seam .tag {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.gotchas { list-style: none; padding: 0; margin: 0; max-width: var(--measure); }
+.gotchas > li {
+  padding: 0.85rem 0 0.85rem 1.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+  position: relative;
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.gotchas > li:first-child { border-top: 1px solid var(--rule-soft); }
+.gotchas > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1.35rem;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--coral);
+}
+.gotchas b { color: var(--ink); font-weight: 600; }
+
+.states { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1rem; align-items: center; }
+.state {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 0.22rem 0.55rem;
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+}
+.state.term { background: var(--paper-sunk); color: var(--ink-faint); }
+.states .to { color: var(--ink-faint); font-size: 12px; }
+
+footer.end {
+  margin-top: 3.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+footer.end .nav { font-family: var(--font-mono); }
+
+@media (max-width: 560px) {
+  body { font-size: 14.5px; }
+  .topbar .set { display: none; }
+  .step { grid-template-columns: 1.3rem minmax(0, 1fr); gap: 0.5rem; }
+}
+</style>
+
+<div class="topbar">
+  <span class="num">04</span>
+  <span>Catalogue And Landing</span>
+  <span class="set">Sapien Paradox V2 &middot; feature 04 of 21</span>
+</div>
+
+<div class="wrap">
+  <header class="masthead">
+    <h1>Catalogue And Landing</h1>
+    <p class="lede">The public face: what an anonymous visitor is served, and where the book's own bytes come from.</p>
+    <div class="chips"><span class="chip cap">Acquisition</span><span class="chip">D47</span><span class="chip">D76</span><span class="chip">D79</span><span class="chip partial">partly built</span></div>
+  </header>
+
+  <section>
+    <h2>Why it exists</h2>
+    <p>D10 said readers would be created by concierge onboarding, so <code>/</code> was going to
+    redirect to <code>/login</code> and a stranger would see nothing. D47 reversed that: payments
+    lead onboarding, so the product needs a front door that explains itself. The landing page is
+    that door, and it leads with the idea of reading this way rather than with a form.</p>
+    <p>Everything reachable without a session lives behind one filter —
+    <code>is_published</code> — so a half-built book with three of its eight chapters uploaded is
+    not for sale, and its cover cannot be fetched by guessing the slug.</p>
+  </section>
+
+  <section>
+    <h2>What a stranger can touch</h2>
+    <figure class="svgscroll">
+      <svg viewBox="0 0 800 300" role="img" aria-label="An anonymous visitor reaches the landing page, which reads three public endpoints — the published book list, a proxied cover and a signed sample URL — and offers one action, Begin a book, which goes to the /begin page.">
+        <defs>
+          <marker id="f4-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+          <marker id="f4-head-lit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head lit" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <rect class="box" x="20" y="112" width="150" height="56" rx="6" />
+        <text class="lbl" x="34" y="136">a stranger</text>
+        <text class="sub" x="34" y="154">no session, no token</text>
+
+        <rect class="box" x="222" y="46" width="208" height="86" rx="6" />
+        <text class="lbl" x="236" y="70">pages/landing</text>
+        <text class="sub" x="236" y="88">Hero · Idea · HowItWorks</text>
+        <text class="sub" x="236" y="104">CompanionSample · Faq</text>
+        <text class="sub" x="236" y="122">no machine: no async work</text>
+
+        <line class="edge" x1="170" y1="130" x2="216" y2="92" marker-end="url(#f4-head)" />
+
+        <rect class="box" x="490" y="36" width="290" height="44" rx="6" />
+        <text class="lbl" x="504" y="56">GET /api/books</text>
+        <text class="sub" x="504" y="72">published only · price in minor units</text>
+        <rect class="box" x="490" y="96" width="290" height="44" rx="6" />
+        <text class="lbl" x="504" y="116">GET /api/books/{slug}/cover</text>
+        <text class="sub" x="504" y="132">bytes proxied · cached an hour · nosniff</text>
+        <rect class="box" x="490" y="156" width="290" height="44" rx="6" />
+        <text class="lbl" x="504" y="176">GET /api/books/{slug}/sample</text>
+        <text class="sub" x="504" y="192">short-lived signed URL, not a public path</text>
+
+        <line class="edge" x1="430" y1="70" x2="484" y2="58" marker-end="url(#f4-head)" />
+        <line class="edge" x1="430" y1="88" x2="484" y2="112" marker-end="url(#f4-head)" />
+        <line class="edge" x1="430" y1="104" x2="484" y2="172" marker-end="url(#f4-head)" />
+
+        <rect class="box lit" x="222" y="196" width="208" height="60" rx="6" />
+        <text class="lbl" x="236" y="220">/begin?pace=…</text>
+        <text class="sub" x="236" y="238">the page's one ask</text>
+        <line class="edge lit" x1="326" y1="132" x2="326" y2="190" marker-end="url(#f4-head-lit)" />
+        <text class="edgelbl" x="334" y="168">Begin a book</text>
+        <line class="edge dashed" x1="430" y1="226" x2="600" y2="226" marker-end="url(#f4-head)" />
+        <text class="edgelbl" x="610" y="230">checkout — feature 05</text>
+      </svg>
+      <figcaption>The pace chosen on the landing page's arrival strip travels to
+      <code>/begin</code> in the query string, so the visitor does not pick it twice. Nothing on
+      this page needs a session, a token or a machine — the only state it keeps is which pace is
+      selected.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What each part does</h2>
+    <div class="map">
+      <div class="step">
+        <span class="n">01</span>
+        <div>
+          <div class="where">core/api/checkout.py <em>· GET /api/books</em></div>
+          <div class="what">What is for sale: slug, title, price in minor units, chapter count,
+          ordered by title, <code>is_published</code> only. It lives in the checkout router
+          because buying is the only thing the list is for.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <div>
+          <div class="where">core/api/books.py</div>
+          <div class="what">A book's public media. <code>/cover</code> streams the image
+          through the API with an hour of cache and <code>nosniff</code>;
+          <code>/sample</code> returns a short-lived signed URL for the sample video. Both
+          resolve the book through one helper that filters on <code>is_published</code>.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <div>
+          <div class="where">core/services/media.py</div>
+          <div class="what">Where the bytes and the URLs actually come from — the only module
+          that knows how a storage URL is made, so the bucket stays swappable. Covered in
+          feature 19.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <div>
+          <div class="where">pages/landing/index.tsx</div>
+          <div class="what">Composes the five sections, holds the selected pace in
+          <code>useState</code>, and navigates to <code>/begin?pace=…</code>. Deliberately has
+          no machine: the convention requires one for async work, waiting or retrying, and this
+          page does none.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">05</span>
+        <div>
+          <div class="where">pages/landing/Hero.tsx <em>· Idea.tsx</em></div>
+          <div class="what">The idea before the product: no form in the hero, then the three
+          principles as a numbered list — numbered because they are read in order, not for
+          decoration.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">06</span>
+        <div>
+          <div class="where">pages/landing/HowItWorks.tsx</div>
+          <div class="what">The four steps, plus the strip that shows <em>when</em> the first
+          five chapters would arrive at each pace. Real dates, never a countdown (D11).</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">07</span>
+        <div>
+          <div class="where">pages/landing/CompanionSample.tsx <em>· Faq.tsx</em></div>
+          <div class="what">A short transcript showing the companion's tone — showing it does
+          more than describing it — and the questions a stranger has before paying, as native
+          <code>&lt;details&gt;</code> with no JavaScript.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">08</span>
+        <div>
+          <div class="where">lib/labels.ts <em>· landing section</em></div>
+          <div class="what">Every word on the page, including the FAQ pairs and the sample
+          transcript. The longest section in the file, and the one most likely to be edited by
+          someone who is not editing code.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What is not built yet</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Missing</th><th>What it needs</th></tr></thead>
+        <tbody>
+          <tr><td>Book detail page — sample chapter, table of contents</td><td>A route and an endpoint; the data is already on <code>Book</code> and <code>Chapter</code>.</td></tr>
+          <tr><td>The catalogue as a cover grid (D79)</td><td>One <code>BookCard</code> shared by the public catalogue and the Home shelf. Covers exist; the grid does not.</td></tr>
+          <tr><td>More than one book on sale at once</td><td><code>GET /api/books</code> already returns a list and <code>Order</code> is per book. The landing page is written for one.</td></tr>
+          <tr><td>A 404 page that is not the landing page</td><td>Today any unmatched route falls through to <code>home</code> in the root machine's route table.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gotchas</h2>
+    <ul class="gotchas">
+      <li><b>The published filter has to be on the media endpoints too.</b> Filtering only the
+      list would leave an unfinished book's cover and sample reachable by guessing its slug —
+      which is exactly the thing <code>is_published</code> was added to prevent.</li>
+      <li><b>"Public sample" does not mean a public bucket.</b> Anyone may ask for the URL; the
+      URL itself expires. The bucket stays private, and nothing in the codebase ever hands out
+      a permanent storage path.</li>
+      <li><b>The pace intervals are declared twice.</b> The backend owns the real schedule and
+      it is env-overridable, so a test deployment can shrink it; the landing strip needs numbers
+      at build time and carries its own <code>PACE_INTERVAL_DAYS</code> for display. Two places
+      that can drift — the fix is moving the value into <code>shared/constants.json</code>.</li>
+      <li><b>A cover gets a new storage name on every upload.</b> That is what makes an hour of
+      browser cache safe: a corrected cover is a different URL, so nobody is served the old one
+      from cache.</li>
+      <li><b>The landing page does the pace selection, the begin page does the buying.</b> They
+      were one page, and asking for money before explaining anything is what that page was
+      replaced for.</li>
+    </ul>
+  </section>
+
+  <footer class="end">
+    <p><a href="index.html">All features</a> &middot; 04 of 21 &middot; source at
+    <span class="mono">docs/features/parts/04-catalogue-and-landing.html</span></p>
+    <p class="nav">&larr; 03 &middot; 05 &rarr;</p>
+  </footer>
+</div>
+</body>
+</html>

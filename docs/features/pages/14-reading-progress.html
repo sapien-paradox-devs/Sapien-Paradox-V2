@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reading Progress</title>
+</head>
+<body>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,400&family=Inter:wght@400;500;600&display=swap");
+
+/* Jewel (D81) — the product's own tokens, light first. */
+:root {
+  color-scheme: light;
+
+  --ink: #1f1b16;
+  --ink-soft: #5d554a;
+  --ink-faint: #6b6358;
+
+  --paper: #f5f6f2;
+  --paper-raised: #fbfcfa;
+  --paper-sunk: #eceee8;
+
+  --rule: #d9ded7;
+  --rule-soft: #e6e9e3;
+
+  --accent: #2952e3;
+  --accent-text: #2952e3;
+  --accent-wash: #e8edfd;
+  --on-accent: #fff;
+
+  --saffron: #f5a623;
+  --saffron-text: #9a5b00;
+  --saffron-wash: #fdf1dc;
+  --coral: #ff6b57;
+  --coral-text: #c23a28;
+  --coral-wash: #ffeae6;
+  --teal: #14b8a6;
+  --teal-text: #0a7266;
+  --teal-wash: #e0f5f2;
+
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --radius: 6px;
+  --measure: 68ch;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ink: #ece4d6;
+    --ink-soft: #b9ae9d;
+    --ink-faint: #9a9083;
+    --paper: #16130f;
+    --paper-raised: #1f1b16;
+    --paper-sunk: #100e0b;
+    --rule: #352e26;
+    --rule-soft: #28231d;
+    --accent: #8fa8ff;
+    --accent-text: #8fa8ff;
+    --accent-wash: #1c2240;
+    --on-accent: #16130f;
+    --saffron: #ffc152;
+    --saffron-text: #ffc152;
+    --saffron-wash: #2e2410;
+    --coral: #ff8a7a;
+    --coral-text: #ff8a7a;
+    --coral-wash: #2e1a16;
+    --teal: #3dd6c3;
+    --teal-text: #3dd6c3;
+    --teal-wash: #102b28;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #ece4d6;
+  --ink-soft: #b9ae9d;
+  --ink-faint: #9a9083;
+  --paper: #16130f;
+  --paper-raised: #1f1b16;
+  --paper-sunk: #100e0b;
+  --rule: #352e26;
+  --rule-soft: #28231d;
+  --accent: #8fa8ff;
+  --accent-text: #8fa8ff;
+  --accent-wash: #1c2240;
+  --on-accent: #16130f;
+  --saffron: #ffc152;
+  --saffron-text: #ffc152;
+  --saffron-wash: #2e2410;
+  --coral: #ff8a7a;
+  --coral-text: #ff8a7a;
+  --coral-wash: #2e1a16;
+  --teal: #3dd6c3;
+  --teal-text: #3dd6c3;
+  --teal-wash: #102b28;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- the spine ---------------------------------------------------- */
+
+.topbar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.6rem 16px;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.topbar .num {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--accent-text);
+}
+
+.topbar .set { margin-left: auto; letter-spacing: 0.06em; }
+
+.wrap {
+  max-width: 78ch;
+  margin: 0 auto;
+  padding: 16px 16px 5rem;
+}
+
+/* ---- masthead ----------------------------------------------------- */
+
+header.masthead { padding-block: 2rem 1.25rem; }
+
+h1 {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 48;
+  font-weight: 500;
+  font-size: clamp(2rem, 6vw, 2.9rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.6rem;
+  text-wrap: balance;
+}
+
+.lede {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 20;
+  font-size: 1.16rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: var(--measure);
+  margin: 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 1.25rem;
+}
+
+.chip {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+}
+
+.chip.cap { background: var(--accent-wash); border-color: transparent; color: var(--accent-text); }
+.chip.built { background: var(--teal-wash); border-color: transparent; color: var(--teal-text); }
+.chip.partial { background: var(--saffron-wash); border-color: transparent; color: var(--saffron-text); }
+.chip.missing { background: var(--coral-wash); border-color: transparent; color: var(--coral-text); }
+
+/* ---- sections ----------------------------------------------------- */
+
+section { margin-top: 2.75rem; }
+
+h2 {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0.9rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+h3 {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 24;
+  font-weight: 600;
+  font-size: 1.12rem;
+  margin: 1.75rem 0 0.4rem;
+}
+
+p { max-width: var(--measure); margin: 0 0 0.9rem; }
+p:last-child { margin-bottom: 0; }
+
+a { color: var(--accent-text); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+strong { font-weight: 600; }
+
+code, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.855em;
+  background: var(--paper-sunk);
+  padding: 0.08em 0.32em;
+  border-radius: 3px;
+  overflow-wrap: anywhere;
+}
+
+ul, ol { max-width: var(--measure); padding-left: 1.15rem; margin: 0 0 0.9rem; }
+li { margin-bottom: 0.35rem; }
+
+/* ---- code map (what each part does) -------------------------------- */
+
+.map { display: flex; flex-direction: column; gap: 0; margin-top: 0.25rem; }
+
+.step {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.step:first-child { border-top: 1px solid var(--rule-soft); }
+
+.step .n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  padding-top: 0.22rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.step .where {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--ink);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.step .where em { font-style: normal; color: var(--ink-faint); font-weight: 400; }
+
+.step .what { color: var(--ink-soft); font-size: 14px; margin-top: 0.12rem; max-width: var(--measure); }
+.step .what code { background: transparent; padding: 0; color: var(--ink); }
+
+/* ---- tables -------------------------------------------------------- */
+
+.tablewrap { overflow-x: auto; margin-bottom: 1rem; }
+
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td {
+  text-align: left;
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+  vertical-align: top;
+}
+th {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 600;
+  white-space: nowrap;
+}
+td.mono, td code { font-family: var(--font-mono); font-size: 12.5px; }
+td.mono { background: none; white-space: nowrap; }
+
+/* ---- figures ------------------------------------------------------- */
+
+figure { margin: 0 0 1rem; }
+
+figure svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  color: var(--ink);
+}
+
+.svgscroll { overflow-x: auto; }
+.svgscroll svg { min-width: 520px; }
+
+figcaption {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  margin-top: 0.6rem;
+  max-width: var(--measure);
+  line-height: 1.5;
+}
+
+/* the SVG vocabulary every diagram in this set uses */
+svg .box { fill: var(--paper-raised); stroke: var(--rule); stroke-width: 1; }
+svg .box.lit { fill: var(--accent-wash); stroke: var(--accent); }
+svg .box.warm { fill: var(--saffron-wash); stroke: var(--saffron); }
+svg .box.cool { fill: var(--teal-wash); stroke: var(--teal); }
+svg .box.hot { fill: var(--coral-wash); stroke: var(--coral); }
+svg .box.ghost { fill: none; stroke: var(--rule); stroke-dasharray: 3 3; }
+svg .lbl { fill: var(--ink); font-family: var(--font-body); font-size: 12px; font-weight: 500; }
+svg .sub { fill: var(--ink-faint); font-family: var(--font-mono); font-size: 10px; }
+svg .edge { stroke: var(--ink-faint); stroke-width: 1.2; fill: none; }
+svg .edge.lit { stroke: var(--accent); stroke-width: 1.6; }
+svg .edge.dashed { stroke-dasharray: 4 3; }
+svg .edgelbl { fill: var(--ink-faint); font-family: var(--font-body); font-size: 10.5px; }
+svg .head { fill: var(--ink-faint); }
+svg .head.lit { fill: var(--accent); }
+svg .zone { fill: var(--paper-sunk); stroke: none; }
+svg .zonelbl { fill: var(--ink-faint); font-family: var(--font-body); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* ---- pull-outs ----------------------------------------------------- */
+
+.seam {
+  border-left: 2px solid var(--accent);
+  background: var(--accent-wash);
+  padding: 0.85rem 1rem;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin: 0 0 1rem;
+  max-width: var(--measure);
+  font-size: 14px;
+}
+.seam p { margin-bottom: 0.5rem; }
+.seam p:last-child { margin-bottom: 0; }
+.seam .tag {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.gotchas { list-style: none; padding: 0; margin: 0; max-width: var(--measure); }
+.gotchas > li {
+  padding: 0.85rem 0 0.85rem 1.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+  position: relative;
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.gotchas > li:first-child { border-top: 1px solid var(--rule-soft); }
+.gotchas > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1.35rem;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--coral);
+}
+.gotchas b { color: var(--ink); font-weight: 600; }
+
+.states { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1rem; align-items: center; }
+.state {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 0.22rem 0.55rem;
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+}
+.state.term { background: var(--paper-sunk); color: var(--ink-faint); }
+.states .to { color: var(--ink-faint); font-size: 12px; }
+
+footer.end {
+  margin-top: 3.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+footer.end .nav { font-family: var(--font-mono); }
+
+@media (max-width: 560px) {
+  body { font-size: 14.5px; }
+  .topbar .set { display: none; }
+  .step { grid-template-columns: 1.3rem minmax(0, 1fr); gap: 0.5rem; }
+}
+</style>
+
+<div class="topbar">
+  <span class="num">14</span>
+  <span>Reading Progress</span>
+  <span class="set">Sapien Paradox V2 &middot; feature 14 of 21</span>
+</div>
+
+<div class="wrap">
+  <header class="masthead">
+    <h1>Reading Progress</h1>
+    <p class="lede">Where the reader is, kept quietly, and deliberately wired to nothing that decides access.</p>
+    <div class="chips"><span class="chip cap">Reading</span><span class="chip">D11</span><span class="chip">D70</span><span class="chip built">built</span></div>
+  </header>
+
+  <section>
+    <h2>Why it exists</h2>
+    <p>D11 said no progress bars: no timers, no metadata, nothing that turns reading into a task
+    list. D70 reversed half of that, because a reader coming back to a chapter after three days
+    genuinely wants to know where they were — and the reversal is written down rather than smuggled
+    in. What it permits is deliberately small: a ring per chapter, a hairline as you read, and a
+    check when you say you are done.</p>
+    <p>The constraint around it matters more than the feature. <strong>Nothing in access, grants,
+    delivery or cadence may read this table.</strong> Chapters unlock on a schedule, never on
+    completion, and a test holds that line — because coupling unlocks to reading would quietly turn
+    the product into a course.</p>
+  </section>
+
+  <section>
+    <h2>From a scroll position to a row</h2>
+    <figure class="svgscroll">
+      <svg viewBox="0 0 800 330" role="img" aria-label="A scroll handler measures the reading fraction and sends PROGRESS to the reader machine's progress region, which debounces in waiting, posts in sending, and returns to idle; on page hide a keepalive send flushes the last value. The endpoint dispatches RECORD_PROGRESS to the reading machine, whose action calls progress.record.">
+        <defs>
+          <marker id="f14-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+          <marker id="f14-head-lit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head lit" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <rect class="box" x="20" y="40" width="170" height="56" rx="6" />
+        <text class="lbl" x="34" y="64">useReadingPosition</text>
+        <text class="sub" x="34" y="82">one rAF per frame, measures only</text>
+
+        <rect class="box" x="20" y="136" width="170" height="56" rx="6" />
+        <text class="lbl" x="34" y="160">position.ts</text>
+        <text class="sub" x="34" y="178">readFraction · currentPage</text>
+        <line class="edge" x1="105" y1="96" x2="105" y2="130" marker-end="url(#f14-head)" />
+
+        <text class="zonelbl" x="240" y="30">reader machine · progress region</text>
+        <rect class="box ghost" x="230" y="40" width="300" height="152" rx="8" />
+        <rect class="box" x="250" y="64" width="110" height="34" rx="5" />
+        <text class="lbl" x="264" y="86">idle</text>
+        <rect class="box lit" x="400" y="64" width="110" height="34" rx="5" />
+        <text class="lbl" x="414" y="86">waiting</text>
+        <rect class="box" x="400" y="130" width="110" height="34" rx="5" />
+        <text class="lbl" x="414" y="152">sending</text>
+        <line class="edge lit" x1="360" y1="81" x2="394" y2="81" marker-end="url(#f14-head-lit)" />
+        <text class="edgelbl" x="330" y="56">PROGRESS</text>
+        <line class="edge" x1="455" y1="98" x2="455" y2="124" marker-end="url(#f14-head)" />
+        <text class="edgelbl" x="463" y="118">after delay</text>
+        <polyline class="edge" points="400,147 305,147 305,104" marker-end="url(#f14-head)" />
+        <line class="edge" x1="190" y1="68" x2="244" y2="76" marker-end="url(#f14-head)" />
+
+        <rect class="box warm" x="230" y="220" width="300" height="52" rx="6" />
+        <text class="lbl" x="244" y="242">FLUSH on pagehide</text>
+        <text class="sub" x="244" y="260">keepalive POST · errors dropped</text>
+
+        <rect class="box" x="570" y="118" width="210" height="56" rx="6" />
+        <text class="lbl" x="584" y="142">POST …/progress</text>
+        <text class="sub" x="584" y="160">204, grant-authenticated</text>
+        <line class="edge" x1="510" y1="147" x2="564" y2="147" marker-end="url(#f14-head)" />
+        <polyline class="edge" points="530,246 550,246 550,160 564,160" marker-end="url(#f14-head)" />
+
+        <rect class="box" x="570" y="196" width="210" height="52" rx="6" />
+        <text class="lbl" x="584" y="218">RECORD_PROGRESS</text>
+        <text class="sub" x="584" y="236">same guards as OPEN</text>
+        <line class="edge" x1="675" y1="174" x2="675" y2="190" marker-end="url(#f14-head)" />
+
+        <rect class="box cool" x="570" y="270" width="210" height="52" rx="6" />
+        <text class="lbl" x="584" y="292">progress.record(user, ch)</text>
+        <text class="sub" x="584" y="310">forward only · ceiling 0.99</text>
+        <line class="edge" x1="675" y1="248" x2="675" y2="264" marker-end="url(#f14-head)" />
+      </svg>
+      <figcaption>The hooks measure and nothing else — the fraction and the current page are handed
+      to the machine as events, and the machine decides when a number is worth a request. Progress
+      is a row on the reading machine, so "may this token write this?" is answered by the same
+      guards that answer "may this token open the chapter?", and never re-asked in an
+      endpoint.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What each part does</h2>
+    <div class="map">
+      <div class="step">
+        <span class="n">01</span>
+        <div>
+          <div class="where">components/PdfChamber/position.ts</div>
+          <div class="what">Two pure functions, testable with no DOM.
+          <code>readFraction</code> is zero until the pages reach the top of the screen and one when
+          their last line reaches the bottom — counting everything merely <em>visible</em> as read
+          would open a short chapter already half full. A chapter that fits on one screen is read at
+          a glance: 1.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <div>
+          <div class="where">components/PdfChamber/useReadingPosition.ts</div>
+          <div class="what">Reads the scroll position at most once per frame and reports the
+          fraction and the page being read. It measures the DOM and hands the result over; it holds
+          no policy.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <div>
+          <div class="where">pages/reader/machine/ <em>· the progress region</em></div>
+          <div class="what"><code>idle</code> → <code>waiting</code> (a debounce, so scrolling does
+          not post per frame) → <code>sending</code>, with guards
+          <code>movedEnough</code>, <code>isFurther</code>, <code>moreToSend</code>. A failed save
+          returns to <code>idle</code> because the next movement carries the same number or a larger
+          one — there is nothing to retry.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <div>
+          <div class="where">lib/fetcher.ts <em>· send()</em></div>
+          <div class="what">The last word of a reading session: a <code>keepalive</code> POST fired
+          on <code>pagehide</code>, with errors dropped because there is nobody left to show them
+          to.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">05</span>
+        <div>
+          <div class="where">core/api/grants.py <em>· progress · complete</em></div>
+          <div class="what">Two endpoints, both 204, both grant-authenticated, both dispatching to
+          the reading machine rather than calling the service directly.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">06</span>
+        <div>
+          <div class="where">core/machines/reading/ <em>· the six internal rows</em></div>
+          <div class="what"><code>RECORD_PROGRESS</code> and <code>COMPLETE</code> each get three
+          rows — allowed, expired, not owner — and all of them have <code>dest: None</code>, because
+          reading further changes nothing about the grant's state.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">07</span>
+        <div>
+          <div class="where">core/services/progress.py</div>
+          <div class="what">Two idempotent writes under <code>select_for_update</code>.
+          <code>record</code> clamps to 0.99 and only ever moves forward — rereading a paragraph is
+          not losing ground. <code>complete</code> stamps the timestamp and sets 1.0, and asking
+          twice changes nothing.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">08</span>
+        <div>
+          <div class="where">core/selectors.py <em>· progress_for · progress_by_chapter</em></div>
+          <div class="what">The reads. Home and the profile page use the batch version — one query
+          for a whole shelf — and a <code>NONE</code> default so a chapter with no row needs no
+          branch at the call site.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">09</span>
+        <div>
+          <div class="where">components/ChapterList/ <em>· the quiet part</em></div>
+          <div class="what">A small ring per chapter and a check with "Completed" once the reader
+          marks it. No percentages on the rows, no badges, nothing that turns a shelf into a
+          dashboard.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gotchas</h2>
+    <ul class="gotchas">
+      <li><b>Progress is keyed on the reader and the chapter, not on the grant.</b> A re-issued link
+      is a new grant, and the reader's place has to survive it — which also means a reader holding
+      only a token can write progress, because the row is reached through
+      <code>grant.user</code>.</li>
+      <li><b>Reaching the last page is not finishing.</b> <code>record</code> stops at 0.99 and only
+      <code>complete</code> reaches 1, so completion is always something the reader declared.</li>
+      <li><b>Nothing in cadence may read this table.</b> The temptation is real — "unlock the next
+      chapter when they finish this one" is a plausible product — and it is the opposite of the
+      premise. The rule is enforced by a test, not by memory.</li>
+      <li><b>The progress region must be parallel to the chamber.</b> One sequence of states would
+      have to leave <code>reading</code> to represent saving, which means the page changes under a
+      reader because a background POST is in flight.</li>
+      <li><b>A dropped save needs no retry.</b> The next scroll event carries a number at least as
+      large, so retry logic here would add failure modes to buy nothing.</li>
+      <li><b>The furthest point is monotonic in the service, not in the client.</b> Two devices, a
+      stale tab or a replayed <code>keepalive</code> request all send whatever they last knew, and
+      the database is where "only forward" is actually enforced.</li>
+      <li><b>Resuming where you stopped is not built.</b> The number is stored and shown; the
+      chamber does not yet scroll to it. That is the obvious next leaf, and it is listed as one.</li>
+    </ul>
+  </section>
+
+  <footer class="end">
+    <p><a href="index.html">All features</a> &middot; 14 of 21 &middot; source at
+    <span class="mono">docs/features/parts/14-reading-progress.html</span></p>
+    <p class="nav">&larr; 13 &middot; 15 &rarr;</p>
+  </footer>
+</div>
+</body>
+</html>

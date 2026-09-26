@@ -1,0 +1,196 @@
+  <section>
+    <h2>Why it exists</h2>
+    <p>Paying is what creates a reader (D47), so checkout is the front door rather than a
+    feature bolted to the side. The important consequence is what it is <em>not</em> allowed to
+    do: no row is written when a purchase starts. An unpaid <code>Order</code> would be an
+    entitlement, and <code>can_read</code> would have to start asking about payment status —
+    exactly the complexity the seam exists to keep out of it.</p>
+    <p>The money then announces itself twice. Razorpay's webhook is the leg that survives the
+    reader closing their laptop; the redirect is the leg the reader's own browser delivers, and
+    the one that actually fires first. D48 accepts both and makes the second one a no-op.</p>
+  </section>
+
+  <section>
+    <h2>Two legs, one reader</h2>
+    <figure class="svgscroll">
+      <svg viewBox="0 0 800 380" role="img" aria-label="The begin page creates a Razorpay order and opens the checkout modal. After payment two paths arrive: the browser's confirm call and Razorpay's webhook. Both call the same fulfil helper, which dispatches PAID to the acquisition machine, whose first row stops a duplicate.">
+        <defs>
+          <marker id="f5-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+          <marker id="f5-head-lit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head lit" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <rect class="box" x="20" y="30" width="180" height="56" rx="6" />
+        <text class="lbl" x="34" y="54">/begin</text>
+        <text class="sub" x="34" y="72">name · email · phone · pace</text>
+
+        <rect class="box" x="20" y="120" width="180" height="56" rx="6" />
+        <text class="lbl" x="34" y="144">POST /api/checkout</text>
+        <text class="sub" x="34" y="162">nothing is created here</text>
+        <line class="edge" x1="110" y1="86" x2="110" y2="114" marker-end="url(#f5-head)" />
+
+        <rect class="box warm" x="20" y="210" width="180" height="56" rx="6" />
+        <text class="lbl" x="34" y="234">Razorpay modal</text>
+        <text class="sub" x="34" y="252">Standard Checkout</text>
+        <line class="edge" x1="110" y1="176" x2="110" y2="204" marker-end="url(#f5-head)" />
+        <text class="edgelbl" x="118" y="196">order id + key</text>
+
+        <rect class="box lit" x="270" y="150" width="200" height="60" rx="6" />
+        <text class="lbl" x="284" y="174">POST /checkout/confirm</text>
+        <text class="sub" x="284" y="192">signature, or status lookup</text>
+        <rect class="box" x="270" y="264" width="200" height="60" rx="6" />
+        <text class="lbl" x="284" y="288">POST /payments/webhook</text>
+        <text class="sub" x="284" y="306">HMAC on the raw body</text>
+
+        <line class="edge lit" x1="200" y1="228" x2="264" y2="192" marker-end="url(#f5-head-lit)" />
+        <text class="edgelbl" x="196" y="140">the browser's leg</text>
+        <line class="edge dashed" x1="200" y1="252" x2="264" y2="290" marker-end="url(#f5-head)" />
+        <text class="edgelbl" x="202" y="340">Razorpay's leg, whenever it arrives</text>
+
+        <rect class="box" x="540" y="150" width="240" height="60" rx="6" />
+        <text class="lbl" x="554" y="174">_fulfil(entity)</text>
+        <text class="sub" x="554" y="192">builds the attempt, dispatches</text>
+        <line class="edge lit" x1="470" y1="180" x2="534" y2="180" marker-end="url(#f5-head-lit)" />
+        <polyline class="edge" points="470,294 505,294 505,186 534,186" marker-end="url(#f5-head)" />
+
+        <rect class="box cool" x="540" y="30" width="240" height="86" rx="6" />
+        <text class="lbl" x="554" y="54">acquisition machine</text>
+        <text class="sub" x="554" y="72">PAID → already_fulfilled? stop</text>
+        <text class="sub" x="554" y="88">else resolve identity</text>
+        <text class="sub" x="554" y="104">→ onboarding.create_reader</text>
+        <line class="edge" x1="660" y1="150" x2="660" y2="122" marker-end="url(#f5-head)" />
+      </svg>
+      <figcaption>Both legs converge on one helper, and every branch after that point lives in
+      the acquisition transition table rather than in the endpoint. The table's first row is the
+      idempotency check, which is why the second signal to arrive — whichever it is — finds the
+      order by its <code>payment_reference</code> and stops.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What each part does</h2>
+    <div class="map">
+      <div class="step">
+        <span class="n">01</span>
+        <div>
+          <div class="where">pages/begin/machine/machine.ts</div>
+          <div class="what">Five states: <code>loading</code> → <code>browsing</code> →
+          <code>submitting</code> → <code>paying</code> → <code>redirecting</code>, with
+          <code>failed</code> and <code>refused</code> beside them. <code>refused</code> returns
+          to the form with everything still typed — a refusal is a normal state, not an error
+          screen (D45).</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <div>
+          <div class="where">pages/begin/machine/actors.ts</div>
+          <div class="what"><code>startCheckout</code> creates the gateway order;
+          <code>payAndConfirm</code> opens the Razorpay modal, waits for the result and calls
+          confirm — one actor, because the modal's outcome is useless without the verification
+          that follows it.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <div>
+          <div class="where">core/api/checkout.py <em>· POST /api/checkout</em></div>
+          <div class="what">Checks that payments are configured, that the book is published,
+          that the pace is one of the three, normalises the phone, and asks the gateway for an
+          order. Returns the order id, the public key, the amount and the book title — what the
+          modal needs and nothing else.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <div>
+          <div class="where">core/services/payments.py</div>
+          <div class="what">The only module that talks to Razorpay: <code>configured()</code>,
+          <code>create_order</code>, <code>verify_payment_signature</code>,
+          <code>fetch_order</code>, <code>signature_is_valid</code>. Unconfigured it raises
+          rather than faking — a silent fake payment would leave a reader believing they had
+          bought something.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">05</span>
+        <div>
+          <div class="where">core/api/checkout.py <em>· _fulfil</em></div>
+          <div class="what">Builds a <code>PurchaseAttempt</code> from the gateway entity's
+          notes, dispatches <code>PAID</code>, and turns the refusal code into the shape both
+          callers already speak. It decides nothing itself.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">06</span>
+        <div>
+          <div class="where">core/api/checkout.py <em>· POST /checkout/confirm</em></div>
+          <div class="what">Two ways in. With a payment id and signature it verifies the HMAC
+          locally — no round trip. With only the order id, which is what a reloaded welcome page
+          has, it fetches the order and checks <code>status == "paid"</code>. Then it fulfils,
+          and sets the password if one was typed and the reader has none.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">07</span>
+        <div>
+          <div class="where">core/api/checkout.py <em>· POST /payments/webhook</em></div>
+          <div class="what">Verifies the signature against the raw body before parsing
+          anything, then handles <code>order.paid</code> and the legacy
+          <code>payment_link.paid</code>. Any other event is acknowledged and ignored.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">08</span>
+        <div>
+          <div class="where">core/api/checkout.py <em>· POST /checkout/resend</em></div>
+          <div class="what">The reader's own escape hatch: send the chapter and the
+          set-a-password link again. Authorised by the Razorpay order id, cooled down, and it
+          will fulfil first if no order exists yet.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">09</span>
+        <div>
+          <div class="where">pages/welcome/machine/machine.ts</div>
+          <div class="what">Four outcomes, four things worth saying: <code>fulfilled</code>,
+          <code>owned</code>, <code>pending</code>, <code>refused</code>, plus
+          <code>failed</code> when confirming itself broke. The first three offer
+          <code>RESEND</code>; only a genuine identity refusal is a dead end.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gotchas</h2>
+    <ul class="gotchas">
+      <li><b>Payment Links ran out.</b> Razorpay's test mode caps them at thirty per
+      account — total, not per day — so the whole flow moved to the Orders API and Standard
+      Checkout. Same fulfilment, different gateway object, and the webhook still handles the old
+      event type.</li>
+      <li><b>The webhook fails closed and silently when its secret is unset.</b>
+      <code>signature_is_valid</code> returns false on an empty secret, so the endpoint 400s
+      before parsing and a paid reader gets nothing but a log line. That is precisely why D48's
+      redirect leg exists, and why the secret is called out in the blueprint.</li>
+      <li><b>Nothing is created when checkout starts.</b> Tempting, and wrong: an unpaid order
+      is an entitlement, and every access question would then have to ask about payment
+      status.</li>
+      <li><b>The resend endpoint is authorised by an order id, and that is safe for one
+      reason.</b> Everything it sends goes to the phone on the account, never to whoever asked.
+      Someone holding the id can cause the owner to receive a message; they cannot receive one
+      themselves.</li>
+      <li><b>The welcome page used to assert delivery.</b> It had one state and told the reader
+      their chapter was on its way — while a rejected webhook meant nothing had been created at
+      all. Now it confirms, then says which of four things actually happened.</li>
+      <li><b>Phone is optional.</b> A reader without one pays and reads through the web app;
+      the WhatsApp legs are skipped rather than failed, so <code>hasPhone</code> travels back to
+      the welcome page and changes what it offers.</li>
+      <li><b>A confirm that arrives twice must not set a password twice.</b> It only sets one
+      when the reader has no usable password, so a reload cannot overwrite a password the
+      reader has since chosen.</li>
+    </ul>
+  </section>

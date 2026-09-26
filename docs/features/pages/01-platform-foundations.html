@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Platform Foundations</title>
+</head>
+<body>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,400&family=Inter:wght@400;500;600&display=swap");
+
+/* Jewel (D81) — the product's own tokens, light first. */
+:root {
+  color-scheme: light;
+
+  --ink: #1f1b16;
+  --ink-soft: #5d554a;
+  --ink-faint: #6b6358;
+
+  --paper: #f5f6f2;
+  --paper-raised: #fbfcfa;
+  --paper-sunk: #eceee8;
+
+  --rule: #d9ded7;
+  --rule-soft: #e6e9e3;
+
+  --accent: #2952e3;
+  --accent-text: #2952e3;
+  --accent-wash: #e8edfd;
+  --on-accent: #fff;
+
+  --saffron: #f5a623;
+  --saffron-text: #9a5b00;
+  --saffron-wash: #fdf1dc;
+  --coral: #ff6b57;
+  --coral-text: #c23a28;
+  --coral-wash: #ffeae6;
+  --teal: #14b8a6;
+  --teal-text: #0a7266;
+  --teal-wash: #e0f5f2;
+
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --radius: 6px;
+  --measure: 68ch;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ink: #ece4d6;
+    --ink-soft: #b9ae9d;
+    --ink-faint: #9a9083;
+    --paper: #16130f;
+    --paper-raised: #1f1b16;
+    --paper-sunk: #100e0b;
+    --rule: #352e26;
+    --rule-soft: #28231d;
+    --accent: #8fa8ff;
+    --accent-text: #8fa8ff;
+    --accent-wash: #1c2240;
+    --on-accent: #16130f;
+    --saffron: #ffc152;
+    --saffron-text: #ffc152;
+    --saffron-wash: #2e2410;
+    --coral: #ff8a7a;
+    --coral-text: #ff8a7a;
+    --coral-wash: #2e1a16;
+    --teal: #3dd6c3;
+    --teal-text: #3dd6c3;
+    --teal-wash: #102b28;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #ece4d6;
+  --ink-soft: #b9ae9d;
+  --ink-faint: #9a9083;
+  --paper: #16130f;
+  --paper-raised: #1f1b16;
+  --paper-sunk: #100e0b;
+  --rule: #352e26;
+  --rule-soft: #28231d;
+  --accent: #8fa8ff;
+  --accent-text: #8fa8ff;
+  --accent-wash: #1c2240;
+  --on-accent: #16130f;
+  --saffron: #ffc152;
+  --saffron-text: #ffc152;
+  --saffron-wash: #2e2410;
+  --coral: #ff8a7a;
+  --coral-text: #ff8a7a;
+  --coral-wash: #2e1a16;
+  --teal: #3dd6c3;
+  --teal-text: #3dd6c3;
+  --teal-wash: #102b28;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- the spine ---------------------------------------------------- */
+
+.topbar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.6rem 16px;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.topbar .num {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--accent-text);
+}
+
+.topbar .set { margin-left: auto; letter-spacing: 0.06em; }
+
+.wrap {
+  max-width: 78ch;
+  margin: 0 auto;
+  padding: 16px 16px 5rem;
+}
+
+/* ---- masthead ----------------------------------------------------- */
+
+header.masthead { padding-block: 2rem 1.25rem; }
+
+h1 {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 48;
+  font-weight: 500;
+  font-size: clamp(2rem, 6vw, 2.9rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.6rem;
+  text-wrap: balance;
+}
+
+.lede {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 20;
+  font-size: 1.16rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: var(--measure);
+  margin: 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 1.25rem;
+}
+
+.chip {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+}
+
+.chip.cap { background: var(--accent-wash); border-color: transparent; color: var(--accent-text); }
+.chip.built { background: var(--teal-wash); border-color: transparent; color: var(--teal-text); }
+.chip.partial { background: var(--saffron-wash); border-color: transparent; color: var(--saffron-text); }
+.chip.missing { background: var(--coral-wash); border-color: transparent; color: var(--coral-text); }
+
+/* ---- sections ----------------------------------------------------- */
+
+section { margin-top: 2.75rem; }
+
+h2 {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0.9rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+h3 {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 24;
+  font-weight: 600;
+  font-size: 1.12rem;
+  margin: 1.75rem 0 0.4rem;
+}
+
+p { max-width: var(--measure); margin: 0 0 0.9rem; }
+p:last-child { margin-bottom: 0; }
+
+a { color: var(--accent-text); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+strong { font-weight: 600; }
+
+code, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.855em;
+  background: var(--paper-sunk);
+  padding: 0.08em 0.32em;
+  border-radius: 3px;
+  overflow-wrap: anywhere;
+}
+
+ul, ol { max-width: var(--measure); padding-left: 1.15rem; margin: 0 0 0.9rem; }
+li { margin-bottom: 0.35rem; }
+
+/* ---- code map (what each part does) -------------------------------- */
+
+.map { display: flex; flex-direction: column; gap: 0; margin-top: 0.25rem; }
+
+.step {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.step:first-child { border-top: 1px solid var(--rule-soft); }
+
+.step .n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  padding-top: 0.22rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.step .where {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--ink);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.step .where em { font-style: normal; color: var(--ink-faint); font-weight: 400; }
+
+.step .what { color: var(--ink-soft); font-size: 14px; margin-top: 0.12rem; max-width: var(--measure); }
+.step .what code { background: transparent; padding: 0; color: var(--ink); }
+
+/* ---- tables -------------------------------------------------------- */
+
+.tablewrap { overflow-x: auto; margin-bottom: 1rem; }
+
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td {
+  text-align: left;
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+  vertical-align: top;
+}
+th {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 600;
+  white-space: nowrap;
+}
+td.mono, td code { font-family: var(--font-mono); font-size: 12.5px; }
+td.mono { background: none; white-space: nowrap; }
+
+/* ---- figures ------------------------------------------------------- */
+
+figure { margin: 0 0 1rem; }
+
+figure svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  color: var(--ink);
+}
+
+.svgscroll { overflow-x: auto; }
+.svgscroll svg { min-width: 520px; }
+
+figcaption {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  margin-top: 0.6rem;
+  max-width: var(--measure);
+  line-height: 1.5;
+}
+
+/* the SVG vocabulary every diagram in this set uses */
+svg .box { fill: var(--paper-raised); stroke: var(--rule); stroke-width: 1; }
+svg .box.lit { fill: var(--accent-wash); stroke: var(--accent); }
+svg .box.warm { fill: var(--saffron-wash); stroke: var(--saffron); }
+svg .box.cool { fill: var(--teal-wash); stroke: var(--teal); }
+svg .box.hot { fill: var(--coral-wash); stroke: var(--coral); }
+svg .box.ghost { fill: none; stroke: var(--rule); stroke-dasharray: 3 3; }
+svg .lbl { fill: var(--ink); font-family: var(--font-body); font-size: 12px; font-weight: 500; }
+svg .sub { fill: var(--ink-faint); font-family: var(--font-mono); font-size: 10px; }
+svg .edge { stroke: var(--ink-faint); stroke-width: 1.2; fill: none; }
+svg .edge.lit { stroke: var(--accent); stroke-width: 1.6; }
+svg .edge.dashed { stroke-dasharray: 4 3; }
+svg .edgelbl { fill: var(--ink-faint); font-family: var(--font-body); font-size: 10.5px; }
+svg .head { fill: var(--ink-faint); }
+svg .head.lit { fill: var(--accent); }
+svg .zone { fill: var(--paper-sunk); stroke: none; }
+svg .zonelbl { fill: var(--ink-faint); font-family: var(--font-body); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* ---- pull-outs ----------------------------------------------------- */
+
+.seam {
+  border-left: 2px solid var(--accent);
+  background: var(--accent-wash);
+  padding: 0.85rem 1rem;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin: 0 0 1rem;
+  max-width: var(--measure);
+  font-size: 14px;
+}
+.seam p { margin-bottom: 0.5rem; }
+.seam p:last-child { margin-bottom: 0; }
+.seam .tag {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.gotchas { list-style: none; padding: 0; margin: 0; max-width: var(--measure); }
+.gotchas > li {
+  padding: 0.85rem 0 0.85rem 1.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+  position: relative;
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.gotchas > li:first-child { border-top: 1px solid var(--rule-soft); }
+.gotchas > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1.35rem;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--coral);
+}
+.gotchas b { color: var(--ink); font-weight: 600; }
+
+.states { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1rem; align-items: center; }
+.state {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 0.22rem 0.55rem;
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+}
+.state.term { background: var(--paper-sunk); color: var(--ink-faint); }
+.states .to { color: var(--ink-faint); font-size: 12px; }
+
+footer.end {
+  margin-top: 3.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+footer.end .nav { font-family: var(--font-mono); }
+
+@media (max-width: 560px) {
+  body { font-size: 14.5px; }
+  .topbar .set { display: none; }
+  .step { grid-template-columns: 1.3rem minmax(0, 1fr); gap: 0.5rem; }
+}
+</style>
+
+<div class="topbar">
+  <span class="num">01</span>
+  <span>Platform Foundations</span>
+  <span class="set">Sapien Paradox V2 &middot; feature 01 of 21</span>
+</div>
+
+<div class="wrap">
+  <header class="masthead">
+    <h1>Platform Foundations</h1>
+    <p class="lede">One repo, two deployable apps, nine shared values, and a clone that runs with zero credentials.</p>
+    <div class="chips"><span class="chip cap">Foundations</span><span class="chip">D5</span><span class="chip">D6</span><span class="chip">D20</span><span class="chip">D23</span><span class="chip">D34</span><span class="chip">D35</span><span class="chip">D66</span><span class="chip built">built</span></div>
+  </header>
+
+  <section>
+    <h2>Why it exists</h2>
+    <p>V1 was two repositories split by lane — services and UI. Every feature that touched
+    both sides had to be split in half, with the merge order managed by hand, and the two
+    halves drifted. Five of V2's twelve planned slices touch both sides in one change, so V2
+    is one repository with one git history and one PR per slice (D6).</p>
+    <p>The second rule is harder and pays more: <strong>a fresh clone runs with zero
+    credentials.</strong> Every external system reads env and falls back to something local —
+    the database to SQLite, storage to the filesystem, WhatsApp to printing on screen, the
+    companion to unavailable. That is why CI needs no secrets, and why a new machine is
+    productive in one command.</p>
+  </section>
+
+  <section>
+    <h2>The shape</h2>
+    <figure>
+      <svg viewBox="0 0 800 400" role="img" aria-label="One repository deploying to two origins: a React SPA on Vercel and Django on Render, with shared/constants.json read by both and all external systems behind env with local fallbacks.">
+        <defs>
+          <marker id="f1-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+          <marker id="f1-head-lit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head lit" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <text class="zonelbl" x="40" y="34">one repository, one git history</text>
+
+        <rect class="box" x="40" y="52" width="210" height="74" rx="6" />
+        <text class="lbl" x="58" y="76">apps/web</text>
+        <text class="sub" x="58" y="95">React 19 · Vite · XState 5</text>
+        <text class="sub" x="58" y="113">Vercel — app.&lt;domain&gt;</text>
+
+        <rect class="box lit" x="530" y="52" width="230" height="74" rx="6" />
+        <text class="lbl" x="548" y="76">apps/api</text>
+        <text class="sub" x="548" y="95">Django 6 · Ninja · gunicorn</text>
+        <text class="sub" x="548" y="113">Render — api.&lt;domain&gt;</text>
+
+        <line class="edge lit" x1="250" y1="86" x2="524" y2="86" marker-end="url(#f1-head-lit)" />
+        <text class="edgelbl" x="387" y="77" text-anchor="middle">fetch · credentials: include</text>
+        <line class="edge dashed" x1="530" y1="110" x2="256" y2="110" marker-end="url(#f1-head)" />
+        <text class="edgelbl" x="387" y="128" text-anchor="middle">Set-Cookie, scoped to .&lt;domain&gt;</text>
+
+        <rect class="zone" x="514" y="176" width="246" height="176" rx="8" />
+        <text class="zonelbl" x="528" y="198">outside, all env-driven</text>
+        <rect class="box" x="528" y="210" width="104" height="48" rx="6" />
+        <text class="lbl" x="542" y="232">Postgres</text>
+        <text class="sub" x="542" y="248">managed</text>
+        <rect class="box" x="644" y="210" width="104" height="48" rx="6" />
+        <text class="lbl" x="658" y="232">R2</text>
+        <text class="sub" x="658" y="248">private bucket</text>
+        <rect class="box ghost" x="528" y="278" width="220" height="56" rx="6" />
+        <text class="lbl" x="542" y="300">Twilio · Razorpay · Claude</text>
+        <text class="sub" x="542" y="320">console / no-op with no keys</text>
+        <line class="edge" x1="640" y1="126" x2="640" y2="170" marker-end="url(#f1-head)" />
+
+        <rect class="box warm" x="40" y="278" width="210" height="56" rx="6" />
+        <text class="lbl" x="58" y="300">shared/constants.json</text>
+        <text class="sub" x="58" y="320">pace keys · route patterns</text>
+        <line class="edge" x1="145" y1="278" x2="145" y2="132" marker-end="url(#f1-head)" />
+        <text class="edgelbl" x="155" y="208">import, retyped</text>
+        <polyline class="edge" points="250,306 460,306 460,132" marker-end="url(#f1-head)" />
+        <text class="edgelbl" x="272" y="296">json.load at import</text>
+      </svg>
+      <figcaption>Two origins under one parent domain, which is what lets a session cookie
+      cover both (D6). The only value that must agree on both sides lives in one file, read by
+      Python at import and by TypeScript at build. Everything in the grey zone is optional:
+      unset its key and the app still boots.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What each part does</h2>
+    <div class="map">
+      <div class="step">
+        <span class="n">01</span>
+        <div>
+          <div class="where">shared/constants.json</div>
+          <div class="what">The nine values where a mismatch between the two sides is a bug:
+          the three pace keys and the five route patterns. Nothing that only one side uses is
+          allowed in here (D20).</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <div>
+          <div class="where">apps/api/core/constants.py</div>
+          <div class="what">Reads that file at import, not lazily, so a malformed constants
+          file fails at startup rather than on the first reader's request. Exports
+          <code>PACE_KEYS</code>, <code>PACE_CHOICES</code> and <code>ROUTES</code> — the
+          database stores neutral keys, and the poetic labels live in <code>labels.ts</code>.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <div>
+          <div class="where">apps/web/src/lib/constants.ts</div>
+          <div class="what">Re-exports the same file with real types, and runs
+          <code>assertPaceInSync</code> at module load. D20 assumed <code>as const</code>
+          would keep the literal union on a JSON import; it doesn't, so the union is declared
+          here and checked against the JSON at boot.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <div>
+          <div class="where">apps/api/config/settings.py</div>
+          <div class="what">One env-driven file, and the only place a default lives. Chooses
+          the database (<code>DATABASE_URL</code> or SQLite), the storage backend (R2,
+          in-memory under test, filesystem otherwise), the WhatsApp backend, the cookie
+          policy, and every window and cap: <code>GRANT_TTL_DAYS</code>,
+          <code>PACE_DELAY_DAYS_*</code>, the three cooldowns, the upload limits.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">05</span>
+        <div>
+          <div class="where">apps/api/config/logging.py <em>· urls.py · wsgi.py</em></div>
+          <div class="what">Logging is stdout only, at <code>LOG_LEVEL</code>, for the host's
+          own viewer — no log vendor (D22). <code>urls.py</code> mounts the single Ninja API
+          under <code>/api</code> and Django admin under <code>/django-admin</code>.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">06</span>
+        <div>
+          <div class="where">apps/api/core/api/__init__.py</div>
+          <div class="what">The <code>NinjaAPI</code> instance and the twelve routers.
+          This package is HTTP only: schemas in, schemas out. A module in here that queries
+          the ORM to make a decision is in the wrong layer.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">07</span>
+        <div>
+          <div class="where">apps/web/src/lib/env.ts</div>
+          <div class="what">The one place that knows the API's address. Empty in development,
+          where Vite proxies <code>/api</code> to <code>localhost:8000</code>; absolute in
+          production from <code>VITE_API_BASE</code>.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">08</span>
+        <div>
+          <div class="where">apps/web/src/lib/fetcher.ts</div>
+          <div class="what">The only way the app talks to the API. Owns the base URL,
+          <code>credentials: "include"</code> on every request, the <code>X-CSRFToken</code>
+          header on every unsafe one, and one error shape carrying <code>status</code> — so a
+          machine guard is a single line. Also <code>blob()</code> for page images and
+          <code>send()</code>, a <code>keepalive</code> POST for the last word of a reading
+          session.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">09</span>
+        <div>
+          <div class="where">apps/web/src/lib/labels.ts</div>
+          <div class="what">Every string the reader sees, in twenty sections keyed by
+          surface. Mandate 1: zero hardcoded strings in components.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">10</span>
+        <div>
+          <div class="where">render.yaml</div>
+          <div class="what">Provisions the database, the web service, the cadence cron and
+          the shared env group from one file. Migrations and <code>render_chapters</code> run
+          in the start command, not pre-deploy, because pre-deploy is a paid feature.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">11</span>
+        <div>
+          <div class="where">.github/workflows/api.yml <em>· web.yml</em></div>
+          <div class="what">Two path-filtered workflows. API: <code>check</code>,
+          <code>makemigrations --check</code>, <code>test core</code>. Web:
+          <code>npm test</code>, <code>npm run build</code>. Neither is given a
+          credential — that is the proof the fallbacks are real.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Zero credentials, in practice</h2>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>External</th><th>Key</th><th>With no key</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Postgres</td><td class="mono">DATABASE_URL</td><td>SQLite at <code>apps/api/db.sqlite3</code>. An <em>empty</em> value counts as absent, because a blank placeholder in a <code>.env</code> otherwise parses into a config with no engine and fails at the first query.</td></tr>
+          <tr><td>R2</td><td class="mono">AWS_STORAGE_BUCKET_NAME</td><td>Filesystem storage under <code>apps/api/media/</code>. Under test, in-memory — a fixture that saves a file must never reach the real bucket.</td></tr>
+          <tr><td>Twilio</td><td class="mono">TWILIO_AUTH_TOKEN</td><td>The console backend prints the message and the link. <code>MessageLog</code> still gets its row.</td></tr>
+          <tr><td>Razorpay</td><td class="mono">RAZORPAY_KEY_ID</td><td>Checkout refuses to start, and says so. Nothing else changes.</td></tr>
+          <tr><td>Claude</td><td class="mono">ANTHROPIC_API_KEY</td><td>The companion reports itself unavailable; the chamber is unaffected.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="seam">
+      <span class="tag">The deploy rule the bucket depends on</span>
+      <p>Nothing in this codebase generates a permanent storage URL — page images and covers
+      are streamed through the API. A public bucket would bypass grant tokens and expiry at
+      the infrastructure layer while every line of application code still looked correct.
+      <strong>The bucket must stay private.</strong></p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gotchas</h2>
+    <ul class="gotchas">
+      <li><b>The first deploy 400s on a hostname nobody could know.</b> Render's health check
+      arrives with <code>&lt;service&gt;.onrender.com</code> as the Host header, before anyone
+      has typed it into the dashboard. <code>settings.py</code> appends
+      <code>RENDER_EXTERNAL_HOSTNAME</code> to <code>ALLOWED_HOSTS</code> rather than
+      assigning it, so the check passes and an explicit <code>api.&lt;domain&gt;</code> keeps
+      working.</li>
+      <li><b>A SameSite=None cookie without Secure is dropped silently.</b> Login appears to
+      succeed and every later request is anonymous. Settings now refuse to start in that
+      combination instead of letting it fail quietly.</li>
+      <li><b>Both cookies have to be None, not just the session one.</b> While the app is on
+      <code>vercel.app</code> and the API on <code>onrender.com</code> they are unrelated
+      sites; set only <code>SESSION_COOKIE_SAMESITE</code> and every write is refused as
+      <code>csrf_failed</code>. Back to <code>Lax</code> once the real domain is pointed.</li>
+      <li><b>The SPA cannot read the API's CSRF cookie across unrelated sites.</b> So the
+      token travels in an <code>X-CSRFToken</code> response header, which CORS must expose,
+      and <code>fetcher.ts</code> keeps it in memory. The cookie is only the fallback.</li>
+      <li><b>Vite inlines env vars at build time.</b> A production build with
+      <code>VITE_API_BASE</code> unset would call its own origin and 404 every request, so
+      <code>env.ts</code> carries a temporary production fallback. It is a second place that
+      knows the API address — the thing D6 exists to prevent — and it gets deleted when the
+      domain lands.</li>
+      <li><b>Free Postgres expires thirty days after creation, with no backups.</b> D35
+      time-boxed the free tier and that clock is real: both plans go paid before the first
+      WhatsApp link reaches a real reader. The free web service also sleeps, so a cold tap
+      waits about a minute.</li>
+      <li><b>A service-level env var beats the shared group.</b> The live web service predates
+      the group, so syncing <code>render.yaml</code> creates the group but does not remove
+      the older values. Copy them in — the secret key included, or everyone gets signed
+      out — then delete them from the service.</li>
+    </ul>
+  </section>
+
+  <footer class="end">
+    <p><a href="index.html">All features</a> &middot; 01 of 21 &middot; source at
+    <span class="mono">docs/features/parts/01-platform-foundations.html</span></p>
+    <p class="nav">02 &rarr;</p>
+  </footer>
+</div>
+</body>
+</html>

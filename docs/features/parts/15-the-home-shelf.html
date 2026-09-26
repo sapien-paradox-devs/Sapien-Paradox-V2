@@ -1,0 +1,179 @@
+  <section>
+    <h2>Why it exists</h2>
+    <p>Home is the screen a reader returns to most, and it answers one question: what do I own, and
+    where am I in it. Its two rules are both about restraint. <strong>No tokens in the
+    payload</strong> — a link is minted when the reader asks for one, because five credentials in a
+    response that gets cached, logged and screenshotted would undo expiry entirely. And books come
+    from <code>Order</code>, never from "all published books", so nobody is shown a library they
+    have not bought.</p>
+  </section>
+
+  <section>
+    <h2>Three queries, whatever the shelf</h2>
+    <figure class="svgscroll">
+      <svg viewBox="0 0 800 300" role="img" aria-label="GET /api/home runs one query for the reader's orders, one for every chapter they have ever opened, and one for all their progress rows, then assembles books with chapter rows carrying read, progress and completed. The payload contains no tokens; the chapter link is minted later by the read endpoint.">
+        <defs>
+          <marker id="f15-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+          <marker id="f15-head-lit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head lit" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <rect class="box" x="20" y="34" width="210" height="40" rx="5" />
+        <text class="lbl" x="34" y="59">Order → Book</text>
+        <rect class="box" x="20" y="86" width="210" height="40" rx="5" />
+        <text class="sub" x="34" y="111">grants with opened_at set</text>
+        <rect class="box" x="20" y="138" width="210" height="40" rx="5" />
+        <text class="sub" x="34" y="163">progress_by_chapter(user)</text>
+        <text class="edgelbl" x="20" y="200">three queries, not one per row —</text>
+        <text class="edgelbl" x="20" y="216">Home is the most-revisited screen</text>
+
+        <rect class="box lit" x="290" y="76" width="190" height="60" rx="6" />
+        <text class="lbl" x="304" y="100">GET /api/home</text>
+        <text class="sub" x="304" y="118">assembles · no ORM decisions</text>
+        <line class="edge" x1="230" y1="54" x2="284" y2="88" marker-end="url(#f15-head)" />
+        <line class="edge" x1="230" y1="106" x2="284" y2="106" marker-end="url(#f15-head)" />
+        <line class="edge" x1="230" y1="158" x2="284" y2="124" marker-end="url(#f15-head)" />
+
+        <rect class="box" x="540" y="34" width="240" height="56" rx="6" />
+        <text class="lbl" x="554" y="56">BookOut</text>
+        <text class="sub" x="554" y="76">title · mean progress · chapters[]</text>
+        <rect class="box" x="540" y="104" width="240" height="56" rx="6" />
+        <text class="lbl" x="554" y="126">ChapterOut</text>
+        <text class="sub" x="554" y="146">number · title · read · progress</text>
+        <line class="edge lit" x1="480" y1="96" x2="534" y2="66" marker-end="url(#f15-head-lit)" />
+        <line class="edge lit" x1="480" y1="116" x2="534" y2="130" marker-end="url(#f15-head-lit)" />
+
+        <rect class="box hot" x="540" y="182" width="240" height="44" rx="6" />
+        <text class="lbl" x="554" y="204">no token, anywhere</text>
+        <text class="sub" x="554" y="220">the link is minted on the tap</text>
+
+        <rect class="box cool" x="290" y="216" width="190" height="56" rx="6" />
+        <text class="lbl" x="304" y="240">GET /api/read/{id}</text>
+        <text class="sub" x="304" y="258">mint_or_reuse → /r/:token</text>
+        <polyline class="edge" points="660,226 660,244 486,244" marker-end="url(#f15-head)" />
+      </svg>
+      <figcaption>Read and unread come from <code>opened_at</code>, which the reading machine stamps
+      on the first open only, so the mark means "you have been here" rather than "you were here
+      recently". Progress comes from <code>ReadingProgress</code>: a ring per chapter, a mean per
+      book.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What each part does</h2>
+    <div class="map">
+      <div class="step">
+        <span class="n">01</span>
+        <div>
+          <div class="where">core/api/home.py</div>
+          <div class="what">Three queries — orders with their books, the ids of every chapter this
+          reader has ever opened, and every progress row — then one <code>BookOut</code> per order
+          with a <code>ChapterOut</code> per chapter. Ordered by when the reader bought each
+          book.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <div>
+          <div class="where">core/selectors.py <em>· progress_by_chapter</em></div>
+          <div class="what">Every chapter this reader has progress on, keyed by chapter id, in one
+          query. Reads live here so the API layer does not query the ORM to make
+          decisions.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <div>
+          <div class="where">core/schemas/home.py</div>
+          <div class="what">The typed payload: <code>HomeOut</code> → <code>BookOut</code> →
+          <code>ChapterOut</code>. Every field the shelf renders, and no field it does not.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <div>
+          <div class="where">pages/home/machine/machine.ts <em>· the list region</em></div>
+          <div class="what"><code>loading</code> → <code>ready</code> | <code>empty</code> |
+          <code>error</code>. <code>empty</code> is its own state and says so plainly, so a blank
+          frame does not read as a failure.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">05</span>
+        <div>
+          <div class="where">pages/home/machine/machine.ts <em>· the send region</em></div>
+          <div class="what"><code>idle</code> → <code>sending</code> → <code>sent</code> |
+          <code>limited</code> | <code>failed</code>, in parallel with the list. A rate-limited send
+          is a normal state, not an error: the reader is told the chapter is already on its
+          way.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">06</span>
+        <div>
+          <div class="where">components/ChapterList/</div>
+          <div class="what">The rows: number, title, a read mark, the progress ring, a check when
+          completed, and the send-to-WhatsApp action. One component, so a book's chapters look the
+          same wherever they appear.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">07</span>
+        <div>
+          <div class="where">pages/home/HomeSkeleton.tsx</div>
+          <div class="what">The shape of the shelf while it loads — rows at the right height, so the
+          page does not jump when the data lands.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">08</span>
+        <div>
+          <div class="where">core/api/read.py <em>· the two session endpoints</em></div>
+          <div class="what">Where a Home tap goes: <code>GET /api/read/{id}</code> mints or reuses a
+          grant and the page redirects to the chamber; <code>POST /chapters/{id}/send</code> sends
+          the link to the reader's own WhatsApp, reusing the live grant so two presses do not leave
+          two live links.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What Home does not show yet</h2>
+    <div class="seam">
+      <span class="tag">The reader-facing half of cadence</span>
+      <p>Chapters are minted <code>scheduled</code> with an <code>unlock_at</code> on each, and Home
+      renders none of it: a reader on a weekly pace sees the chapters they can open and no sign of
+      the rest. The payload has no locked rows and no dates, so a schedule they are living inside is
+      invisible to them. Because every unlock moment is computed at purchase, Home can render the
+      whole schedule without simulating anything — which is exactly why D50 chose to compute them
+      up front.</p>
+    </div>
+    <p>Also waiting: grouping a shelf of several books properly, the cover grid that would share one
+    <code>BookCard</code> with the public catalogue, and whatever a finished reader should see when
+    the last chapter has been delivered.</p>
+  </section>
+
+  <section>
+    <h2>Gotchas</h2>
+    <ul class="gotchas">
+      <li><b>Books come from orders, not from published books.</b> The obvious query shows every
+      reader the whole catalogue as though they owned it.</li>
+      <li><b>The read mark is first-open, not last-open.</b> <code>opened_at</code> is an engagement
+      signal rather than analytics, and re-opening inside the seven days must not restamp it.</li>
+      <li><b>The two regions have to be parallel.</b> With one sequence, <code>sending</code> would
+      have to leave <code>ready</code> — blanking the chapter list for one button press.</li>
+      <li><b>An empty context inside <code>as const</code> freezes.</b> <code>books: []</code>
+      declared inline becomes <code>readonly []</code>, which the machine's context type rejects; the
+      initial context is hoisted and annotated instead. The <code>as const</code> itself is needed so
+      <code>type: "parallel"</code> stays a literal.</li>
+      <li><b>429 is not an error here.</b> "Already sent — check WhatsApp" is the truth, and rendering
+      it as a failure would make a reader press again.</li>
+      <li><b>The per-book loop runs a query per book.</b> Two queries cover progress and opens for
+      the whole shelf, but chapters are fetched per order — fine at one or two books, worth collapsing
+      when a shelf grows.</li>
+    </ul>
+  </section>

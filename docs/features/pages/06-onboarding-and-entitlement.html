@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Onboarding And Entitlement</title>
+</head>
+<body>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,400&family=Inter:wght@400;500;600&display=swap");
+
+/* Jewel (D81) — the product's own tokens, light first. */
+:root {
+  color-scheme: light;
+
+  --ink: #1f1b16;
+  --ink-soft: #5d554a;
+  --ink-faint: #6b6358;
+
+  --paper: #f5f6f2;
+  --paper-raised: #fbfcfa;
+  --paper-sunk: #eceee8;
+
+  --rule: #d9ded7;
+  --rule-soft: #e6e9e3;
+
+  --accent: #2952e3;
+  --accent-text: #2952e3;
+  --accent-wash: #e8edfd;
+  --on-accent: #fff;
+
+  --saffron: #f5a623;
+  --saffron-text: #9a5b00;
+  --saffron-wash: #fdf1dc;
+  --coral: #ff6b57;
+  --coral-text: #c23a28;
+  --coral-wash: #ffeae6;
+  --teal: #14b8a6;
+  --teal-text: #0a7266;
+  --teal-wash: #e0f5f2;
+
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --radius: 6px;
+  --measure: 68ch;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ink: #ece4d6;
+    --ink-soft: #b9ae9d;
+    --ink-faint: #9a9083;
+    --paper: #16130f;
+    --paper-raised: #1f1b16;
+    --paper-sunk: #100e0b;
+    --rule: #352e26;
+    --rule-soft: #28231d;
+    --accent: #8fa8ff;
+    --accent-text: #8fa8ff;
+    --accent-wash: #1c2240;
+    --on-accent: #16130f;
+    --saffron: #ffc152;
+    --saffron-text: #ffc152;
+    --saffron-wash: #2e2410;
+    --coral: #ff8a7a;
+    --coral-text: #ff8a7a;
+    --coral-wash: #2e1a16;
+    --teal: #3dd6c3;
+    --teal-text: #3dd6c3;
+    --teal-wash: #102b28;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #ece4d6;
+  --ink-soft: #b9ae9d;
+  --ink-faint: #9a9083;
+  --paper: #16130f;
+  --paper-raised: #1f1b16;
+  --paper-sunk: #100e0b;
+  --rule: #352e26;
+  --rule-soft: #28231d;
+  --accent: #8fa8ff;
+  --accent-text: #8fa8ff;
+  --accent-wash: #1c2240;
+  --on-accent: #16130f;
+  --saffron: #ffc152;
+  --saffron-text: #ffc152;
+  --saffron-wash: #2e2410;
+  --coral: #ff8a7a;
+  --coral-text: #ff8a7a;
+  --coral-wash: #2e1a16;
+  --teal: #3dd6c3;
+  --teal-text: #3dd6c3;
+  --teal-wash: #102b28;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- the spine ---------------------------------------------------- */
+
+.topbar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.6rem 16px;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.topbar .num {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--accent-text);
+}
+
+.topbar .set { margin-left: auto; letter-spacing: 0.06em; }
+
+.wrap {
+  max-width: 78ch;
+  margin: 0 auto;
+  padding: 16px 16px 5rem;
+}
+
+/* ---- masthead ----------------------------------------------------- */
+
+header.masthead { padding-block: 2rem 1.25rem; }
+
+h1 {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 48;
+  font-weight: 500;
+  font-size: clamp(2rem, 6vw, 2.9rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.6rem;
+  text-wrap: balance;
+}
+
+.lede {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 20;
+  font-size: 1.16rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: var(--measure);
+  margin: 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 1.25rem;
+}
+
+.chip {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+}
+
+.chip.cap { background: var(--accent-wash); border-color: transparent; color: var(--accent-text); }
+.chip.built { background: var(--teal-wash); border-color: transparent; color: var(--teal-text); }
+.chip.partial { background: var(--saffron-wash); border-color: transparent; color: var(--saffron-text); }
+.chip.missing { background: var(--coral-wash); border-color: transparent; color: var(--coral-text); }
+
+/* ---- sections ----------------------------------------------------- */
+
+section { margin-top: 2.75rem; }
+
+h2 {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0.9rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+h3 {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 24;
+  font-weight: 600;
+  font-size: 1.12rem;
+  margin: 1.75rem 0 0.4rem;
+}
+
+p { max-width: var(--measure); margin: 0 0 0.9rem; }
+p:last-child { margin-bottom: 0; }
+
+a { color: var(--accent-text); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+strong { font-weight: 600; }
+
+code, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.855em;
+  background: var(--paper-sunk);
+  padding: 0.08em 0.32em;
+  border-radius: 3px;
+  overflow-wrap: anywhere;
+}
+
+ul, ol { max-width: var(--measure); padding-left: 1.15rem; margin: 0 0 0.9rem; }
+li { margin-bottom: 0.35rem; }
+
+/* ---- code map (what each part does) -------------------------------- */
+
+.map { display: flex; flex-direction: column; gap: 0; margin-top: 0.25rem; }
+
+.step {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.step:first-child { border-top: 1px solid var(--rule-soft); }
+
+.step .n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  padding-top: 0.22rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.step .where {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--ink);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.step .where em { font-style: normal; color: var(--ink-faint); font-weight: 400; }
+
+.step .what { color: var(--ink-soft); font-size: 14px; margin-top: 0.12rem; max-width: var(--measure); }
+.step .what code { background: transparent; padding: 0; color: var(--ink); }
+
+/* ---- tables -------------------------------------------------------- */
+
+.tablewrap { overflow-x: auto; margin-bottom: 1rem; }
+
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td {
+  text-align: left;
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+  vertical-align: top;
+}
+th {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 600;
+  white-space: nowrap;
+}
+td.mono, td code { font-family: var(--font-mono); font-size: 12.5px; }
+td.mono { background: none; white-space: nowrap; }
+
+/* ---- figures ------------------------------------------------------- */
+
+figure { margin: 0 0 1rem; }
+
+figure svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  color: var(--ink);
+}
+
+.svgscroll { overflow-x: auto; }
+.svgscroll svg { min-width: 520px; }
+
+figcaption {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  margin-top: 0.6rem;
+  max-width: var(--measure);
+  line-height: 1.5;
+}
+
+/* the SVG vocabulary every diagram in this set uses */
+svg .box { fill: var(--paper-raised); stroke: var(--rule); stroke-width: 1; }
+svg .box.lit { fill: var(--accent-wash); stroke: var(--accent); }
+svg .box.warm { fill: var(--saffron-wash); stroke: var(--saffron); }
+svg .box.cool { fill: var(--teal-wash); stroke: var(--teal); }
+svg .box.hot { fill: var(--coral-wash); stroke: var(--coral); }
+svg .box.ghost { fill: none; stroke: var(--rule); stroke-dasharray: 3 3; }
+svg .lbl { fill: var(--ink); font-family: var(--font-body); font-size: 12px; font-weight: 500; }
+svg .sub { fill: var(--ink-faint); font-family: var(--font-mono); font-size: 10px; }
+svg .edge { stroke: var(--ink-faint); stroke-width: 1.2; fill: none; }
+svg .edge.lit { stroke: var(--accent); stroke-width: 1.6; }
+svg .edge.dashed { stroke-dasharray: 4 3; }
+svg .edgelbl { fill: var(--ink-faint); font-family: var(--font-body); font-size: 10.5px; }
+svg .head { fill: var(--ink-faint); }
+svg .head.lit { fill: var(--accent); }
+svg .zone { fill: var(--paper-sunk); stroke: none; }
+svg .zonelbl { fill: var(--ink-faint); font-family: var(--font-body); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* ---- pull-outs ----------------------------------------------------- */
+
+.seam {
+  border-left: 2px solid var(--accent);
+  background: var(--accent-wash);
+  padding: 0.85rem 1rem;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin: 0 0 1rem;
+  max-width: var(--measure);
+  font-size: 14px;
+}
+.seam p { margin-bottom: 0.5rem; }
+.seam p:last-child { margin-bottom: 0; }
+.seam .tag {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.gotchas { list-style: none; padding: 0; margin: 0; max-width: var(--measure); }
+.gotchas > li {
+  padding: 0.85rem 0 0.85rem 1.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+  position: relative;
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.gotchas > li:first-child { border-top: 1px solid var(--rule-soft); }
+.gotchas > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1.35rem;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--coral);
+}
+.gotchas b { color: var(--ink); font-weight: 600; }
+
+.states { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1rem; align-items: center; }
+.state {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 0.22rem 0.55rem;
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+}
+.state.term { background: var(--paper-sunk); color: var(--ink-faint); }
+.states .to { color: var(--ink-faint); font-size: 12px; }
+
+footer.end {
+  margin-top: 3.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+footer.end .nav { font-family: var(--font-mono); }
+
+@media (max-width: 560px) {
+  body { font-size: 14.5px; }
+  .topbar .set { display: none; }
+  .step { grid-template-columns: 1.3rem minmax(0, 1fr); gap: 0.5rem; }
+}
+</style>
+
+<div class="topbar">
+  <span class="num">06</span>
+  <span>Onboarding And Entitlement</span>
+  <span class="set">Sapien Paradox V2 &middot; feature 06 of 21</span>
+</div>
+
+<div class="wrap">
+  <header class="masthead">
+    <h1>Onboarding And Entitlement</h1>
+    <p class="lede">One door a reader comes through, one question about whether they may read, and four identity cases decided in advance.</p>
+    <div class="chips"><span class="chip cap">Acquisition</span><span class="chip">D25</span><span class="chip">D26</span><span class="chip">D50</span><span class="chip">D64</span><span class="chip built">built</span></div>
+  </header>
+
+  <section>
+    <h2>Why it exists</h2>
+    <p>Two of the three seams live here. <code>onboarding.create_reader(...)</code> is the only
+    way a reader comes into existence — the admin calls it, the payment legs call it,
+    <code>seed_dev</code> calls it — so "how does a reader get here?" has one answer and
+    payments arrived as a new <em>caller</em> rather than a new flow.
+    <code>access.can_read(user, chapter)</code> is the only access check, which is why cadence
+    could later be added by editing one function instead of auditing every query.</p>
+    <p>Identity is the hard part, and it is not decided inside the service. The acquisition
+    machine resolves who the reader is and hands <code>create_reader</code> either a resolved
+    user or <code>None</code>; the service's job is the transaction.</p>
+  </section>
+
+  <section>
+    <h2>The transaction boundary</h2>
+    <figure class="svgscroll">
+      <svg viewBox="0 0 800 340" role="img" aria-label="Inside one atomic block: the user row, the order, the first grant, the cadence schedule and a reset token. Outside the block, after commit: the chapter message and the set-password message. The result carries both message logs back.">
+        <defs>
+          <marker id="f6-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <rect class="zone" x="20" y="34" width="440" height="270" rx="8" />
+        <text class="zonelbl" x="36" y="56">inside transaction.atomic()</text>
+
+        <rect class="box" x="40" y="70" width="180" height="44" rx="6" />
+        <text class="lbl" x="54" y="90">User</text>
+        <text class="sub" x="54" y="106">unusable password</text>
+        <rect class="box" x="40" y="128" width="180" height="44" rx="6" />
+        <text class="lbl" x="54" y="148">Order</text>
+        <text class="sub" x="54" y="164">book + pace, the anchor</text>
+        <rect class="box" x="40" y="186" width="180" height="44" rx="6" />
+        <text class="lbl" x="54" y="206">TemporalGrant</text>
+        <text class="sub" x="54" y="222">chapter 1, live</text>
+        <rect class="box warm" x="250" y="186" width="190" height="44" rx="6" />
+        <text class="lbl" x="264" y="206">cadence.schedule(order)</text>
+        <text class="sub" x="264" y="222">chapters 2…N, scheduled</text>
+        <rect class="box" x="40" y="244" width="180" height="44" rx="6" />
+        <text class="lbl" x="54" y="264">PasswordResetToken</text>
+        <text class="sub" x="54" y="280">only if no password yet</text>
+
+        <line class="edge" x1="130" y1="114" x2="130" y2="122" marker-end="url(#f6-head)" />
+        <line class="edge" x1="130" y1="172" x2="130" y2="180" marker-end="url(#f6-head)" />
+        <line class="edge" x1="130" y1="230" x2="130" y2="238" marker-end="url(#f6-head)" />
+        <line class="edge" x1="220" y1="208" x2="244" y2="208" marker-end="url(#f6-head)" />
+
+        <rect class="box ghost" x="510" y="34" width="270" height="270" rx="8" />
+        <text class="zonelbl" x="526" y="56">after commit</text>
+        <rect class="box cool" x="530" y="82" width="230" height="52" rx="6" />
+        <text class="lbl" x="544" y="104">whatsapp.send_chapter(grant)</text>
+        <text class="sub" x="544" y="122">returns a MessageLog, never raises</text>
+        <rect class="box cool" x="530" y="152" width="230" height="52" rx="6" />
+        <text class="lbl" x="544" y="174">send_password_reset(token)</text>
+        <text class="sub" x="544" y="192">skipped when there is no phone</text>
+        <rect class="box" x="530" y="226" width="230" height="58" rx="6" />
+        <text class="lbl" x="544" y="250">OnboardingResult</text>
+        <text class="sub" x="544" y="268">user · order · grant · both logs</text>
+
+        <line class="edge" x1="460" y1="150" x2="524" y2="108" marker-end="url(#f6-head)" />
+        <text class="edgelbl" x="466" y="136">commit</text>
+        <line class="edge" x1="645" y1="204" x2="645" y2="220" marker-end="url(#f6-head)" />
+      </svg>
+      <figcaption>Delivery sits outside the block on purpose. Rolling the reader back because
+      Twilio hiccuped would turn a delivery problem into a refund problem, so the send happens
+      after commit and its <code>MessageLog</code> comes back in the result for the caller to
+      report. The same shape means <code>create_reader</code> must never be called from inside
+      an outer <code>atomic()</code> — the grant would not be committed when the link to it is
+      built.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>The four identity cases</h2>
+    <p>D26 decided these in advance, and they are rows in the acquisition table rather than
+    branches in a function. Rows are read top to bottom and the first whose guards pass fires,
+    so <strong>the order is part of the logic</strong>.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>#</th><th>Situation</th><th>Outcome</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>This payment reference already has an order</td><td>Stop. <code>duplicate</code> — the other leg got there first.</td></tr>
+          <tr><td>1</td><td>Neither email nor phone is taken</td><td>A new reader: user, order, grant, schedule.</td></tr>
+          <tr><td>2</td><td>Known reader who already owns this book</td><td>Adopt the reference, then refuse <code>already_owns_book</code>. They want the links again, not a second charge.</td></tr>
+          <tr><td>3</td><td>Known reader, new book</td><td>Normal. <code>Order</code> is unique per (user, book), not per user.</td></tr>
+          <tr><td>4a</td><td>Email names one reader, phone names another</td><td>Refuse <code>two_readers</code>. Guessing here merges two people.</td></tr>
+          <tr><td>4b</td><td>One field matched, the other did not</td><td>Refuse <code>partial_match</code> — kept distinct from 4a, because the frontend says something different.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="seam">
+      <span class="tag">Row order, concretely</span>
+      <p>Move the duplicate check off the top and a Razorpay retry creates a second reader. Move
+      case 2 below case 3 and a returning reader is silently charged twice for the same book.
+      Neither is a subtle bug in the table; both are invisible in a nest of
+      <code>if</code>s.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>What each part does</h2>
+    <div class="map">
+      <div class="step">
+        <span class="n">01</span>
+        <div>
+          <div class="where">core/machines/acquisition/machine.py</div>
+          <div class="what">The table above, as data. Two states — <code>new</code> and
+          <code>fulfilled</code> — and no <code>refused</code> state: a refusal is an outcome
+          carried as a code, and the attempt is discarded either way.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <div>
+          <div class="where">core/machines/acquisition/guards.py</div>
+          <div class="what"><code>already_fulfilled</code>, <code>book_unknown</code>,
+          <code>identity_unknown</code>, <code>is_exact_match</code>,
+          <code>is_email_only_match</code>, <code>owns_book</code>,
+          <code>matches_two_readers</code>. They look things up through
+          <code>ctx.deps</code>, so the machine's tests need no database.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <div>
+          <div class="where">core/api/checkout.py <em>· acquisition_deps()</em></div>
+          <div class="what">Where those lookups are bound to the ORM: find by email, find by
+          phone, book by slug, order for a user and book, order by reference, adopt a
+          reference, and <code>create_reader</code> itself.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <div>
+          <div class="where">core/services/onboarding.py <em>· create_reader</em></div>
+          <div class="what">The transaction in the figure, then delivery, then the result. It
+          normalises the phone to one spelling, sets an unusable password on a new reader,
+          refuses <code>already_owns_book</code> and <code>book_has_no_chapters</code> from
+          inside the block, and mints a reset token only for someone who cannot yet log
+          in.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">05</span>
+        <div>
+          <div class="where">core/services/onboarding.py <em>· the admin's other actions</em></div>
+          <div class="what">Update, deactivate, reactivate and erase, each leaving an
+          <code>AccountChange</code> row. None of them deletes a reader — orders, grants and
+          payment references are what refunds and accounting read. Covered in feature 17.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">06</span>
+        <div>
+          <div class="where">core/services/access.py <em>· can_read</em></div>
+          <div class="what">Two questions in one function: does this active reader own the
+          book, and has this chapter unlocked. Returns a plain bool and never raises — a
+          service raising an error whose only purpose is to become a 403 has put HTTP in the
+          service layer.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">07</span>
+        <div>
+          <div class="where">core/services/access.py <em>· owns</em></div>
+          <div class="what">The first of the two questions, exposed on its own for exactly one
+          caller: the cadence tick, whose chapter is locked by definition, so
+          <code>can_read</code> would refuse the very grant it is unlocking.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gotchas</h2>
+    <ul class="gotchas">
+      <li><b>"Has it unlocked?" is not "is <code>unlock_at</code> in the past?"</b> A chapter is
+      locked while the reader holds a <code>scheduled</code> grant for it, because the tick is
+      the one clock. Comparing timestamps as well would make two clocks that disagree for up to
+      fifteen minutes at every edge.</li>
+      <li><b>Ownership is re-checked on every request, including token-authenticated ones.</b>
+      So a refund or a deactivation takes effect on the reader's next request rather than
+      whenever their token happens to expire.</li>
+      <li><b><code>is_active</code> is checked inside the access question, not at login.</b>
+      That is what makes deactivating a reader stop the links already sitting in their WhatsApp
+      history, and stop the tick sending them the rest of the book.</li>
+      <li><b>Never call <code>create_reader</code> inside an outer <code>atomic()</code>.</b>
+      The delivery that follows the block would be handed a link to a grant that is not
+      committed yet.</li>
+      <li><b><code>ONBOARDING_ALLOW_PHONE_REUSE</code> is a live hole behind a flag.</b> It
+      exists so the whole flow can be tested with one phone number, and it is a <em>row</em> in
+      the table rather than a branch in a function precisely so that reverting it is deleting
+      six lines. With it on, anyone who knows a reader's number can attach a purchase to their
+      account. It must be unset and the row deleted before a real reader signs up.</li>
+      <li><b>A refund has nowhere to write.</b> <code>can_read</code> asks whether an
+      <code>Order</code> exists, and nothing revokes one — money can come in and cannot go back
+      out. The fix is one nullable <code>revoked_at</code> and one clause in this function,
+      which is the point of having a single access check.</li>
+      <li><b>Identity resolution left the service.</b> It used to live in
+      <code>_resolve_identity</code> inside <code>onboarding.py</code>, where the four cases
+      were nested conditionals. Moving them into the table is why case 2 now adopts the payment
+      reference on its way past — behaviour that was easy to forget and hard to see.</li>
+    </ul>
+  </section>
+
+  <footer class="end">
+    <p><a href="index.html">All features</a> &middot; 06 of 21 &middot; source at
+    <span class="mono">docs/features/parts/06-onboarding-and-entitlement.html</span></p>
+    <p class="nav">&larr; 05 &middot; 07 &rarr;</p>
+  </footer>
+</div>
+</body>
+</html>

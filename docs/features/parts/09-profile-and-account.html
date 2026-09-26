@@ -1,0 +1,199 @@
+  <section>
+    <h2>Why it exists</h2>
+    <p>Until this landed, a signed-in reader had no page about themselves: no way to see what
+    they owned, correct a misspelled name, change a password they had set by link, or find out
+    how far through a book they were. The profile page is also where the header's avatar leads,
+    which is the first thing a reader looks for when they want to know whether they are signed
+    in as the right person.</p>
+    <p>It is the one feature here with no machine on the server side. Profile edits are CRUD, not
+    a flow with states — nothing waits, nothing retries, and no guard decides anything a
+    validator could not.</p>
+  </section>
+
+  <section>
+    <h2>Where each field comes from</h2>
+    <figure class="svgscroll">
+      <svg viewBox="0 0 800 320" role="img" aria-label="GET /api/profile composes the user row, the reader's orders and a progress lookup into one payload with account details and per-book progress. PATCH /api/profile routes name and email through onboarding.update_reader, which writes an AccountChange row, while the avatar seed is written directly.">
+        <defs>
+          <marker id="f9-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+          <marker id="f9-head-lit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head lit" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <rect class="box" x="20" y="34" width="140" height="44" rx="6" />
+        <text class="lbl" x="34" y="54">User</text>
+        <text class="sub" x="34" y="70">name · email · phone</text>
+        <rect class="box" x="20" y="96" width="140" height="44" rx="6" />
+        <text class="lbl" x="34" y="116">Order</text>
+        <text class="sub" x="34" y="132">one per book</text>
+        <rect class="box" x="20" y="158" width="140" height="44" rx="6" />
+        <text class="lbl" x="34" y="178">ReadingProgress</text>
+        <text class="sub" x="34" y="194">via selectors</text>
+
+        <rect class="box lit" x="230" y="86" width="190" height="66" rx="6" />
+        <text class="lbl" x="244" y="110">GET /api/profile</text>
+        <text class="sub" x="244" y="128">_profile() composes</text>
+        <text class="sub" x="244" y="144">one query per book</text>
+        <line class="edge" x1="160" y1="56" x2="224" y2="102" marker-end="url(#f9-head)" />
+        <line class="edge" x1="160" y1="118" x2="224" y2="118" marker-end="url(#f9-head)" />
+        <line class="edge" x1="160" y1="180" x2="224" y2="136" marker-end="url(#f9-head)" />
+
+        <rect class="box" x="480" y="34" width="300" height="60" rx="6" />
+        <text class="lbl" x="494" y="58">account</text>
+        <text class="sub" x="494" y="76">fullName · email · phone · hasPassword · avatarSeed</text>
+        <rect class="box" x="480" y="110" width="300" height="60" rx="6" />
+        <text class="lbl" x="494" y="134">books[]</text>
+        <text class="sub" x="494" y="152">title · chaptersUnlocked / total · progress</text>
+        <line class="edge lit" x1="420" y1="108" x2="474" y2="70" marker-end="url(#f9-head-lit)" />
+        <line class="edge lit" x1="420" y1="128" x2="474" y2="140" marker-end="url(#f9-head-lit)" />
+
+        <rect class="box" x="230" y="220" width="190" height="66" rx="6" />
+        <text class="lbl" x="244" y="244">PATCH /api/profile</text>
+        <text class="sub" x="244" y="262">avatarSeed written here</text>
+        <text class="sub" x="244" y="278">name + email routed on</text>
+
+        <rect class="box warm" x="480" y="196" width="300" height="52" rx="6" />
+        <text class="lbl" x="494" y="218">onboarding.update_reader</text>
+        <text class="sub" x="494" y="236">the same call the admin makes · 409 on a clash</text>
+        <rect class="box cool" x="480" y="262" width="300" height="48" rx="6" />
+        <text class="lbl" x="494" y="284">AccountChange: updated</text>
+        <text class="sub" x="494" y="300">who did it, and when</text>
+        <line class="edge" x1="420" y1="248" x2="474" y2="226" marker-end="url(#f9-head)" />
+        <line class="edge" x1="630" y1="248" x2="630" y2="256" marker-end="url(#f9-head)" />
+      </svg>
+      <figcaption>A reader editing their own name and a staff member editing it for them go
+      through the same service call, so the email-clash refusal, the normalisation and the audit
+      row are identical either way. The avatar seed is the exception: it is display-only, belongs
+      to nobody else, and needs no audit trail.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What each part does</h2>
+    <div class="map">
+      <div class="step">
+        <span class="n">01</span>
+        <div>
+          <div class="where">core/api/profile.py <em>· _profile()</em></div>
+          <div class="what">Builds the whole payload: the account fields, <code>hasPassword</code>
+          from <code>has_usable_password()</code>, and one <code>BookProgressOut</code> per order
+          with chapters touched, chapters total and mean progress.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <div>
+          <div class="where">core/selectors.py <em>· progress_by_chapter</em></div>
+          <div class="what">The reader's places, keyed by chapter id, with a
+          <code>NONE</code> default so a chapter with no row needs no branch at the call site.
+          Reads live here rather than in the API layer.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <div>
+          <div class="where">core/api/profile.py <em>· PATCH /api/profile</em></div>
+          <div class="what">Writes <code>avatar_seed</code> directly, and routes name and email
+          through <code>onboarding.update_reader</code>, translating
+          <code>OnboardingRefused</code> into a 409 carrying the reason.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <div>
+          <div class="where">core/services/onboarding.py <em>· update_reader</em></div>
+          <div class="what">Validates the email is free, applies the change, and leaves an
+          <code>AccountChange</code> row with <code>by</code> set to whoever made it — the reader
+          themselves, or a staff member.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">05</span>
+        <div>
+          <div class="where">core/api/profile.py <em>· POST /auth/password</em></div>
+          <div class="what">Eight characters minimum; the current password required only from a
+          reader who has one; then <code>update_session_auth_hash</code>, without which changing
+          a password signs you out of the session you just used.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">06</span>
+        <div>
+          <div class="where">core/schemas/profile.py</div>
+          <div class="what">Four schemas, all fields optional on the way in so a PATCH can carry
+          one change. <code>ProfileUpdateIn</code> has no <code>phone</code> — see the gap
+          below.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">07</span>
+        <div>
+          <div class="where">pages/profile/machine/machine.ts</div>
+          <div class="what">Three parallel regions (D42): <code>data</code> loads,
+          <code>saving</code> handles the details form, <code>password</code> handles the password
+          form. Independent, so a failed password change does not blank the page or discard an
+          unsaved name.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">08</span>
+        <div>
+          <div class="where">lib/avatar.ts</div>
+          <div class="what">A deterministic identicon: a 5×5 symmetric grid coloured from the
+          Jewel palette, hashed from the seed. A pure function — no network, no third-party
+          avatar service, and no tracking pixel on every page.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">09</span>
+        <div>
+          <div class="where">components/Avatar/ <em>· components/SiteHeader/</em></div>
+          <div class="what">The avatar renders the identicon and falls back to the email as its
+          seed. In the header it opens the dropdown that leads to the profile, the admin (for
+          staff) and sign-out.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The gap that bites on the first real reader</h2>
+    <div class="seam">
+      <span class="tag">Changing a phone number</span>
+      <p>A reader cannot change their own phone number: <code>ProfileUpdateIn</code> has no such
+      field. The number is both the delivery address and half the identity, so a reader who
+      switches numbers becomes permanently unreachable — every future chapter goes to a handset
+      they no longer own, and password recovery goes with it. Staff can change it through the
+      admin, which makes this a support request rather than a self-service action, but it is the
+      account feature most likely to be needed first.</p>
+    </div>
+    <p>Also absent, and recorded rather than forgotten: changing an email is possible while
+    deleting an account is not — D80's deactivate-and-erase pair exists on the staff side
+    only.</p>
+  </section>
+
+  <section>
+    <h2>Gotchas</h2>
+    <ul class="gotchas">
+      <li><b>Forget <code>update_session_auth_hash</code> and changing a password logs the reader
+      out.</b> Django invalidates sessions tied to the old password hash, so the reader is
+      bounced to sign-in the moment they succeed.</li>
+      <li><b>A reader with no usable password must be able to set one without the current
+      one.</b> They arrived by link and have nothing to type — requiring it would lock exactly
+      the readers this form exists for out of it.</li>
+      <li><b><code>chaptersUnlocked</code> counts chapters the reader has actually opened,</b>
+      not chapters cadence has released. It is a progress number, and naming it "unlocked" is a
+      trap worth knowing about when reading the payload.</li>
+      <li><b>The avatar seed defaults to the email.</b> So a reader who never touches it still
+      gets a stable icon, and changing the email changes the icon — which is why the column
+      exists at all: it lets the icon be pinned.</li>
+      <li><b>The per-book loop queries per order.</b> Fine at one or two books per reader, and
+      worth collapsing into one query the moment a shelf gets long.</li>
+      <li><b>The profile tests broke the deploy, not the tests.</b> Actor stubs without input
+      types passed locally and failed the Vercel build's stricter type check — a reminder that
+      "green locally" and "green on the host" are different claims.</li>
+    </ul>
+  </section>

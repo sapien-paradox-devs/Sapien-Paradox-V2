@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Book Workspace</title>
+</head>
+<body>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,400&family=Inter:wght@400;500;600&display=swap");
+
+/* Jewel (D81) — the product's own tokens, light first. */
+:root {
+  color-scheme: light;
+
+  --ink: #1f1b16;
+  --ink-soft: #5d554a;
+  --ink-faint: #6b6358;
+
+  --paper: #f5f6f2;
+  --paper-raised: #fbfcfa;
+  --paper-sunk: #eceee8;
+
+  --rule: #d9ded7;
+  --rule-soft: #e6e9e3;
+
+  --accent: #2952e3;
+  --accent-text: #2952e3;
+  --accent-wash: #e8edfd;
+  --on-accent: #fff;
+
+  --saffron: #f5a623;
+  --saffron-text: #9a5b00;
+  --saffron-wash: #fdf1dc;
+  --coral: #ff6b57;
+  --coral-text: #c23a28;
+  --coral-wash: #ffeae6;
+  --teal: #14b8a6;
+  --teal-text: #0a7266;
+  --teal-wash: #e0f5f2;
+
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --radius: 6px;
+  --measure: 68ch;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ink: #ece4d6;
+    --ink-soft: #b9ae9d;
+    --ink-faint: #9a9083;
+    --paper: #16130f;
+    --paper-raised: #1f1b16;
+    --paper-sunk: #100e0b;
+    --rule: #352e26;
+    --rule-soft: #28231d;
+    --accent: #8fa8ff;
+    --accent-text: #8fa8ff;
+    --accent-wash: #1c2240;
+    --on-accent: #16130f;
+    --saffron: #ffc152;
+    --saffron-text: #ffc152;
+    --saffron-wash: #2e2410;
+    --coral: #ff8a7a;
+    --coral-text: #ff8a7a;
+    --coral-wash: #2e1a16;
+    --teal: #3dd6c3;
+    --teal-text: #3dd6c3;
+    --teal-wash: #102b28;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #ece4d6;
+  --ink-soft: #b9ae9d;
+  --ink-faint: #9a9083;
+  --paper: #16130f;
+  --paper-raised: #1f1b16;
+  --paper-sunk: #100e0b;
+  --rule: #352e26;
+  --rule-soft: #28231d;
+  --accent: #8fa8ff;
+  --accent-text: #8fa8ff;
+  --accent-wash: #1c2240;
+  --on-accent: #16130f;
+  --saffron: #ffc152;
+  --saffron-text: #ffc152;
+  --saffron-wash: #2e2410;
+  --coral: #ff8a7a;
+  --coral-text: #ff8a7a;
+  --coral-wash: #2e1a16;
+  --teal: #3dd6c3;
+  --teal-text: #3dd6c3;
+  --teal-wash: #102b28;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- the spine ---------------------------------------------------- */
+
+.topbar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.6rem 16px;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.topbar .num {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--accent-text);
+}
+
+.topbar .set { margin-left: auto; letter-spacing: 0.06em; }
+
+.wrap {
+  max-width: 78ch;
+  margin: 0 auto;
+  padding: 16px 16px 5rem;
+}
+
+/* ---- masthead ----------------------------------------------------- */
+
+header.masthead { padding-block: 2rem 1.25rem; }
+
+h1 {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 48;
+  font-weight: 500;
+  font-size: clamp(2rem, 6vw, 2.9rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.6rem;
+  text-wrap: balance;
+}
+
+.lede {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 20;
+  font-size: 1.16rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: var(--measure);
+  margin: 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 1.25rem;
+}
+
+.chip {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+}
+
+.chip.cap { background: var(--accent-wash); border-color: transparent; color: var(--accent-text); }
+.chip.built { background: var(--teal-wash); border-color: transparent; color: var(--teal-text); }
+.chip.partial { background: var(--saffron-wash); border-color: transparent; color: var(--saffron-text); }
+.chip.missing { background: var(--coral-wash); border-color: transparent; color: var(--coral-text); }
+
+/* ---- sections ----------------------------------------------------- */
+
+section { margin-top: 2.75rem; }
+
+h2 {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0.9rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+h3 {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 24;
+  font-weight: 600;
+  font-size: 1.12rem;
+  margin: 1.75rem 0 0.4rem;
+}
+
+p { max-width: var(--measure); margin: 0 0 0.9rem; }
+p:last-child { margin-bottom: 0; }
+
+a { color: var(--accent-text); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+strong { font-weight: 600; }
+
+code, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.855em;
+  background: var(--paper-sunk);
+  padding: 0.08em 0.32em;
+  border-radius: 3px;
+  overflow-wrap: anywhere;
+}
+
+ul, ol { max-width: var(--measure); padding-left: 1.15rem; margin: 0 0 0.9rem; }
+li { margin-bottom: 0.35rem; }
+
+/* ---- code map (what each part does) -------------------------------- */
+
+.map { display: flex; flex-direction: column; gap: 0; margin-top: 0.25rem; }
+
+.step {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.step:first-child { border-top: 1px solid var(--rule-soft); }
+
+.step .n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  padding-top: 0.22rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.step .where {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--ink);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.step .where em { font-style: normal; color: var(--ink-faint); font-weight: 400; }
+
+.step .what { color: var(--ink-soft); font-size: 14px; margin-top: 0.12rem; max-width: var(--measure); }
+.step .what code { background: transparent; padding: 0; color: var(--ink); }
+
+/* ---- tables -------------------------------------------------------- */
+
+.tablewrap { overflow-x: auto; margin-bottom: 1rem; }
+
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td {
+  text-align: left;
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+  vertical-align: top;
+}
+th {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 600;
+  white-space: nowrap;
+}
+td.mono, td code { font-family: var(--font-mono); font-size: 12.5px; }
+td.mono { background: none; white-space: nowrap; }
+
+/* ---- figures ------------------------------------------------------- */
+
+figure { margin: 0 0 1rem; }
+
+figure svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  color: var(--ink);
+}
+
+.svgscroll { overflow-x: auto; }
+.svgscroll svg { min-width: 520px; }
+
+figcaption {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  margin-top: 0.6rem;
+  max-width: var(--measure);
+  line-height: 1.5;
+}
+
+/* the SVG vocabulary every diagram in this set uses */
+svg .box { fill: var(--paper-raised); stroke: var(--rule); stroke-width: 1; }
+svg .box.lit { fill: var(--accent-wash); stroke: var(--accent); }
+svg .box.warm { fill: var(--saffron-wash); stroke: var(--saffron); }
+svg .box.cool { fill: var(--teal-wash); stroke: var(--teal); }
+svg .box.hot { fill: var(--coral-wash); stroke: var(--coral); }
+svg .box.ghost { fill: none; stroke: var(--rule); stroke-dasharray: 3 3; }
+svg .lbl { fill: var(--ink); font-family: var(--font-body); font-size: 12px; font-weight: 500; }
+svg .sub { fill: var(--ink-faint); font-family: var(--font-mono); font-size: 10px; }
+svg .edge { stroke: var(--ink-faint); stroke-width: 1.2; fill: none; }
+svg .edge.lit { stroke: var(--accent); stroke-width: 1.6; }
+svg .edge.dashed { stroke-dasharray: 4 3; }
+svg .edgelbl { fill: var(--ink-faint); font-family: var(--font-body); font-size: 10.5px; }
+svg .head { fill: var(--ink-faint); }
+svg .head.lit { fill: var(--accent); }
+svg .zone { fill: var(--paper-sunk); stroke: none; }
+svg .zonelbl { fill: var(--ink-faint); font-family: var(--font-body); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* ---- pull-outs ----------------------------------------------------- */
+
+.seam {
+  border-left: 2px solid var(--accent);
+  background: var(--accent-wash);
+  padding: 0.85rem 1rem;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin: 0 0 1rem;
+  max-width: var(--measure);
+  font-size: 14px;
+}
+.seam p { margin-bottom: 0.5rem; }
+.seam p:last-child { margin-bottom: 0; }
+.seam .tag {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.gotchas { list-style: none; padding: 0; margin: 0; max-width: var(--measure); }
+.gotchas > li {
+  padding: 0.85rem 0 0.85rem 1.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+  position: relative;
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.gotchas > li:first-child { border-top: 1px solid var(--rule-soft); }
+.gotchas > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1.35rem;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--coral);
+}
+.gotchas b { color: var(--ink); font-weight: 600; }
+
+.states { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1rem; align-items: center; }
+.state {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 0.22rem 0.55rem;
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+}
+.state.term { background: var(--paper-sunk); color: var(--ink-faint); }
+.states .to { color: var(--ink-faint); font-size: 12px; }
+
+footer.end {
+  margin-top: 3.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+footer.end .nav { font-family: var(--font-mono); }
+
+@media (max-width: 560px) {
+  body { font-size: 14.5px; }
+  .topbar .set { display: none; }
+  .step { grid-template-columns: 1.3rem minmax(0, 1fr); gap: 0.5rem; }
+}
+</style>
+
+<div class="topbar">
+  <span class="num">18</span>
+  <span>The Book Workspace</span>
+  <span class="set">Sapien Paradox V2 &middot; feature 18 of 21</span>
+</div>
+
+<div class="wrap">
+  <header class="masthead">
+    <h1>The Book Workspace</h1>
+    <p class="lede">Drop a folder of PDFs and watch them become chapters: signed uploads straight to R2, auto-matched, fixed by drag.</p>
+    <div class="chips"><span class="chip cap">Stewardship</span><span class="chip">D78</span><span class="chip">D82</span><span class="chip">D84</span><span class="chip">D85</span><span class="chip">D86</span><span class="chip built">built</span></div>
+  </header>
+
+  <section>
+    <h2>Why it exists</h2>
+    <p>Uploading a book used to mean Django admin: one chapter at a time, a file field per form, no
+    validation, and no way to see whether the thing was ready. D78 proposed uploading a book as a
+    folder; D84 turned that into a <strong>draft workspace</strong> rather than a wizard — the book
+    exists from the moment you name it, and you fill it in whatever order you like.</p>
+    <p>The workspace protects readers with two rules. A book is created unpublished and can only be
+    published when its checklist passes. Once published, chapter order is fixed and a chapter anyone
+    holds a link to cannot be deleted — because grants, progress and cadence all point at chapters by
+    position.</p>
+  </section>
+
+  <section>
+    <h2>Dropped folder to published book</h2>
+    <figure class="svgscroll">
+      <svg viewBox="0 0 800 380" role="img" aria-label="A dropped folder is walked into files, auto-matched into a proposed chapter order which the admin can fix by drag, then confirmed. Each file is uploaded on a signed ticket — straight to R2 when configured, through the API otherwise — and completing an upload attaches it, extracts text and renders pages. Publishing requires chapters, all rendered, and a cover.">
+        <defs>
+          <marker id="f18-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+          <marker id="f18-head-lit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head lit" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <rect class="box" x="20" y="34" width="150" height="50" rx="6" />
+        <text class="lbl" x="34" y="56">a dropped folder</text>
+        <text class="sub" x="34" y="73">files.ts walks it</text>
+
+        <rect class="box warm" x="206" y="34" width="190" height="50" rx="6" />
+        <text class="lbl" x="220" y="56">match.ts proposes</text>
+        <text class="sub" x="220" y="73">number in name, else natural order</text>
+        <line class="edge" x1="170" y1="59" x2="200" y2="59" marker-end="url(#f18-head)" />
+
+        <rect class="box" x="432" y="34" width="180" height="50" rx="6" />
+        <text class="lbl" x="446" y="56">staged, in context</text>
+        <text class="sub" x="446" y="73">retitle · drag · nothing sent</text>
+        <line class="edge" x1="396" y1="59" x2="426" y2="59" marker-end="url(#f18-head)" />
+
+        <rect class="box lit" x="648" y="34" width="132" height="50" rx="6" />
+        <text class="lbl" x="662" y="56">CONFIRM</text>
+        <text class="sub" x="662" y="73">the queue starts</text>
+        <line class="edge lit" x1="612" y1="59" x2="642" y2="59" marker-end="url(#f18-head-lit)" />
+
+        <rect class="box" x="20" y="132" width="210" height="62" rx="6" />
+        <text class="lbl" x="34" y="156">POST /admin/uploads</text>
+        <text class="sub" x="34" y="174">checks kind + size, picks a key</text>
+        <text class="sub" x="34" y="190">hands back a signed ticket</text>
+        <polyline class="edge lit" points="714,84 714,110 125,110 125,126" marker-end="url(#f18-head-lit)" />
+
+        <rect class="box cool" x="290" y="120" width="230" height="40" rx="5" />
+        <text class="sub" x="304" y="145">presigned PUT → R2, one per part</text>
+        <rect class="box" x="290" y="168" width="230" height="40" rx="5" />
+        <text class="sub" x="304" y="193">or PUT /admin/uploads/direct</text>
+        <line class="edge" x1="230" y1="152" x2="284" y2="140" marker-end="url(#f18-head)" />
+        <line class="edge" x1="230" y1="176" x2="284" y2="188" marker-end="url(#f18-head)" />
+
+        <rect class="box" x="580" y="132" width="200" height="62" rx="6" />
+        <text class="lbl" x="594" y="156">POST …/uploads/complete</text>
+        <text class="sub" x="594" y="174">object there, at the size promised</text>
+        <text class="sub" x="594" y="190">→ catalog.attach</text>
+        <line class="edge" x1="520" y1="140" x2="574" y2="152" marker-end="url(#f18-head)" />
+        <line class="edge" x1="520" y1="188" x2="574" y2="176" marker-end="url(#f18-head)" />
+
+        <rect class="box" x="580" y="228" width="200" height="56" rx="6" />
+        <text class="lbl" x="594" y="252">catalog.prepare</text>
+        <text class="sub" x="594" y="270">extract text · render pages</text>
+        <line class="edge" x1="680" y1="194" x2="680" y2="222" marker-end="url(#f18-head)" />
+
+        <rect class="box ghost" x="20" y="242" width="510" height="118" rx="8" />
+        <text class="zonelbl" x="36" y="264">the publish checklist (D84)</text>
+        <rect class="box" x="40" y="276" width="150" height="34" rx="5" />
+        <text class="sub" x="54" y="297">at least one chapter</text>
+        <rect class="box" x="200" y="276" width="150" height="34" rx="5" />
+        <text class="sub" x="214" y="297">every chapter rendered</text>
+        <rect class="box" x="360" y="276" width="150" height="34" rx="5" />
+        <text class="sub" x="374" y="297">a cover</text>
+        <rect class="box cool" x="40" y="318" width="470" height="30" rx="5" />
+        <text class="sub" x="54" y="338">all three → POST /admin/books/{id}/publish · order is then fixed</text>
+      </svg>
+      <figcaption>A pending upload is a promise from us to ourselves — this key, this size, this
+      destination, until this time — and signing it keeps the promise tamper-proof without a row to
+      create, expire and clean up. The ticket is not a read credential and exposes nothing, and it is
+      still never logged.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What each part does</h2>
+    <div class="map">
+      <div class="step">
+        <span class="n">01</span>
+        <div>
+          <div class="where">pages/admin/book/files.ts</div>
+          <div class="what">A dropped folder arrives as a directory entry rather than as files, so
+          this walks it and hands the flat list to the machine as one event. Browser APIs only, no
+          network.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <div>
+          <div class="where">pages/admin/books/match.ts</div>
+          <div class="what">Pure matching, tested without a DOM. PDFs are ordered by the number in
+          the filename when there is one, otherwise by natural name order — so
+          <code>Chapter 2</code> precedes <code>Chapter 10</code> — and titles are cleaned from the
+          filenames. Videos match a chapter by number then by title;
+          <code>sample.mp4</code> is the public sample, and anything ambiguous waits in a tray. A
+          match only proposes.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <div>
+          <div class="where">pages/admin/book/machine/ <em>· the three regions</em></div>
+          <div class="what"><code>data</code> loads the book, <code>ops</code> runs one change at a
+          time, <code>uploads</code> is the queue. Staged files live in context until
+          <code>CONFIRM</code>, so titles, order and video slots can all be fixed before anything is
+          sent.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <div>
+          <div class="where">pages/admin/book/machine/ <em>· the upload queue</em></div>
+          <div class="what">Each file is an item, and while it moves it is a spawned child actor
+          named by its id. PDFs go strictly one at a time and in order, so chapters land in the
+          sequence the admin confirmed; everything else runs two at a time. Every finished upload
+          returns the whole book, so the screen redraws from the server's truth rather than guessing
+          at it.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">05</span>
+        <div>
+          <div class="where">core/services/uploads.py <em>· start</em></div>
+          <div class="what">Validates the destination and the file's kind — PDF, MP4 or image — and
+          its size against the per-kind cap, chooses a fresh storage key in the same shape as the
+          models' upload paths, and returns a signed ticket plus how to send the bytes (one PUT, or
+          one per part above the multipart threshold).</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">06</span>
+        <div>
+          <div class="where">core/services/uploads.py <em>· direct · complete</em></div>
+          <div class="what"><code>direct</code> is the no-R2 fallback so a fresh clone gets the same
+          screens; <code>complete</code> verifies the object exists at the promised size and returns
+          the ticket's claims for attaching.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">07</span>
+        <div>
+          <div class="where">core/services/catalog.py <em>· create_book · update_book</em></div>
+          <div class="what">A new book is unpublished from the start, with a unique slug derived
+          from the title. Editing details never changes the slug — it is already in links that have
+          been shared.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">08</span>
+        <div>
+          <div class="where">core/services/catalog.py <em>· checklist · publish · unpublish</em></div>
+          <div class="what">Three booleans and a <code>passes</code> property. Unpublishing takes a
+          book off sale and does not touch anyone's reading: access comes from
+          <code>Order</code>, not from this flag.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">09</span>
+        <div>
+          <div class="where">core/services/catalog.py <em>· reorder · delete_chapter · attach · prepare</em></div>
+          <div class="what">Reordering and deletion are draft-only, and deletion is refused outright
+          for a chapter anyone holds a grant to. <code>attach</code> puts an uploaded object where
+          its ticket said it goes; <code>prepare</code> extracts the text and renders the pages, and
+          reports whether the chapter is ready.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">10</span>
+        <div>
+          <div class="where">core/api/admin_books.py</div>
+          <div class="what">Fifteen staff endpoints that map HTTP to those calls and nothing else:
+          books, chapters, media removal, cover bytes, ordering, a render retry, and the three upload
+          steps.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">11</span>
+        <div>
+          <div class="where">pages/admin/book/ <em>· the panels</em></div>
+          <div class="what"><code>Details</code>, <code>Chapters</code>, <code>DropZone</code>,
+          <code>Uploads</code>, <code>Videos</code>, <code>Publish</code> — one workspace, each panel
+          a view onto the same machine rather than a step in a wizard.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gotchas</h2>
+    <ul class="gotchas">
+      <li><b>Chapter order is identity.</b> Grants, progress and the cadence schedule all point at a
+      chapter by position, so reordering a published book would quietly hand readers a different
+      chapter than the one they were sent. Hence: draft only.</li>
+      <li><b>PDFs must upload one at a time.</b> Chapters are appended in arrival order, so
+      concurrent uploads would scramble the sequence the admin just confirmed — which is why the
+      queue treats PDFs differently from videos and covers.</li>
+      <li><b>Nothing uploads until CONFIRM.</b> Auto-matching gets filenames wrong often enough
+      that fixing them <em>after</em> a batch upload would mean renaming chapters in the database
+      instead of dragging rows on screen.</li>
+      <li><b>A signed ticket, not a pending-upload table.</b> No row to create, expire or clean up,
+      and nothing to leak — but it is still kept out of logs.</li>
+      <li><b>The upload path must survive having no R2.</b> Otherwise the whole workspace is
+      unusable on a fresh clone, and mandate 6 stops being true.</li>
+      <li><b>A render failure must not fail the upload.</b> <code>prepare</code> reports readiness
+      rather than raising, the checklist blocks publishing until every chapter is rendered, and there
+      is a retry action for the one bad file.</li>
+      <li><b>Completion has to verify the bytes.</b> A browser that failed mid-PUT would otherwise
+      attach a truncated object, and the first reader to open that chapter would be the one to find
+      out.</li>
+    </ul>
+  </section>
+
+  <footer class="end">
+    <p><a href="index.html">All features</a> &middot; 18 of 21 &middot; source at
+    <span class="mono">docs/features/parts/18-the-book-workspace.html</span></p>
+    <p class="nav">&larr; 17 &middot; 19 &rarr;</p>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Razorpay Checkout</title>
+</head>
+<body>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,400&family=Inter:wght@400;500;600&display=swap");
+
+/* Jewel (D81) — the product's own tokens, light first. */
+:root {
+  color-scheme: light;
+
+  --ink: #1f1b16;
+  --ink-soft: #5d554a;
+  --ink-faint: #6b6358;
+
+  --paper: #f5f6f2;
+  --paper-raised: #fbfcfa;
+  --paper-sunk: #eceee8;
+
+  --rule: #d9ded7;
+  --rule-soft: #e6e9e3;
+
+  --accent: #2952e3;
+  --accent-text: #2952e3;
+  --accent-wash: #e8edfd;
+  --on-accent: #fff;
+
+  --saffron: #f5a623;
+  --saffron-text: #9a5b00;
+  --saffron-wash: #fdf1dc;
+  --coral: #ff6b57;
+  --coral-text: #c23a28;
+  --coral-wash: #ffeae6;
+  --teal: #14b8a6;
+  --teal-text: #0a7266;
+  --teal-wash: #e0f5f2;
+
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --radius: 6px;
+  --measure: 68ch;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ink: #ece4d6;
+    --ink-soft: #b9ae9d;
+    --ink-faint: #9a9083;
+    --paper: #16130f;
+    --paper-raised: #1f1b16;
+    --paper-sunk: #100e0b;
+    --rule: #352e26;
+    --rule-soft: #28231d;
+    --accent: #8fa8ff;
+    --accent-text: #8fa8ff;
+    --accent-wash: #1c2240;
+    --on-accent: #16130f;
+    --saffron: #ffc152;
+    --saffron-text: #ffc152;
+    --saffron-wash: #2e2410;
+    --coral: #ff8a7a;
+    --coral-text: #ff8a7a;
+    --coral-wash: #2e1a16;
+    --teal: #3dd6c3;
+    --teal-text: #3dd6c3;
+    --teal-wash: #102b28;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #ece4d6;
+  --ink-soft: #b9ae9d;
+  --ink-faint: #9a9083;
+  --paper: #16130f;
+  --paper-raised: #1f1b16;
+  --paper-sunk: #100e0b;
+  --rule: #352e26;
+  --rule-soft: #28231d;
+  --accent: #8fa8ff;
+  --accent-text: #8fa8ff;
+  --accent-wash: #1c2240;
+  --on-accent: #16130f;
+  --saffron: #ffc152;
+  --saffron-text: #ffc152;
+  --saffron-wash: #2e2410;
+  --coral: #ff8a7a;
+  --coral-text: #ff8a7a;
+  --coral-wash: #2e1a16;
+  --teal: #3dd6c3;
+  --teal-text: #3dd6c3;
+  --teal-wash: #102b28;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- the spine ---------------------------------------------------- */
+
+.topbar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.6rem 16px;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.topbar .num {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--accent-text);
+}
+
+.topbar .set { margin-left: auto; letter-spacing: 0.06em; }
+
+.wrap {
+  max-width: 78ch;
+  margin: 0 auto;
+  padding: 16px 16px 5rem;
+}
+
+/* ---- masthead ----------------------------------------------------- */
+
+header.masthead { padding-block: 2rem 1.25rem; }
+
+h1 {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 48;
+  font-weight: 500;
+  font-size: clamp(2rem, 6vw, 2.9rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.6rem;
+  text-wrap: balance;
+}
+
+.lede {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 20;
+  font-size: 1.16rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: var(--measure);
+  margin: 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 1.25rem;
+}
+
+.chip {
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: var(--paper-raised);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+}
+
+.chip.cap { background: var(--accent-wash); border-color: transparent; color: var(--accent-text); }
+.chip.built { background: var(--teal-wash); border-color: transparent; color: var(--teal-text); }
+.chip.partial { background: var(--saffron-wash); border-color: transparent; color: var(--saffron-text); }
+.chip.missing { background: var(--coral-wash); border-color: transparent; color: var(--coral-text); }
+
+/* ---- sections ----------------------------------------------------- */
+
+section { margin-top: 2.75rem; }
+
+h2 {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0.9rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+h3 {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 24;
+  font-weight: 600;
+  font-size: 1.12rem;
+  margin: 1.75rem 0 0.4rem;
+}
+
+p { max-width: var(--measure); margin: 0 0 0.9rem; }
+p:last-child { margin-bottom: 0; }
+
+a { color: var(--accent-text); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+strong { font-weight: 600; }
+
+code, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.855em;
+  background: var(--paper-sunk);
+  padding: 0.08em 0.32em;
+  border-radius: 3px;
+  overflow-wrap: anywhere;
+}
+
+ul, ol { max-width: var(--measure); padding-left: 1.15rem; margin: 0 0 0.9rem; }
+li { margin-bottom: 0.35rem; }
+
+/* ---- code map (what each part does) -------------------------------- */
+
+.map { display: flex; flex-direction: column; gap: 0; margin-top: 0.25rem; }
+
+.step {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.step:first-child { border-top: 1px solid var(--rule-soft); }
+
+.step .n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  padding-top: 0.22rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.step .where {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--ink);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.step .where em { font-style: normal; color: var(--ink-faint); font-weight: 400; }
+
+.step .what { color: var(--ink-soft); font-size: 14px; margin-top: 0.12rem; max-width: var(--measure); }
+.step .what code { background: transparent; padding: 0; color: var(--ink); }
+
+/* ---- tables -------------------------------------------------------- */
+
+.tablewrap { overflow-x: auto; margin-bottom: 1rem; }
+
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td {
+  text-align: left;
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+  vertical-align: top;
+}
+th {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 600;
+  white-space: nowrap;
+}
+td.mono, td code { font-family: var(--font-mono); font-size: 12.5px; }
+td.mono { background: none; white-space: nowrap; }
+
+/* ---- figures ------------------------------------------------------- */
+
+figure { margin: 0 0 1rem; }
+
+figure svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  color: var(--ink);
+}
+
+.svgscroll { overflow-x: auto; }
+.svgscroll svg { min-width: 520px; }
+
+figcaption {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  margin-top: 0.6rem;
+  max-width: var(--measure);
+  line-height: 1.5;
+}
+
+/* the SVG vocabulary every diagram in this set uses */
+svg .box { fill: var(--paper-raised); stroke: var(--rule); stroke-width: 1; }
+svg .box.lit { fill: var(--accent-wash); stroke: var(--accent); }
+svg .box.warm { fill: var(--saffron-wash); stroke: var(--saffron); }
+svg .box.cool { fill: var(--teal-wash); stroke: var(--teal); }
+svg .box.hot { fill: var(--coral-wash); stroke: var(--coral); }
+svg .box.ghost { fill: none; stroke: var(--rule); stroke-dasharray: 3 3; }
+svg .lbl { fill: var(--ink); font-family: var(--font-body); font-size: 12px; font-weight: 500; }
+svg .sub { fill: var(--ink-faint); font-family: var(--font-mono); font-size: 10px; }
+svg .edge { stroke: var(--ink-faint); stroke-width: 1.2; fill: none; }
+svg .edge.lit { stroke: var(--accent); stroke-width: 1.6; }
+svg .edge.dashed { stroke-dasharray: 4 3; }
+svg .edgelbl { fill: var(--ink-faint); font-family: var(--font-body); font-size: 10.5px; }
+svg .head { fill: var(--ink-faint); }
+svg .head.lit { fill: var(--accent); }
+svg .zone { fill: var(--paper-sunk); stroke: none; }
+svg .zonelbl { fill: var(--ink-faint); font-family: var(--font-body); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* ---- pull-outs ----------------------------------------------------- */
+
+.seam {
+  border-left: 2px solid var(--accent);
+  background: var(--accent-wash);
+  padding: 0.85rem 1rem;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin: 0 0 1rem;
+  max-width: var(--measure);
+  font-size: 14px;
+}
+.seam p { margin-bottom: 0.5rem; }
+.seam p:last-child { margin-bottom: 0; }
+.seam .tag {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.gotchas { list-style: none; padding: 0; margin: 0; max-width: var(--measure); }
+.gotchas > li {
+  padding: 0.85rem 0 0.85rem 1.4rem;
+  border-bottom: 1px solid var(--rule-soft);
+  position: relative;
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+.gotchas > li:first-child { border-top: 1px solid var(--rule-soft); }
+.gotchas > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1.35rem;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--coral);
+}
+.gotchas b { color: var(--ink); font-weight: 600; }
+
+.states { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0 0 1rem; align-items: center; }
+.state {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 0.22rem 0.55rem;
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+}
+.state.term { background: var(--paper-sunk); color: var(--ink-faint); }
+.states .to { color: var(--ink-faint); font-size: 12px; }
+
+footer.end {
+  margin-top: 3.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+footer.end .nav { font-family: var(--font-mono); }
+
+@media (max-width: 560px) {
+  body { font-size: 14.5px; }
+  .topbar .set { display: none; }
+  .step { grid-template-columns: 1.3rem minmax(0, 1fr); gap: 0.5rem; }
+}
+</style>
+
+<div class="topbar">
+  <span class="num">05</span>
+  <span>Razorpay Checkout</span>
+  <span class="set">Sapien Paradox V2 &middot; feature 05 of 21</span>
+</div>
+
+<div class="wrap">
+  <header class="masthead">
+    <h1>Razorpay Checkout</h1>
+    <p class="lede">Money arrives twice — once on the redirect, once on the webhook — and exactly one reader comes out.</p>
+    <div class="chips"><span class="chip cap">Acquisition</span><span class="chip">D28</span><span class="chip">D47</span><span class="chip">D48</span><span class="chip built">built</span></div>
+  </header>
+
+  <section>
+    <h2>Why it exists</h2>
+    <p>Paying is what creates a reader (D47), so checkout is the front door rather than a
+    feature bolted to the side. The important consequence is what it is <em>not</em> allowed to
+    do: no row is written when a purchase starts. An unpaid <code>Order</code> would be an
+    entitlement, and <code>can_read</code> would have to start asking about payment status —
+    exactly the complexity the seam exists to keep out of it.</p>
+    <p>The money then announces itself twice. Razorpay's webhook is the leg that survives the
+    reader closing their laptop; the redirect is the leg the reader's own browser delivers, and
+    the one that actually fires first. D48 accepts both and makes the second one a no-op.</p>
+  </section>
+
+  <section>
+    <h2>Two legs, one reader</h2>
+    <figure class="svgscroll">
+      <svg viewBox="0 0 800 380" role="img" aria-label="The begin page creates a Razorpay order and opens the checkout modal. After payment two paths arrive: the browser's confirm call and Razorpay's webhook. Both call the same fulfil helper, which dispatches PAID to the acquisition machine, whose first row stops a duplicate.">
+        <defs>
+          <marker id="f5-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head" points="0,1 10,5 0,9" />
+          </marker>
+          <marker id="f5-head-lit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <polygon class="head lit" points="0,1 10,5 0,9" />
+          </marker>
+        </defs>
+
+        <rect class="box" x="20" y="30" width="180" height="56" rx="6" />
+        <text class="lbl" x="34" y="54">/begin</text>
+        <text class="sub" x="34" y="72">name · email · phone · pace</text>
+
+        <rect class="box" x="20" y="120" width="180" height="56" rx="6" />
+        <text class="lbl" x="34" y="144">POST /api/checkout</text>
+        <text class="sub" x="34" y="162">nothing is created here</text>
+        <line class="edge" x1="110" y1="86" x2="110" y2="114" marker-end="url(#f5-head)" />
+
+        <rect class="box warm" x="20" y="210" width="180" height="56" rx="6" />
+        <text class="lbl" x="34" y="234">Razorpay modal</text>
+        <text class="sub" x="34" y="252">Standard Checkout</text>
+        <line class="edge" x1="110" y1="176" x2="110" y2="204" marker-end="url(#f5-head)" />
+        <text class="edgelbl" x="118" y="196">order id + key</text>
+
+        <rect class="box lit" x="270" y="150" width="200" height="60" rx="6" />
+        <text class="lbl" x="284" y="174">POST /checkout/confirm</text>
+        <text class="sub" x="284" y="192">signature, or status lookup</text>
+        <rect class="box" x="270" y="264" width="200" height="60" rx="6" />
+        <text class="lbl" x="284" y="288">POST /payments/webhook</text>
+        <text class="sub" x="284" y="306">HMAC on the raw body</text>
+
+        <line class="edge lit" x1="200" y1="228" x2="264" y2="192" marker-end="url(#f5-head-lit)" />
+        <text class="edgelbl" x="196" y="140">the browser's leg</text>
+        <line class="edge dashed" x1="200" y1="252" x2="264" y2="290" marker-end="url(#f5-head)" />
+        <text class="edgelbl" x="202" y="340">Razorpay's leg, whenever it arrives</text>
+
+        <rect class="box" x="540" y="150" width="240" height="60" rx="6" />
+        <text class="lbl" x="554" y="174">_fulfil(entity)</text>
+        <text class="sub" x="554" y="192">builds the attempt, dispatches</text>
+        <line class="edge lit" x1="470" y1="180" x2="534" y2="180" marker-end="url(#f5-head-lit)" />
+        <polyline class="edge" points="470,294 505,294 505,186 534,186" marker-end="url(#f5-head)" />
+
+        <rect class="box cool" x="540" y="30" width="240" height="86" rx="6" />
+        <text class="lbl" x="554" y="54">acquisition machine</text>
+        <text class="sub" x="554" y="72">PAID → already_fulfilled? stop</text>
+        <text class="sub" x="554" y="88">else resolve identity</text>
+        <text class="sub" x="554" y="104">→ onboarding.create_reader</text>
+        <line class="edge" x1="660" y1="150" x2="660" y2="122" marker-end="url(#f5-head)" />
+      </svg>
+      <figcaption>Both legs converge on one helper, and every branch after that point lives in
+      the acquisition transition table rather than in the endpoint. The table's first row is the
+      idempotency check, which is why the second signal to arrive — whichever it is — finds the
+      order by its <code>payment_reference</code> and stops.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>What each part does</h2>
+    <div class="map">
+      <div class="step">
+        <span class="n">01</span>
+        <div>
+          <div class="where">pages/begin/machine/machine.ts</div>
+          <div class="what">Five states: <code>loading</code> → <code>browsing</code> →
+          <code>submitting</code> → <code>paying</code> → <code>redirecting</code>, with
+          <code>failed</code> and <code>refused</code> beside them. <code>refused</code> returns
+          to the form with everything still typed — a refusal is a normal state, not an error
+          screen (D45).</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">02</span>
+        <div>
+          <div class="where">pages/begin/machine/actors.ts</div>
+          <div class="what"><code>startCheckout</code> creates the gateway order;
+          <code>payAndConfirm</code> opens the Razorpay modal, waits for the result and calls
+          confirm — one actor, because the modal's outcome is useless without the verification
+          that follows it.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">03</span>
+        <div>
+          <div class="where">core/api/checkout.py <em>· POST /api/checkout</em></div>
+          <div class="what">Checks that payments are configured, that the book is published,
+          that the pace is one of the three, normalises the phone, and asks the gateway for an
+          order. Returns the order id, the public key, the amount and the book title — what the
+          modal needs and nothing else.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">04</span>
+        <div>
+          <div class="where">core/services/payments.py</div>
+          <div class="what">The only module that talks to Razorpay: <code>configured()</code>,
+          <code>create_order</code>, <code>verify_payment_signature</code>,
+          <code>fetch_order</code>, <code>signature_is_valid</code>. Unconfigured it raises
+          rather than faking — a silent fake payment would leave a reader believing they had
+          bought something.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">05</span>
+        <div>
+          <div class="where">core/api/checkout.py <em>· _fulfil</em></div>
+          <div class="what">Builds a <code>PurchaseAttempt</code> from the gateway entity's
+          notes, dispatches <code>PAID</code>, and turns the refusal code into the shape both
+          callers already speak. It decides nothing itself.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">06</span>
+        <div>
+          <div class="where">core/api/checkout.py <em>· POST /checkout/confirm</em></div>
+          <div class="what">Two ways in. With a payment id and signature it verifies the HMAC
+          locally — no round trip. With only the order id, which is what a reloaded welcome page
+          has, it fetches the order and checks <code>status == "paid"</code>. Then it fulfils,
+          and sets the password if one was typed and the reader has none.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">07</span>
+        <div>
+          <div class="where">core/api/checkout.py <em>· POST /payments/webhook</em></div>
+          <div class="what">Verifies the signature against the raw body before parsing
+          anything, then handles <code>order.paid</code> and the legacy
+          <code>payment_link.paid</code>. Any other event is acknowledged and ignored.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">08</span>
+        <div>
+          <div class="where">core/api/checkout.py <em>· POST /checkout/resend</em></div>
+          <div class="what">The reader's own escape hatch: send the chapter and the
+          set-a-password link again. Authorised by the Razorpay order id, cooled down, and it
+          will fulfil first if no order exists yet.</div>
+        </div>
+      </div>
+      <div class="step">
+        <span class="n">09</span>
+        <div>
+          <div class="where">pages/welcome/machine/machine.ts</div>
+          <div class="what">Four outcomes, four things worth saying: <code>fulfilled</code>,
+          <code>owned</code>, <code>pending</code>, <code>refused</code>, plus
+          <code>failed</code> when confirming itself broke. The first three offer
+          <code>RESEND</code>; only a genuine identity refusal is a dead end.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gotchas</h2>
+    <ul class="gotchas">
+      <li><b>Payment Links ran out.</b> Razorpay's test mode caps them at thirty per
+      account — total, not per day — so the whole flow moved to the Orders API and Standard
+      Checkout. Same fulfilment, different gateway object, and the webhook still handles the old
+      event type.</li>
+      <li><b>The webhook fails closed and silently when its secret is unset.</b>
+      <code>signature_is_valid</code> returns false on an empty secret, so the endpoint 400s
+      before parsing and a paid reader gets nothing but a log line. That is precisely why D48's
+      redirect leg exists, and why the secret is called out in the blueprint.</li>
+      <li><b>Nothing is created when checkout starts.</b> Tempting, and wrong: an unpaid order
+      is an entitlement, and every access question would then have to ask about payment
+      status.</li>
+      <li><b>The resend endpoint is authorised by an order id, and that is safe for one
+      reason.</b> Everything it sends goes to the phone on the account, never to whoever asked.
+      Someone holding the id can cause the owner to receive a message; they cannot receive one
+      themselves.</li>
+      <li><b>The welcome page used to assert delivery.</b> It had one state and told the reader
+      their chapter was on its way — while a rejected webhook meant nothing had been created at
+      all. Now it confirms, then says which of four things actually happened.</li>
+      <li><b>Phone is optional.</b> A reader without one pays and reads through the web app;
+      the WhatsApp legs are skipped rather than failed, so <code>hasPhone</code> travels back to
+      the welcome page and changes what it offers.</li>
+      <li><b>A confirm that arrives twice must not set a password twice.</b> It only sets one
+      when the reader has no usable password, so a reload cannot overwrite a password the
+      reader has since chosen.</li>
+    </ul>
+  </section>
+
+  <footer class="end">
+    <p><a href="index.html">All features</a> &middot; 05 of 21 &middot; source at
+    <span class="mono">docs/features/parts/05-razorpay-checkout.html</span></p>
+    <p class="nav">&larr; 04 &middot; 06 &rarr;</p>
+  </footer>
+</div>
+</body>
+</html>
