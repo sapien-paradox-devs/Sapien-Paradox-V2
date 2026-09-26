@@ -71,6 +71,7 @@ back to. Without it these read as taste rather than as answers to specific, obse
 | D46 | Gemini for testing, behind the existing seam *(scoped; amends D24's model choice)* | [companion-provider](11-companion-provider.md) | locked |
 | D47 | Public signup; payments lead onboarding *(reverses D10, advances D28)* | [payments](08-payments.md) | locked |
 | D48 | Fulfil on the redirect as well as the webhook *(refines D47)* | [payments](08-payments.md) | locked |
+| D50 | Cadence: schedule minted at purchase, Render Cron ticks it *(applies D39/D40)* | [cadence](12-cadence.md) | locked |
 | D54 | Motion is native-first; no animation library, no WebGL | [surface](13-surface.md) | locked |
 | D59 | One Django app per domain *(reverses one-app in `apps/api/CLAUDE.md`)* | [structure](14-structure.md) | locked |
 | D60 | `flows.py` is the root map, and a test keeps it true | [structure](14-structure.md) | locked |
@@ -80,7 +81,7 @@ back to. Without it these read as taste rather than as answers to specific, obse
 | D64 | `Order.state` is derived from its grants, never stored | [structure](14-structure.md) | locked |
 | D65 | Reset the migration files; keep the database | [structure](14-structure.md) | locked |
 | D66 | Split settings, split requirements, run pytest | [structure](14-structure.md) | locked |
-| D67 | The clean foundation lands before the first real reader *(amended by D72)* | [structure](14-structure.md) | locked |
+| D67 | The clean foundation lands before the first real reader *(amended by D72, D89)* | [structure](14-structure.md) | locked |
 | D68 | Models move in one PR; everything else moves app by app | [structure](14-structure.md) | locked |
 | D69 | Fix the logic in `core/`, then move it | [structure](14-structure.md) | locked |
 | D70 | Reading progress, shown quietly *(reverses D11's "no progress bars"; amends D18: a ninth table)* | [reading](15-reading.md) | locked |
@@ -102,6 +103,7 @@ back to. Without it these read as taste rather than as answers to specific, obse
 | D86 | Dropped files auto-match to chapters, fixed by drag *(amends D78's strict naming)* | [stewardship](17-stewardship.md) | locked |
 | D87 | A quieter watermark: sparse marks and one line in the margin *(amends D73's watermark)* | [reading](15-reading.md) | locked |
 | D88 | The companion: a quiet launcher, a side panel or a sheet, and it speaks first *(realises D13/D14)* | [reading](15-reading.md) | locked |
+| D89 | Cadence proceeds on the current structure *(amends structure-D67)* | [cadence](12-cadence.md) | locked |
 
 **Claim the number in this index first, then write the file.** Three collisions happened in one day
 because a number locked on an unmerged branch is invisible here. The index on `main` is the lock.

@@ -255,9 +255,10 @@ makes per-app `conftest.py` worth having across eight apps.
 ## D67 — The clean foundation lands before the first real reader
 
 **Locked** 2026-09-23 · **amended by D72** (`15-reading.md`): the landing page, the chamber and
-reading progress proceed on the current structure rather than waiting for the rebuild. The rebuild
-still precedes cadence, which is what D67 was protecting — cadence is the feature that touches the
-three places the identity logic was duplicated.
+reading progress proceed on the current structure rather than waiting for the rebuild. D72 kept
+the rebuild ahead of cadence, which is what D67 was protecting — cadence is the feature that touches
+the three places the identity logic was duplicated. **Further amended by D89** (`12-cadence.md`):
+cadence is built on `core/` now too, on the condition that it does not touch the identity path.
 
 The rebuild (D59–D66) completes before cadence, before the surface track's remaining work, and
 before anyone who is not the owner uses the product.
