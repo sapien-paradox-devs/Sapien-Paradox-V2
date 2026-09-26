@@ -281,8 +281,11 @@ instance; a tick that finds nothing due finishes in seconds, so at 96 runs a day
 roughly **$1/month**. Its build is `pip install` only — no `collectstatic`, and no migrations,
 which stay the web service's job.
 
-**Environment.** Both services read the `sapien-shared` env group (secret key, `APP_BASE_URL`, R2,
-Twilio); the cron wires its own `DATABASE_URL` from the database because a group cannot. Anything
+**Environment.** Both services read the `sapien-shared` env group: `DJANGO_SECRET_KEY`,
+`DJANGO_DEBUG`, `DATABASE_SSL_REQUIRE`, `PYTHON_VERSION`, `APP_BASE_URL` and the three `TWILIO_*`.
+That is everything the cron has, plus its own `DATABASE_URL`, because an env group cannot reference
+a database. R2, Razorpay, cookie and companion settings stay on `sapien-api` alone, so secrets the
+tick never uses never reach it. Anything
 cadence-related (`PACE_DELAY_DAYS_*`, `CADENCE_DELIVERY_HOUR`, `GRANT_TTL_DAYS`) goes **in the
 group**, never on one service: the web service computes `unlock_at` at purchase and the cron
 compares against it, so the two must agree.
@@ -297,8 +300,9 @@ they are removed, the two services can silently disagree.
 2. Copy into the group the web service's current value for every key the group holds —
    **including `DJANGO_SECRET_KEY`**. The group generates a fresh key otherwise, and switching to
    it signs every reader out once.
-3. Delete those same keys from `sapien-api` → Environment. `DATABASE_URL` and the web-only keys
-   (CORS, cookies, Razorpay, Anthropic, `ONBOARDING_ALLOW_PHONE_REUSE`) stay on the service.
+3. Delete those same eight keys from `sapien-api` → Environment. Everything else — `DATABASE_URL`,
+   CORS, cookies, R2, Razorpay, Anthropic, cooldowns, `ONBOARDING_ALLOW_PHONE_REUSE` — stays on the
+   service.
 4. Redeploy `sapien-api` and check `/api/health`.
 
 `WHATSAPP_BACKEND` and `WHATSAPP_MAX_ATTEMPTS` are not set anywhere and should stay that way: the

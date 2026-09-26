@@ -23,8 +23,11 @@ databases:
 # ── Shared environment (#113) ──────────────────────────────────────────────
 # The web service and the cadence cron run the same Django project, so they
 # need the same settings. Typed once here, referenced by both with `fromGroup`.
-# DATABASE_URL is NOT here: a group cannot use `fromDatabase`, so each service
-# wires its own below.
+# DATABASE_URL is NOT here: an env group cannot reference a database, so each
+# service wires its own `fromDatabase` entry below.
+#
+# Only what the cron needs is shared. R2, Razorpay, cookies and the companion key
+# stay on sapien-api alone, so a secret the tick never uses never reaches it.
 #
 # THE LIVE WEB SERVICE PREDATES THIS GROUP. Its variables were typed onto the
 # service directly, and a service-level value overrides the group's. Syncing
@@ -53,19 +56,6 @@ envVarGroups:
 
       - key: APP_BASE_URL
         sync: false           # the SPA URL; WhatsApp links are built from it
-
-      # Cloudflare R2. THE BUCKET MUST STAY PRIVATE (D19) — nothing here
-      # generates a storage URL; the API streams the bytes itself.
-      - key: AWS_STORAGE_BUCKET_NAME
-        sync: false
-      - key: AWS_ACCESS_KEY_ID
-        sync: false
-      - key: AWS_SECRET_ACCESS_KEY
-        sync: false
-      - key: AWS_S3_ENDPOINT_URL
-        sync: false
-      - key: AWS_S3_REGION_NAME
-        value: auto
 
       # Twilio. Leave unset and delivery falls back to printing on screen —
       # the app runs fine without it, which is how it stays deployable before
@@ -115,13 +105,14 @@ services:
 
     envVars:
       # ── wired automatically ────────────────────────────────────────────
+      # Per service, not in the group: an env group cannot reference a database.
       - key: DATABASE_URL
         fromDatabase:
           name: sapien-db
           property: connectionString
 
-      # Secret key, Python version, APP_BASE_URL, R2 and Twilio are shared with
-      # the cron, so they live in the group above.
+      # Secret key, Python version, APP_BASE_URL and Twilio are shared with the
+      # cron, so they live in the group above. Everything else stays here.
       - fromGroup: sapien-shared
 
       # ── set these once the domain exists ───────────────────────────────
@@ -152,7 +143,21 @@ services:
         sync: false
       - key: COOKIE_DOMAIN
         sync: false           # .<domain>  — leading dot matters. Empty until then.
+
       # ── secrets, typed once into the dashboard ─────────────────────────
+      # Cloudflare R2. THE BUCKET MUST STAY PRIVATE (D19) — nothing here
+      # generates a storage URL; the API streams the bytes itself.
+      - key: AWS_STORAGE_BUCKET_NAME
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_S3_ENDPOINT_URL
+        sync: false
+      - key: AWS_S3_REGION_NAME
+        value: auto
+
       # Razorpay (D28, D47). These were missing from the blueprint entirely, so a
       # fresh provision never prompted for them. Checkout closes without the first
       # two; the webhook fails CLOSED and SILENTLY without the third —
@@ -206,6 +211,7 @@ services:
     startCommand: python manage.py cadence_tick
 
     envVars:
+      # Its own entry, not the group's: an env group cannot reference a database.
       - key: DATABASE_URL
         fromDatabase:
           name: sapien-db
