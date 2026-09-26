@@ -71,13 +71,6 @@
   animation: landing-arrive var(--dur-settle) var(--ease-settle) 180ms both;
 }
 
-.landing-book-numeral {
-  font-family: var(--font-display);
-  font-size: 44px;
-  font-weight: 500;
-  fill: var(--coral-text);
-}
-
 @keyframes landing-arrive {
   from { opacity: 0; transform: translateY(var(--rise)); }
 }

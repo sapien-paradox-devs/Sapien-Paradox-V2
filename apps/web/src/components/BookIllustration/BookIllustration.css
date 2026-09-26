@@ -1,0 +1,13 @@
+/* The open book (#206): shared by the landing page and the sign-in and sign-up panel. */
+.ui-book-art {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.ui-book-numeral {
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 500;
+  fill: var(--coral-text);
+}

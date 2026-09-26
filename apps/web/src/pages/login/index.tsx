@@ -6,6 +6,7 @@
 import { useMachine } from "@xstate/react";
 import { useEffect, useState } from "react";
 
+import { AuthLayout } from "../../components/AuthLayout";
 import { Button } from "../../components/Button";
 import { ErrorNotice } from "../../components/ErrorNotice";
 import { TextField } from "../../components/TextField";
@@ -20,6 +21,7 @@ export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const user = state.context.user;
 
@@ -35,26 +37,26 @@ export function LoginPage() {
   // beneath one that cannot work for them.
   if (state.matches("linkForm") || sendingLink || state.matches("linkSent")) {
     return (
-      <main className="shell">
-        <div className="login">
+      <AuthLayout eyebrow={labels.auth.signInEyebrow} title={labels.auth.signInTitle} lede={labels.auth.signInLede}>
+        <div className="auth-card">
           <h1>{labels.login.linkTitle}</h1>
 
           {state.matches("linkSent") ? (
             <>
-              <p className="login-lead">{labels.login.linkDone}</p>
+              <p className="auth-sub">{labels.login.linkDone}</p>
               <Button type="button" onClick={() => send({ type: "BACK" })}>
                 {labels.login.linkBack}
               </Button>
             </>
           ) : (
             <form
-              className="login-form"
+              className="auth-form"
               onSubmit={(e) => {
                 e.preventDefault();
                 send({ type: "SEND_LINK", phone });
               }}
             >
-              <p className="login-lead">{labels.login.linkLead}</p>
+              <p className="auth-sub">{labels.login.linkLead}</p>
 
               <TextField
                 label={labels.login.linkPhone}
@@ -86,17 +88,18 @@ export function LoginPage() {
             </form>
           )}
         </div>
-      </main>
+      </AuthLayout>
     );
   }
 
   return (
-    <main className="shell">
-      <div className="login">
+    <AuthLayout eyebrow={labels.auth.signInEyebrow} title={labels.auth.signInTitle} lede={labels.auth.signInLede}>
+      <div className="auth-card">
         <h1>{labels.login.title}</h1>
+        <p className="auth-sub">{labels.login.sub}</p>
 
         <form
-          className="login-form"
+          className="auth-form"
           onSubmit={(e) => {
             e.preventDefault();
             send({ type: "SUBMIT", email, password });
@@ -114,17 +117,23 @@ export function LoginPage() {
             }}
           />
 
-          <TextField
-            label={labels.login.password}
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              send({ type: "EDIT" });
-            }}
-          />
+          <div className="auth-password">
+            <TextField
+              label={labels.login.password}
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                send({ type: "EDIT" });
+              }}
+            />
+            <button type="button" className="auth-reveal" aria-pressed={showPassword}
+              onClick={() => setShowPassword((shown) => !shown)}>
+              {showPassword ? labels.login.hidePassword : labels.login.showPassword}
+            </button>
+          </div>
 
           {state.context.errorMessage && (
             <ErrorNotice>{state.context.errorMessage}</ErrorNotice>
@@ -135,7 +144,7 @@ export function LoginPage() {
           </Button>
         </form>
 
-        <p className="login-alt">
+        <p className="auth-small">
           {labels.login.noPassword}{" "}
           <button
             type="button"
@@ -146,13 +155,11 @@ export function LoginPage() {
           </button>
         </p>
 
-        <p className="login-alt">
-          {labels.login.newHere}{" "}
-          <button type="button" className="linklike" onClick={() => navigate("/begin")}>
-            {labels.login.createAccount}
-          </button>
-        </p>
+        <p className="auth-divider">{labels.login.newHere}</p>
+        <button type="button" className="auth-secondary" onClick={() => navigate("/begin")}>
+          {labels.login.createAccount}
+        </button>
       </div>
-    </main>
+    </AuthLayout>
   );
 }
