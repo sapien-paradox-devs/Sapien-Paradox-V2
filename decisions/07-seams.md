@@ -55,6 +55,35 @@ the reasons will be.
 
 **Cost accepted:** five call sites each write their own 403.
 
+### Amended 2026-10-10 (#114) — the deferred upgrade, taken
+
+Cadence landed (D50), so the case this decision parked has arrived: "you don't own this" and "this
+unlocks Friday" are different screens, and a bare `False` cannot tell them apart.
+
+The upgrade is the lighter half of what was rejected above — a **reason function**, not a result
+object:
+
+```python
+access.can_read(user, chapter)    -> bool              # unchanged, every existing caller
+access.refusal_for(user, chapter) -> str | None         # "not_owner" | "not_unlocked" | None
+```
+
+`can_read` is now **defined as** `refusal_for(...) is None`, so there is still exactly one
+implementation of the rule and no second place that can drift. Callers that only need a yes or no
+keep the question-shaped name; the two session endpoints that must choose a screen ask for the
+reason.
+
+The codes are refusal codes in D38's sense — the API layer maps them to statuses (403 for
+`not_owner`, 409 for `not_unlocked`) and nothing below it knows what a status is.
+
+**Why not the full result object.** Nothing needed the third field. A dataclass carrying a bool and
+a reason would make every call site unpack a value it mostly discards, and `can_read` would stop
+reading as a question.
+
+**Revisit if** a third refusal arrives that carries data rather than a code — a date, say, rather
+than the fact of being locked. Home gets its dates from `selectors.locks_by_chapter`, not from this
+seam, precisely so that this one stays a yes/no with a reason.
+
 ### Knows nothing about unlocking, today
 
 Today it is exactly "does an `Order` exist for this user and this book?". When cadence lands, the

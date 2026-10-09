@@ -7,6 +7,10 @@ export type Chapter = {
   /** 0–1; 1 only once the reader marked it complete (D70). */
   progress: number;
   completed: boolean;
+  /** Cadence has not released it yet (D50, #114). No link, and a date instead. */
+  locked: boolean;
+  /** ISO 8601, and null whenever `locked` is false. */
+  unlocksAt: string | null;
 };
 
 export type Book = {

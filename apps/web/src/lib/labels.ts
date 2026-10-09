@@ -225,6 +225,12 @@ export const labels = {
     completed: "Completed",
     // Follows a number: "42% read" (D70).
     percentRead: "% read",
+    // Precedes a date: "Unlocks Fri, 17 Oct" (D11 — a date, never a countdown).
+    unlocks: "Unlocks ",
+    // When the schedule has no date on the row, which should not happen.
+    locked: "Not yet unlocked",
+    // Read by a screen reader in place of the row's link.
+    lockedAria: "Locked until ",
     send: "Send to WhatsApp",
     sending: "Sending…",
     sent: "Sent — check WhatsApp.",
@@ -235,6 +241,10 @@ export const labels = {
   opening: {
     working: "Finding your place…",
     denied: "This book is not on your shelf.",
+    // Cadence has not released this chapter yet (#114). Reachable from a stale
+    // tab or a typed URL, since Home renders no link for a locked chapter.
+    locked: "This chapter has not arrived yet. It will reach you on its day.",
+    library: "Back to your library",
     error: "We could not open that chapter.",
     retry: "Try again",
   },

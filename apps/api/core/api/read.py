@@ -6,6 +6,10 @@ reader by cookie, because the reader is already on Home when they use them.
 Rate limits are counted from `MessageLog` rows in a window (D31). There is no
 counter and no Redis -- the rows already exist, and a counter would be a second
 source of truth that can disagree with them.
+
+Both chapter endpoints refuse a chapter cadence has not released yet, with its
+own code (#114). "Not yours" and "not yet" are different screens: one is a dead
+end, the other is a date.
 """
 
 from datetime import timedelta
@@ -22,6 +26,25 @@ from ..services import access, grants, whatsapp
 
 router = Router()
 
+# Refusal code -> status (D38). The only place that knows what a 403 is.
+#
+# 409 for a locked chapter, deliberately not 403 or 410: the reader owns it, so
+# it is not forbidden, and it has not gone anywhere -- it conflicts with the
+# chapter's current state, which is `scheduled`. The frontend tells the three
+# apart by status alone.
+_STATUS = {access.NOT_OWNER: 403, access.NOT_UNLOCKED: 409}
+
+
+def _refuse_unless_readable(user, chapter) -> None:
+    """Ask the access seam, and turn its reason into a status (D25, D38).
+
+    A live token is never sufficient on its own, and neither is a session:
+    ownership is re-checked here so a refund takes effect on the next request.
+    """
+    refusal = access.refusal_for(user, chapter)
+    if refusal is not None:
+        raise HttpError(_STATUS[refusal], refusal)
+
 
 # Moved to services/whatsapp.py — the post-checkout resend needs it too.
 _recently_sent = whatsapp.recently_sent
@@ -35,13 +58,13 @@ def read_chapter(request, chapter_id: str):
     one exists, so opening the same chapter twice does not accumulate tokens.
     Making it a POST would put an interstitial screen on the path to reading,
     which is the one path that should never have one.
+
+    Reachable for a locked chapter only from a stale tab or a typed URL -- Home
+    renders no link for one -- and it answers 409 rather than minting a token
+    the reader was never sent (#114).
     """
     chapter = get_object_or_404(Chapter, pk=chapter_id)
-
-    # A live token is never sufficient on its own, and neither is a session:
-    # ownership is re-checked here so a refund takes effect on the next request.
-    if not access.can_read(request.auth, chapter):
-        raise HttpError(403, "not_owner")
+    _refuse_unless_readable(request.auth, chapter)
 
     grant = grants.mint_or_reuse(request.auth, chapter)
     return {"token": grant.token}
@@ -56,9 +79,7 @@ def send_chapter(request, chapter_id: str):
     for one chapter (D27).
     """
     chapter = get_object_or_404(Chapter, pk=chapter_id)
-
-    if not access.can_read(request.auth, chapter):
-        raise HttpError(403, "not_owner")
+    _refuse_unless_readable(request.auth, chapter)
 
     if _recently_sent(request.auth, "chapter_delivery",
                       settings.CHAPTER_SEND_COOLDOWN_MINUTES):
