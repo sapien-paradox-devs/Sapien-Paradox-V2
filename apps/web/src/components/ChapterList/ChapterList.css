@@ -77,3 +77,40 @@
 @keyframes ui-row-in {
   from { opacity: 0; transform: translateY(var(--rise)); }
 }
+
+/* A chapter still to come (#114). Quieter than an arrived one, and not
+   interactive: there is nothing to press until the tick releases it. */
+.ui-chapter-locked {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  text-align: left;
+  cursor: default;
+}
+
+.ui-chapter-is-locked .ui-chapter-n { color: var(--ink-faint); }
+
+.ui-chapter-is-locked .ui-chapter-title { color: var(--ink-soft); }
+
+.ui-chapter-when {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: center;
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* On a phone the date drops under the title rather than squeezing it. */
+@media (max-width: 30rem) {
+  .ui-chapter-locked {
+    flex-wrap: wrap;
+    row-gap: var(--space-1);
+  }
+
+  .ui-chapter-when { margin-left: 0; flex-basis: 100%; }
+}

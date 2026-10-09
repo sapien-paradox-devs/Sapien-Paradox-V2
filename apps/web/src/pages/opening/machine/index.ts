@@ -16,7 +16,11 @@ export const openingMachine = setup({
   },
   actions: { assignToken: assign(actions.tokenFrom) },
   actors: { resolveChapter: actors.resolveChapter },
-  guards: { isAuthenticated: guards.isAuthenticated, isForbidden: guards.isForbidden },
+  guards: {
+    isAuthenticated: guards.isAuthenticated,
+    isForbidden: guards.isForbidden,
+    isLocked: guards.isLocked,
+  },
 }).createMachine(openingConfig);
 
 export type { Context, Event } from "./types";

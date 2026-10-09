@@ -41,6 +41,16 @@ export function OpeningPage() {
     return <main role="alert">{labels.opening.denied}</main>;
   }
 
+  // Not an alert: nothing has gone wrong, the chapter is simply not due (#114).
+  if (state.matches("locked")) {
+    return (
+      <main>
+        {labels.opening.locked}{" "}
+        <button onClick={() => navigate("/")}>{labels.opening.library}</button>
+      </main>
+    );
+  }
+
   if (state.matches("error")) {
     return (
       <main role="alert">

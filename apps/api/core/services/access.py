@@ -1,10 +1,11 @@
 """The only access check (D25).
 
-    access.can_read(user, chapter) -> bool
-    access.owns(user, book)        -> bool   the first of can_read's two questions
+    access.can_read(user, chapter)    -> bool
+    access.refusal_for(user, chapter) -> str | None   the same check, with its reason
+    access.owns(user, book)           -> bool   the first of can_read's two questions
 
 **No caller queries `Order` or `TemporalGrant` directly.** Cadence landed as
-D50, and its unlock check lives *inside this function*. That is the whole promise
+D50, and its unlock check lives *inside this module's one check*. That is the whole promise
 of the seam, and it's why nothing else may ask the question.
 
 It returns a plain bool and never raises. A service raising an error whose only
@@ -13,6 +14,11 @@ status codes at the API layer.
 """
 
 from ..models import Order, TemporalGrant
+
+# Refusal codes (D38). The API layer maps these to status codes; nothing here
+# knows what a 403 is.
+NOT_OWNER = "not_owner"
+NOT_UNLOCKED = "not_unlocked"
 
 
 def owns(user, book) -> bool:
@@ -39,10 +45,31 @@ def can_read(user, chapter) -> bool:
     A reader from before cadence holds no scheduled rows, so this changes
     nothing for them.
     """
-    if not _owns(user, chapter.book_id):
-        return False
+    return refusal_for(user, chapter) is None
 
-    return not TemporalGrant.objects.filter(
+
+def refusal_for(user, chapter) -> str | None:
+    """Why this reader may not read this chapter, as a refusal code — or None.
+
+    The same two questions as `can_read`, in the same order, in one place; this
+    one says *which* of them failed, and `can_read` is now defined in terms of
+    it. There is still exactly one implementation of the rule (D25).
+
+    The API layer needs the distinction because the two refusals are different
+    screens: "not yours" is a dead end, and "not yet" is a date the reader can
+    wait for (#114).
+    """
+    if not _owns(user, chapter.book_id):
+        return NOT_OWNER
+
+    if _is_scheduled(user, chapter):
+        return NOT_UNLOCKED
+
+    return None
+
+
+def _is_scheduled(user, chapter) -> bool:
+    return TemporalGrant.objects.filter(
         user=user, chapter=chapter, state=TemporalGrant.SCHEDULED
     ).exists()
 

@@ -5,8 +5,9 @@ in the rebuild (R3); new reads are written here from the start.
 """
 
 from dataclasses import dataclass
+from datetime import datetime
 
-from .models import ReadingProgress
+from .models import ReadingProgress, TemporalGrant
 
 
 @dataclass(frozen=True)
@@ -30,6 +31,36 @@ def progress_by_chapter(user) -> dict[int, Progress]:
 
 def _progress(row: ReadingProgress) -> Progress:
     return Progress(furthest=1.0 if row.completed_at else row.furthest, completed=row.completed_at is not None)
+
+
+# ── cadence, as Home renders it (D50, #114) ──────────────────────────────────
+
+
+@dataclass(frozen=True)
+class Lock:
+    locked: bool
+    unlocks_at: datetime | None
+    """When the tick will release it. Null on a live chapter, and on a reader
+    from before cadence, who holds no scheduled rows at all."""
+
+
+UNLOCKED = Lock(locked=False, unlocks_at=None)
+
+
+def locks_by_chapter(user) -> dict[int, Lock]:
+    """Every chapter this reader is still waiting for, in one query.
+
+    A chapter is locked while a `scheduled` grant for it exists — the same
+    question `access.refusal_for` asks, because the tick is the one clock (D39).
+    Ordered newest first so the earliest unlock wins the key, in case a reader
+    somehow holds two scheduled rows for one chapter.
+    """
+    return {
+        grant.chapter_id: Lock(locked=True, unlocks_at=grant.unlock_at)
+        for grant in TemporalGrant.objects.filter(
+            user=user, state=TemporalGrant.SCHEDULED
+        ).order_by("-unlock_at")
+    }
 
 
 # ── the in-app admin (D82) ────────────────────────────────────────────────────

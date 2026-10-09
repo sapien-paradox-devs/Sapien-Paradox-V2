@@ -15,6 +15,8 @@ class ChapterOut(Schema):
     read: bool          # opened at least once, from `opened_at`
     progress: float     # 0–1; 1 only once marked complete (D70)
     completed: bool
+    locked: bool        # cadence has not released it yet (D50)
+    unlocksAt: str | None   # ISO 8601, and null whenever `locked` is false
 
 
 class BookOut(Schema):

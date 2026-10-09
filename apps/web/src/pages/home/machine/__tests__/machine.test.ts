@@ -5,16 +5,38 @@ import { ApiError } from "../../../../lib/fetcher";
 import { homeMachine } from "..";
 import type { Book } from "../types";
 
+const ARRIVED = {
+  id: "c1",
+  number: 1,
+  title: "The Long Descent",
+  read: false,
+  progress: 0,
+  completed: false,
+  locked: false,
+  unlocksAt: null,
+};
+
+/** Chapter two, still with cadence (#114). */
+const TO_COME = {
+  ...ARRIVED,
+  id: "c2",
+  number: 2,
+  title: "Clocks and Calendars",
+  locked: true,
+  unlocksAt: "2026-10-17T08:00:00+05:30",
+};
+
 const BOOKS: Book[] = [
   {
     id: "b1",
     title: "The Sapien Paradox",
     progress: 0,
-    chapters: [
-      { id: "c1", number: 1, title: "The Long Descent", read: false, progress: 0, completed: false },
-    ],
+    chapters: [ARRIVED],
   },
 ];
+
+/** A shelf part delivered and part scheduled — the ordinary state of a book. */
+const PARTLY_UNLOCKED: Book[] = [{ ...BOOKS[0], chapters: [ARRIVED, TO_COME] }];
 
 function start(options: { home?: Book[] | "error"; send?: "ok" | 429 | 500 } = {}) {
   const machine = homeMachine.provide({
@@ -123,5 +145,26 @@ describe("the send region", () => {
     actor.send({ type: "SEND", chapterId: "c1" });
 
     expect(actor.getSnapshot().matches({ send: "sending" })).toBe(true);
+  });
+
+  /*
+   * Locked rows must reach the list: Home is where a reader sees the shape of
+   * their book, and a payload of only-delivered chapters hides the schedule
+   * they are living inside (#114).
+   */
+  it("keeps the chapters cadence has not released yet", async () => {
+    const actor = start({ home: PARTLY_UNLOCKED });
+    await settle();
+
+    const [book] = actor.getSnapshot().context.books;
+    expect(book.chapters.map((c) => c.locked)).toEqual([false, true]);
+    expect(book.chapters[1].unlocksAt).not.toBeNull();
+  });
+
+  it("a book whose chapters are all still to come is ready, not empty", async () => {
+    const actor = start({ home: [{ ...BOOKS[0], chapters: [TO_COME] }] });
+    await settle();
+
+    expect(actor.getSnapshot().matches({ list: "ready" })).toBe(true);
   });
 });

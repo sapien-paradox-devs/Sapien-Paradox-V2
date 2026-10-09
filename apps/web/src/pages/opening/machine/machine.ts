@@ -40,6 +40,9 @@ export const openingConfig = {
         onError: [
           // You do not own this book. No button helps, so it is not sanctuary.
           { guard: "isForbidden", target: "denied" },
+          // You own it; the tick has not sent it yet (#114). Not an error, and
+          // not retryable — waiting is the correct behaviour (D45).
+          { guard: "isLocked", target: "locked" },
           { target: "error" },
         ],
       },
@@ -50,6 +53,7 @@ export const openingConfig = {
     anonymous: { type: "final" },
 
     denied: {},
+    locked: {},
     error: { on: { RETRY: { target: "resolving" } } },
   },
 } as const;

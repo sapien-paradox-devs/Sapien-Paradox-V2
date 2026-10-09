@@ -7,6 +7,7 @@ import { forwardRef } from "react";
 
 import { PACE, PACE_INTERVAL_DAYS, type Pace } from "../../lib/constants";
 import { labels } from "../../lib/labels";
+import { formatDay } from "../../lib/locale";
 
 type Props = {
   pace: Pace;
@@ -77,10 +78,4 @@ export function arrivalDates(start: Date, intervalDays: number, count: number): 
     date.setDate(date.getDate() + index * intervalDays);
     return date;
   });
-}
-
-const DAY = new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short" });
-
-function formatDay(date: Date): string {
-  return DAY.format(date);
 }

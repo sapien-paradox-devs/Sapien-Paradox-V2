@@ -8,6 +8,11 @@ point of expiry.
 Read/unread comes from `opened_at`, which the reading machine stamps on the
 first open only. Progress and completion come from `ReadingProgress` (D70),
 quietly: a ring per chapter, a total per book.
+
+Locked chapters are listed too (#114). A reader on a weekly pace should be able
+to see the shape of their book, so every chapter is here with the date its lock
+lifts — a date, never a countdown (D11). The row carries no link, because
+`/read` refuses it.
 """
 
 from ninja import Router
@@ -46,20 +51,13 @@ def home(request):
     # And one for every chapter's progress (D70).
     places = selectors.progress_by_chapter(user)
 
+    # And one for the chapters cadence has not released yet (D50).
+    locks = selectors.locks_by_chapter(user)
+
     books = []
     for order in orders:
         chapters = list(Chapter.objects.filter(book=order.book).order_by("order_index"))
-        rows = [
-            ChapterOut(
-                id=str(chapter.pk),
-                number=chapter.order_index,
-                title=chapter.title,
-                read=chapter.pk in opened_ids,
-                progress=places.get(chapter.pk, selectors.NONE).furthest,
-                completed=places.get(chapter.pk, selectors.NONE).completed,
-            )
-            for chapter in chapters
-        ]
+        rows = [_chapter_row(chapter, opened_ids, places, locks) for chapter in chapters]
         books.append(
             BookOut(
                 id=str(order.book.pk),
@@ -70,3 +68,19 @@ def home(request):
         )
 
     return HomeOut(books=books)
+
+
+def _chapter_row(chapter, opened_ids, places, locks) -> ChapterOut:
+    place = places.get(chapter.pk, selectors.NONE)
+    lock = locks.get(chapter.pk, selectors.UNLOCKED)
+
+    return ChapterOut(
+        id=str(chapter.pk),
+        number=chapter.order_index,
+        title=chapter.title,
+        read=chapter.pk in opened_ids,
+        progress=place.furthest,
+        completed=place.completed,
+        locked=lock.locked,
+        unlocksAt=lock.unlocks_at.isoformat() if lock.unlocks_at else None,
+    )
